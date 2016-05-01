@@ -1,0 +1,6 @@
+.idea
+*.sln
+*.suo
+node_modules
+projects/*/lib
+npm-debug.log

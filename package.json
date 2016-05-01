@@ -1,0 +1,33 @@
+{
+  "name": "droplit.io-edge",
+  "version": "1.0.0",
+  "description": "Instant Cloud Control for smart devices",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Droplit, Inc.",
+  "contributors": [
+    "Jenks, Bryan <bryan@droplit.io>"
+  ],
+  "license": "ISC",
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "async": "^1.5.2",
+    "del": "^2.2.0",
+    "gulp": "^3.9.1",
+    "gulp-help": "^1.6.1",
+    "gulp-load-plugins": "^1.2.2",
+    "gulp-param": "^1.0.3",
+    "gulp-plumber": "^1.1.0",
+    "gulp-sequence": "^0.4.5",
+    "gulp-sloc": "^1.0.4",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-tslint": "^4.3.5",
+    "gulp-typescript": "^2.13.0",
+    "gulp-util": "^3.0.7",
+    "merge2": "^1.0.2",
+    "tslint": "^3.7.4"
+  }
+}

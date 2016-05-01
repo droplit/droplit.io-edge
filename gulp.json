@@ -1,0 +1,32 @@
+{
+    "projectPath": "projects/{project}",
+    "clean": [
+        "projects/{project}/lib/**/*"
+    ],
+    "deepClean": [
+        "projects/{project}/lib/**/*",
+        "projects/{project}/node_modules/**/*"
+    ],
+    "tsfiles": [
+        "typings/main.d.ts",
+        "projects/{project}/src/**/*.ts"
+    ],
+    "dest": "projects/{project}/lib/",
+    "resourceExtensions": [
+        ".md",
+        ".npmignore",
+        ".json",
+        ".js"
+    ],
+    "sloc_project": [
+        "projects/{project}/src/**/*.ts",
+        "projects/{project}/src/**/*.json"
+    ],
+    "sloc_all": [
+        "projects/*/src/**/*.ts",
+        "projects/*/src/**/*.json",
+        "notes/*",
+        "docs/*",
+        "*.*"
+    ]
+}

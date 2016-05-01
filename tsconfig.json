@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "preserveConstEnums": true,
+        "removeComments": false,
+        "target": "ES5"
+    },
+    "filesGlob": [
+        "typings/main.d.ts",
+        "projects/**/*.ts"
+    ]
+}
