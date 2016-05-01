@@ -1,0 +1,32 @@
+{
+  "name": "droplit-edge",
+  "description": "Instant Cloud Control for smart devices",
+  "author": "Droplit, Inc.",
+  "version": "0.1.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Bryan Jenks",
+      "email": "bryan@droplit.io"
+    },
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    },
+    {
+      "name": "Chris Woodle",
+      "email": "chris@droplit.io"
+    }
+  ],
+  "main": "server.js",
+  "scripts": {
+    "start": "sudo node server.js",
+    "debug": "sudo DEBUG=droplit,droplit:* node server.js"
+  },
+  "dependencies": {
+    "debug": "^2.2.0",
+    "getmac": "^1.0.7",
+    "strong-service-install": "^2.0.2"
+  },
+  "devDependencies": {}
+}
