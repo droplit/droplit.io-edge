@@ -7,7 +7,8 @@
     "form-data": "registry:dt/form-data#0.0.0+20160316155526",
     "http-status": "registry:dt/http-status#0.2.1+20160412142223",
     "node": "registry:dt/node#4.0.0+20160412142033",
-    "request": "registry:dt/request#0.0.0+20160316155526"
+    "request": "registry:dt/request#0.0.0+20160316155526",
+    "ws": "registry:dt/ws#0.0.0+20160317120654"
   },
   "dependencies": {
     "chalk": "registry:npm/chalk#1.0.0+20160211003958"

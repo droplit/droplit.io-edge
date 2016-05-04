@@ -1,0 +1,5 @@
+{
+    "transport": {
+        "host": "wss://dev-ws-droplit-io.azurewebsites.net/edge"
+    }
+}

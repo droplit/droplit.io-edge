@@ -6,4 +6,5 @@
 /// <reference path="browser/ambient/http-status/index.d.ts" />
 /// <reference path="browser/ambient/node/index.d.ts" />
 /// <reference path="browser/ambient/request/index.d.ts" />
+/// <reference path="browser/ambient/ws/index.d.ts" />
 /// <reference path="browser/definitions/chalk/index.d.ts" />

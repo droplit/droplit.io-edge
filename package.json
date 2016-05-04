@@ -8,7 +8,18 @@
   },
   "author": "Droplit, Inc.",
   "contributors": [
-    "Jenks, Bryan <bryan@droplit.io>"
+    {
+      "name": "Bryan Jenks",
+      "email": "bryan@droplit.io"
+    },
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    },
+    {
+      "name": "Chris Woodle",
+      "email": "chris@droplit.io"
+    }
   ],
   "license": "ISC",
   "private": true,
