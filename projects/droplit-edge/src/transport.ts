@@ -1,10 +1,21 @@
 import * as WebSocket from 'ws';
 import {EventEmitter} from 'events';
+const retry = require('retry');
 
 export default class Transport extends EventEmitter {
     
     // Connection
     private ws: WebSocket = undefined;
+    private settings: any = undefined;
+    private connectOperation = retry.operation({
+        // retries: Infinity,
+        factor: 1.5,
+        minTimeout: 500,
+        maxTimeout: 5000,
+        randomize: true,
+        forever: true
+    });
+    private isOpen = false;
 
     constructor() {
         super();
@@ -12,26 +23,51 @@ export default class Transport extends EventEmitter {
     }
     
     public start(settings: any) {
-        this.ws = new WebSocket(settings.host);
-        this.ws.on('open', this.onOpen);
-        this.ws.on('message', this.onMessage);
-        this.ws.on('close', this.onClose);
-        this.ws.on('ping', this.onPing);
-        this.ws.on('pong', this.onPong);
+        this.settings = settings;
+        this.retryConnect();
+    }
+    
+    private retryConnect() {
+        this.connectOperation.attempt((currentAttempt: any) => {
+            console.log('reconnecting...');
+            this.restart();
+        });
+    }
+    
+    private restart() {
+        try {
+            this.ws = new WebSocket(this.settings.host);
+            this.ws.on('open', this.onOpen.bind(this));
+            this.ws.on('message', this.onMessage.bind(this));
+            this.ws.on('close', this.onClose.bind(this));
+            this.ws.on('ping', this.onPing.bind(this));
+            this.ws.on('pong', this.onPong.bind(this));
+            this.ws.on('error', this.onError.bind(this));
+        } catch (err) {
+            console.log('connect error', err.stack);
+        }
     }
     
     private onOpen() {
+        this.isOpen = true;
         this.startHeartbeat();
         this.emit('connected');
     }
 
     private onMessage(data: any, flags: any) {
+        console.log('message', data);
         let packet = JSON.parse(data);
         this.emit('message', data.m);
     }
 
     private onClose(code: any, message: any) {
-        this.emit('disconnected');
+        this.ws = undefined;
+        if (this.isOpen) {
+            this.isOpen = false;
+            this.stopHeartbeat();
+            this.emit('disconnected');
+            this.retryConnect();
+        }
     }
 
     private onPing(data: any, flags: any) {
@@ -42,15 +78,36 @@ export default class Transport extends EventEmitter {
         
     }
     
+    private onError(error: any) {
+        // console.log('conn error', error.stack);
+        this.isOpen = false;
+        this.stopHeartbeat();
+        this.connectOperation.retry(error);
+    }
+    
     public send(message: string, data?: any, cb?: (err: Error) => void) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId() };
-        this.ws.send(JSON.stringify(packet), cb);
+        this._send(JSON.stringify(packet), cb);
+    }
+    
+    private _send(packet: any, cb?: (err: Error) => void) {
+        if (this.ws) {
+            try {
+                this.ws.send(packet, cb);
+            } catch (err) {
+                console.log('send error', err.stack);
+                cb(err);
+                this.retryConnect();
+            }
+        } else {
+            cb(new Error('not connected'));
+        }
     }
     
     private heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
-        this.ws.send(this.heartbeatPacket);
+        this._send(this.heartbeatPacket);
     }
 
     public stop() {
@@ -58,6 +115,7 @@ export default class Transport extends EventEmitter {
             this.ws.close();
             this.ws = undefined;
         }
+        this.stopHeartbeat();
         this.emit('disconnected');
     }
 
@@ -69,7 +127,6 @@ export default class Transport extends EventEmitter {
         return ++ this.messageIdSeed;
     }
     
-    
     // Heartbeat
 
     private heartbeatInterval = 1000;
@@ -77,7 +134,7 @@ export default class Transport extends EventEmitter {
 
     private startHeartbeat() {
         this.stopHeartbeat();
-        this.heartbeatTimer = setInterval(this.performHeartbeat, this.heartbeatInterval);
+        this.heartbeatTimer = setInterval(<() => void>(this.performHeartbeat.bind(this)), this.heartbeatInterval);
     }
 
     private performHeartbeat() {
