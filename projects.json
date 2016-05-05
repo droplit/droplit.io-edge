@@ -1,3 +1,18 @@
 {
-    "droplit-edge": {}
+    "droplit-edge": {
+        "dependencies": [
+            "droplit-plugin"
+        ]
+    },
+    "droplit-plugin": {},
+    "droplit-plugin-ts-example": {
+        "dependencies": [
+            "droplit-plugin"
+        ]
+    },
+    "droplit-plugin-js-example": {
+        "dependencies": [
+            "droplit-plugin"
+        ]
+    }
 }

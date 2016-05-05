@@ -182,8 +182,8 @@ projectNames.forEach((project) => {
         return merge([
             tsResult.dts.pipe(gulp.dest(dest)),
             tsResult.js
-                .pipe(G$.sourcemaps.write()) // inline sourcemaps
-                // .pipe(G$.sourcemaps.write('.')) // separate .js.map files
+                // .pipe(G$.sourcemaps.write()) // inline sourcemaps
+                .pipe(G$.sourcemaps.write('.')) // separate .js.map files
                 .pipe(gulp.dest(dest))
         ]);
     });

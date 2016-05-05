@@ -1,0 +1,24 @@
+{
+  "name": "droplit-plugin-js-example",
+  "description": "Example Droplit Edge server plugin",
+  "author": "Droplit, Inc.",
+  "version": "2.0.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Bryan Jenks",
+      "email": "bryan@droplit.io"
+    },
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    },
+    {
+      "name": "Chris Woodle",
+      "email": "chris@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {}
+}
