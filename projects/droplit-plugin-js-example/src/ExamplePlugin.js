@@ -28,7 +28,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
     discover() {
         setImmediate(() => { // simulate async
             this.onDeviceInfo({
-                identifier: '1',
+                localId: '1',
                 address: 'device.1',
                 deviceMeta: { name: 'first device'},
                 location: 'main facility',
@@ -39,7 +39,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                 }
             });
             this.onDeviceInfo({
-                identifier: '2',
+                localId: '2',
                 address: 'device.2',
                 deviceMeta: { name: 'second device'},
                 location: 'main facility',
@@ -53,41 +53,41 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         });
     }
     
-    connect(identifier) {
+    connect(localId) {
         // track state changes on this device
-        this.deviceConnected[identifier] = true;
+        this.deviceConnected[localId] = true;
     }
     
-    disconnect(identifier) {
+    disconnect(localId) {
         // stop tracking state changes on this device
-        this.deviceConnected[identifier] = false;
+        this.deviceConnected[localId] = false;
     }
     
-    BinarySwitch_get_switch(identifier, index, callback) {
+    BinarySwitch_get_switch(localId, index, callback) {
         if (index === undefined) {
             setImmediate(() => { // simulate async
                 // send last set value
-                callback(this.devices[identifier]['BinarySwitch.switch']);
+                callback(this.devices[localId]['BinarySwitch.switch']);
             });
             return true;
         }
         return false;
     }
     
-    BinarySwitch_set_switch(identifier, index, value) {
+    BinarySwitch_set_switch(localId, index, value) {
         if (index === undefined) {
             setImmediate(() => { // simulate async
                 // simulate setting device property
-                this.devices[identifier]['BinarySwitch.switch'] = value;
+                this.devices[localId]['BinarySwitch.switch'] = value;
                 // check if we're supposed to be tracking the device state
-                if (this.deviceConnected[identifier]) {
+                if (this.deviceConnected[localId]) {
                     /**
                      * we have a connection to the device,
                      * so we would get a notification that the state changed
                      * indicate the property changed
                      */
                     this.onPropertiesChanged([{
-                        identifier: identifier,
+                        localId: localId,
                         index: index,
                         member: 'switch',
                         service: 'BinarySwitch',

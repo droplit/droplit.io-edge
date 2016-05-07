@@ -59,16 +59,16 @@ export class PluginFactory extends EventEmitter {
         this.pluginInstance.discover();
     }
     
-    public connect(identifier: string): void {
-        this.pluginInstance.connect(identifier);
+    public connect(localId: string): void {
+        this.pluginInstance.connect(localId);
     }
     
-    public disconnect(identifier: string): void {
-        this.pluginInstance.disconnect(identifier);
+    public disconnect(localId: string): void {
+        this.pluginInstance.disconnect(localId);
     }
     
-    public dropDevice(identifier: string): void {
-        this.pluginInstance.dropDevice(identifier);
+    public dropDevice(localId: string): void {
+        this.pluginInstance.dropDevice(localId);
     }
     
     // services

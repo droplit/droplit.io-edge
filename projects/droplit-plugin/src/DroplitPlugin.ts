@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 /**
  * DeviceServiceMember - Address information for device and service member
  * @typedef {Object} DeviceServiceMember
- * @param {string} identifier - device unique identifier (unique within this plugin in this environment)
+ * @param {string} localId - device unique identifier (unique within this plugin in this environment)
  * @param {string} service - Service class name
  * @param {string} index - Service class instance
  * @param {string} member - Service class member
@@ -12,18 +12,17 @@ import {EventEmitter} from 'events';
  * @interface DeviceServiceMember
  */
 export interface DeviceServiceMember {
-    identifier: string;
+    localId: string;
     service: string;
     index: string;
     member: string;
     value?: any;
 }
 
-
 /**
  * DeviceInfo - Everything about a device
  * @typedef {Object} DeviceInfo
- * @param {string} identifier - device unique identifier (unique within this plugin in this environment)
+ * @param {string} localId - device unique identifier (unique within this plugin in this environment)
  * @param {any} address - device address on this network
  * @param {string} product - manufacturer, assigned name and type
  * @param {string} name - user assigned friendly name (seeds the label)
@@ -35,7 +34,7 @@ export interface DeviceServiceMember {
  * @interface DeviceInfo
  */
 export interface DeviceInfo {
-    identifier: string;
+    localId: string;
     address?: any;
     product?: any;
     name?: string;
@@ -58,18 +57,18 @@ export abstract class DroplitPlugin extends EventEmitter {
     /**
      * connect - Start tracking the specified device
      * 
-     * @param {string} identifier - device unique identifier
+     * @param {string} localId - device unique identifier
      * @abstract
      */
-    public abstract connect(identifier: string): void
+    public abstract connect(localId: string): void
     
     /**
      * disconnect - Stop tracking the specified device
      * 
-     * @param {string} identifier - device unique identifier
+     * @param {string} localId - device unique identifier
      * @abstract
      */
-    public abstract disconnect(identifier: string): void
+    public abstract disconnect(localId: string): void
     
     /**
      * callMethod - Call a service method
@@ -85,7 +84,7 @@ export abstract class DroplitPlugin extends EventEmitter {
         // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array'); 
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
         let params = method.value || [];
-        params.unshift(method.identifier);
+        params.unshift(method.localId);
         let methodImplementation = this.getServiceMember(method.service, method.member);
         if (methodImplementation) {
             let isSupported = methodImplementation.apply(this, params);
@@ -120,7 +119,7 @@ export abstract class DroplitPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`get ${this.getServiceSelector(property)}`);
-        let params = [property.identifier, callback];
+        let params = [property.localId, callback];
         let methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
         if (methodImplementation) {
             let isSupported = methodImplementation.apply(this, params);
@@ -144,7 +143,7 @@ export abstract class DroplitPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
-        let params = [property.identifier, property.value];
+        let params = [property.localId, property.value];
         let methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
         if (methodImplementation) {
             let isSupported = methodImplementation.apply(this, params);
@@ -261,7 +260,7 @@ export abstract class DroplitPlugin extends EventEmitter {
      */
     
     protected getServiceSelector(member: DeviceServiceMember): string {
-        return `${member.identifier}/${member.service}${member.index ? `[${member.index}]` : ''}.${member.member}`;
+        return `${member.localId}/${member.service}${member.index ? `[${member.index}]` : ''}.${member.member}`;
     }
     
     protected getServiceMember(service: string, member: string): () => void {

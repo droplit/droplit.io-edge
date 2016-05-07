@@ -13,7 +13,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     };
     
     // virtual device tracking
-    private deviceConnected: { [identifier: string]: boolean } = {};
+    private deviceConnected: { [localId: string]: boolean } = {};
     
     /**
      * Example plugin will produce two devices when told to discover
@@ -22,7 +22,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     public discover() {
         setImmediate(() => { // simulate async
             this.onDeviceInfo({
-                identifier: '1',
+                localId: '1',
                 address: 'device.1',
                 deviceMeta: { name: 'first device'},
                 location: 'main facility',
@@ -33,7 +33,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
                 }
             });
             this.onDeviceInfo({
-                identifier: '2',
+                localId: '2',
                 address: 'device.2',
                 deviceMeta: { name: 'second device'},
                 location: 'main facility',
@@ -47,46 +47,46 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
         });
     }
     
-    public connect(identifier: string) {
+    public connect(localId: string) {
         // track state changes on this device
-        this.deviceConnected[identifier] = true;
+        this.deviceConnected[localId] = true;
     }
     
-    public disconnect(identifier: string) {
+    public disconnect(localId: string) {
         // stop tracking state changes on this device
-        this.deviceConnected[identifier] = false;
+        this.deviceConnected[localId] = false;
     }
     
-    public dropDevice(identifier: string) {
-        this.disconnect(identifier);
+    public dropDevice(localId: string) {
+        this.disconnect(localId);
         
     }
     
-    protected BinarySwitch_get_switch(identifier: string, index: string, callback: (value: any) => void): boolean {
+    protected BinarySwitch_get_switch(localId: string, index: string, callback: (value: any) => void): boolean {
         if (index === undefined) {
             setImmediate(() => { // simulate async
                 // send last set value
-                callback(this.devices[identifier]['BinarySwitch.switch']);
+                callback(this.devices[localId]['BinarySwitch.switch']);
             });
             return true;
         }
         return false;
     }
     
-    protected BinarySwitch_set_switch(identifier: string, index: string, value: any): boolean {
+    protected BinarySwitch_set_switch(localId: string, index: string, value: any): boolean {
         if (index === undefined) {
             setImmediate(() => { // simulate async
                 // simulate setting device property
-                this.devices[identifier]['BinarySwitch.switch'] = value;
+                this.devices[localId]['BinarySwitch.switch'] = value;
                 // check if we're supposed to be tracking the device state
-                if (this.deviceConnected[identifier]) {
+                if (this.deviceConnected[localId]) {
                     /**
                      * we have a connection to the device,
                      * so we would get a notification that the state changed
                      * indicate the property changed
                      */
                     this.onPropertiesChanged([{
-                        identifier: identifier,
+                        localId: localId,
                         index: index,
                         member: 'switch',
                         service: 'BinarySwitch',
