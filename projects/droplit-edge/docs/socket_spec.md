@@ -3,6 +3,8 @@
 
 `discover`
 
+`device info`
+
 `device connect`
 
 `device disconnect`
@@ -19,10 +21,12 @@
 
 `plugin data`
 
+`config set`
+
 
 ### Edge to Cloud
 
-`device update`
+`device info`
 
 `property changed`
 

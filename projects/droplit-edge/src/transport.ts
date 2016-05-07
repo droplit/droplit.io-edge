@@ -1,6 +1,8 @@
 import * as WebSocket from 'ws';
 import {EventEmitter} from 'events';
 const retry = require('retry');
+import * as debug from 'debug';
+let log = debug('droplit-edge:transport');
 
 export default class Transport extends EventEmitter {
     
@@ -29,7 +31,7 @@ export default class Transport extends EventEmitter {
     
     private retryConnect() {
         this.connectOperation.attempt((currentAttempt: any) => {
-            console.log('reconnecting...');
+            log('reconnecting...');
             this.restart();
         });
     }
@@ -51,11 +53,12 @@ export default class Transport extends EventEmitter {
     private onOpen() {
         this.isOpen = true;
         this.startHeartbeat();
+        log('connected');
         this.emit('connected');
     }
 
     private onMessage(data: any, flags: any) {
-        console.log('message', data);
+        log('message', data);
         let packet = JSON.parse(data);
         this.emit('message', data.m);
     }
@@ -65,21 +68,22 @@ export default class Transport extends EventEmitter {
         if (this.isOpen) {
             this.isOpen = false;
             this.stopHeartbeat();
+            log('disconnected');
             this.emit('disconnected');
             this.retryConnect();
         }
     }
 
     private onPing(data: any, flags: any) {
-        
+        log('ping');
     }
 
     private onPong(data: any, flags: any) {
-        
+        log('pong');
     }
     
     private onError(error: any) {
-        // console.log('conn error', error.stack);
+        // log('conn error', error.stack);
         this.isOpen = false;
         this.stopHeartbeat();
         this.connectOperation.retry(error);
@@ -95,7 +99,7 @@ export default class Transport extends EventEmitter {
             try {
                 this.ws.send(packet, cb);
             } catch (err) {
-                console.log('send error', err.stack);
+                log('send error', err.stack);
                 cb(err);
                 this.retryConnect();
             }
@@ -116,6 +120,7 @@ export default class Transport extends EventEmitter {
             this.ws = undefined;
         }
         this.stopHeartbeat();
+        log('disconnected');
         this.emit('disconnected');
     }
 

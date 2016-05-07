@@ -21,7 +21,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     
     public discover() {
         setImmediate(() => { // simulate async
-            this.onDeviceUpdate({
+            this.onDeviceInfo({
                 identifier: '1',
                 address: 'device.1',
                 deviceMeta: { name: 'first device'},
@@ -32,7 +32,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
                     'switch': 'BinarySwitch.switch'
                 }
             });
-            this.onDeviceUpdate({
+            this.onDeviceInfo({
                 identifier: '2',
                 address: 'device.2',
                 deviceMeta: { name: 'second device'},

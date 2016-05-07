@@ -2,6 +2,9 @@
   "name": "droplit-edge",
   "description": "Instant Cloud Control for smart devices",
   "author": "Droplit, Inc.",
+  "engines": {
+    "node": ">=4.2.6"
+  },
   "version": "2.0.0",
   "private": false,
   "contributors": [

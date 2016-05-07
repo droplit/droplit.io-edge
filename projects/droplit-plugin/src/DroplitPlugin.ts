@@ -74,9 +74,14 @@ export abstract class DroplitPlugin extends EventEmitter {
     /**
      * callMethod - Call a service method
      * 
-     * @param {DeviceServiceMember} method (description)
+     * @param {DeviceServiceMember} method - boolean indicating if method is supported
      */
     public callMethod(method: DeviceServiceMember): boolean {
+        /**
+         * The edge server will never call the signular version of this method,
+         * it is just here as an abstraction layer and can be disregarded 
+         * if overriding the plural version.
+         */
         // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array'); 
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
         let params = method.value || [];
@@ -91,11 +96,29 @@ export abstract class DroplitPlugin extends EventEmitter {
         }
     }
     
+    /**
+     * callMethods - Call multiple service methods
+     * 
+     * @param {DeviceServiceMember[]} methods - array of methods to call
+     * @returns {boolean[]} array of booleans indicating if method is supported
+     */
     public callMethods(methods: DeviceServiceMember[]): boolean[] {
         return methods.map(method => this.callMethod(method));
     }
     
+    /**
+     * getProperty - Get a service property value
+     * 
+     * @param {DeviceServiceMember} property - property to get
+     * @param {(value: any) => void} callback - callback for result
+     * @returns {boolean} boolean indicating if property is supported
+     */
     public getProperty(property: DeviceServiceMember, callback: (value: any) => void): boolean {
+        /**
+         * The edge server will never call the signular version of this method,
+         * it is just here as an abstraction layer and can be disregarded 
+         * if overriding the plural version.
+         */
         this.log(`get ${this.getServiceSelector(property)}`);
         let params = [property.identifier, callback];
         let methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
@@ -108,7 +131,18 @@ export abstract class DroplitPlugin extends EventEmitter {
         }
     }
     
+    /**
+     * setProperty - Set a service propery value
+     * 
+     * @param {DeviceServiceMember} property - property to set
+     * @returns {boolean} - boolean indicating if property is supported
+     */
     public setProperty(property: DeviceServiceMember): boolean {
+        /**
+         * The edge server will never call the signular version of this method,
+         * it is just here as an abstraction layer and can be disregarded 
+         * if overriding the plural version.
+         */
         this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
         let params = [property.identifier, property.value];
         let methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
@@ -121,6 +155,13 @@ export abstract class DroplitPlugin extends EventEmitter {
         }
     }
     
+    /**
+     * getProperties - Gets multiple service property values
+     * 
+     * @param {DeviceServiceMember[]} properties - properties to get
+     * @param {(values: DeviceServiceMember[]) => void} callback - callback for results
+     * @returns {boolean[]} array of booleans indicating if each property is supported
+     */
     public getProperties(properties: DeviceServiceMember[], callback: (values: DeviceServiceMember[]) => void): boolean[] {
         // could use `async` library, but didn't want external dependency
         let values: DeviceServiceMember[] = Array.apply(null, Array(properties.length)); // init all values to undefined
@@ -133,16 +174,40 @@ export abstract class DroplitPlugin extends EventEmitter {
         });
     }
     
+    /**
+     * setProperties - Sets multiple service property values
+     * 
+     * @param {DeviceServiceMember[]} properties - properties to set
+     * @returns {boolean[]} adday of booleans indicating if each property is supported
+     */
     public setProperties(properties: DeviceServiceMember[]): boolean[] {
         return properties.map(property => this.setProperty(property));
     }
     
+    /**
+     * dropDevice - clear device information from memory, disconnect
+     * 
+     * @abstract
+     * @param {string} idenrifier (description)
+     */
     public abstract dropDevice(idenrifier: string): void
     
+    /**
+     * log - Write to the log
+     * 
+     * @protected
+     * @param {...any[]} args (description)
+     */
     protected log(... args: any[]): void {
         this.emit('log info', args);
     }
     
+    /**
+     * logError - Write error information to thr log
+     * 
+     * @protected
+     * @param {...any[]} args (description)
+     */
     protected logError(... args: any[]): void {
         this.emit('log error', args);
     }
@@ -150,21 +215,51 @@ export abstract class DroplitPlugin extends EventEmitter {
     /**
      * Events
      */
-    protected onDeviceUpdate(info: DeviceInfo) {
-        this.emit('device update');
+    
+    /**
+     * onDeviceUpdate - Raises an event indicating that the device details have changed or a new device has been discovered
+     * 
+     * @protected
+     * @param {DeviceInfo} deviceInfo (description)
+     */
+    protected onDeviceInfo(deviceInfo: DeviceInfo) {
+        this.emit('device info', deviceInfo);
     }
     
+    /**
+     * onDiscoverComplete - Raises an event indicting that the device discovery cycle has completed
+     * 
+     * @protected
+     */
     protected onDiscoverComplete() {
         this.emit('discover complete');
     }
     
+    /**
+     * onPropertiesChanged - Raises an event indicating that device properties have changed state
+     * 
+     * @protected
+     * @param {DeviceServiceMember[]} properties (description)
+     */
     protected onPropertiesChanged(properties: DeviceServiceMember[]) {
-        this.emit('property changed');
+        this.emit('property changed', properties);
+    }
+    
+    /**
+     * onEvents - Raises an event indicating that devices have raised events
+     * 
+     * @protected
+     * @param {DeviceServiceMember[]} events (description)
+     */
+    protected onEvents(events: DeviceServiceMember[]) {
+        this.emit('event raised', events);
     }
     
     /**
      * Helper methods
+     * Internal use only to support service member routing
      */
+    
     protected getServiceSelector(member: DeviceServiceMember): string {
         return `${member.identifier}/${member.service}${member.index ? `[${member.index}]` : ''}.${member.member}`;
     }
