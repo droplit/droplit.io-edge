@@ -23,7 +23,9 @@ let log = debug('droplit-edge:transport');
  *
  * @event Transport#message
  * @type {object}
- * @property {string} data - Contents of the message
+ * @property {string} message - #message
+ * @property {any} data - Contents of the message
+ * @propetry {function} callback - response callback if expected
  */
 
 /**
@@ -101,7 +103,7 @@ export default class Transport extends EventEmitter {
         let packet = JSON.parse(data);
         if (packet.r === true) {
             // it's a request expecting a response
-            this.emit('request', packet.m, packet.d, (response: any): void => {
+            this.emit('#' + packet.m, packet.d, (response: any): void => {
                 let responseMessageId = packet.i;
                 let responsePacket: any = { d: response, r: responseMessageId };
                 this._send(JSON.stringify(responsePacket));
@@ -116,7 +118,7 @@ export default class Transport extends EventEmitter {
             }
         } else {
             // it's a normal message
-            this.emit('message', packet.m, packet.d);
+            this.emit('#' + packet.m, packet.d);
         }
     }
 
@@ -151,9 +153,20 @@ export default class Transport extends EventEmitter {
         this._send(JSON.stringify(packet), cb);
     }
     
+    // private sendBuffer: any[] = [];
+    
+    // private buffer: {
+    //     queueAndPeek: (packet: any) => {
+            
+    //     },
+    //     dequeue: () => {}
+    // };
+    
     private _send(packet: any, cb?: (err: Error) => void) {
         if (this.ws) {
+            // this.sendBuffer.push(packet);
             try {
+                // let x = this.buffer.queueAndPeek(null);
                 this.ws.send(packet, cb);
             } catch (err) {
                 log('send error', err.stack);
@@ -161,6 +174,7 @@ export default class Transport extends EventEmitter {
                 this.retryConnect();
             }
         } else {
+            // connection was closed intentionally
             cb(new Error('not connected'));
         }
     }

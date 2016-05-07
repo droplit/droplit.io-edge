@@ -4,3 +4,7 @@
 node_modules
 projects/*/lib
 npm-debug.log
+
+#project specific
+/projects/droplit-edge/cache
+/projects/droplit-edge/plugins

@@ -1,3 +1,3 @@
-var index = require("./lib/index");
+var index = require("./lib/router");
 
 module.exports = index;

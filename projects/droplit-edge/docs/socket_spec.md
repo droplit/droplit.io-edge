@@ -3,13 +3,23 @@
 
 `discover`
 
-`device info`
+// `device info`
 
 `device connect`
 
 `device disconnect`
 
-`property set`
+#### `property set` - set service properties
+```
+{
+    deviceId: string;
+    pluginName: string;
+    service: string;
+    index: string;
+    member: string;
+    value: any;
+}[]
+```
 
 `property get`
 
@@ -26,7 +36,7 @@
 
 ### Edge to Cloud
 
-`device info`
+`device info` => deviceInfo
 
 `property changed`
 
