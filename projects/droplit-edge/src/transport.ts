@@ -4,6 +4,35 @@ const retry = require('retry');
 import * as debug from 'debug';
 let log = debug('droplit-edge:transport');
 
+/**
+ * Connected event
+ *
+ * @event Transport#connected
+ * @type {object}
+ */
+
+/**
+ * Disconnected event
+ *
+ * @event Transport#disconnected
+ * @type {object}
+ */
+
+/**
+ * Message event indicates that a message was received
+ *
+ * @event Transport#message
+ * @type {object}
+ * @property {string} data - Contents of the message
+ */
+
+/**
+ * Provides communication with droplit.io
+ * 
+ * @export
+ * @class Transport
+ * @extends {EventEmitter}
+ */
 export default class Transport extends EventEmitter {
     
     // Connection
@@ -18,10 +47,18 @@ export default class Transport extends EventEmitter {
         forever: true
     });
     private isOpen = false;
+    
+    // timeout
+    private messageTimeout = 5000;
+    private messageTimer: NodeJS.Timer = undefined;
+    
+    // request-response mapping
+    private responseMap: {[id: string]: (response: string, err?: Error) => void} = {};
 
     constructor() {
         super();
         EventEmitter.call(this);
+        this.messageTimer = setInterval(this.digestCycle, this.messageTimeout);
     }
     
     public start(settings: any) {
@@ -29,6 +66,8 @@ export default class Transport extends EventEmitter {
         this.retryConnect();
     }
     
+    // reconnect
+
     private retryConnect() {
         this.connectOperation.attempt((currentAttempt: any) => {
             log('reconnecting...');
@@ -60,7 +99,25 @@ export default class Transport extends EventEmitter {
     private onMessage(data: any, flags: any) {
         log('message', data);
         let packet = JSON.parse(data);
-        this.emit('message', data.m);
+        if (packet.r === true) {
+            // it's a request expecting a response
+            this.emit('request', packet.m, packet.d, (response: any): void => {
+                let responseMessageId = packet.i;
+                let responsePacket: any = { d: response, r: responseMessageId };
+                this._send(JSON.stringify(responsePacket));
+            });
+        } else if (typeof(packet.r) === 'string') {
+            // it's the reponse to a request
+            let cb = this.responseMap[packet.r];
+            if (cb) {
+                cb(packet.d);
+            } else {
+                log('unknown message response', packet);
+            }
+        } else {
+            // it's a normal message
+            this.emit('message', packet.m, packet.d);
+        }
     }
 
     private onClose(code: any, message: any) {
@@ -108,6 +165,67 @@ export default class Transport extends EventEmitter {
         }
     }
     
+    public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
+        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        this.responseMap[packet.i] = cb;
+        this._send(JSON.stringify(packet), (err) => {
+            // only happens if there was an error, so presumably the callback won't be called from a valid response
+            cb(undefined, err);
+            delete this.responseMap[packet.i];
+            log('request send error', packet, err);
+        });
+    }
+    
+    // message callback expiration handler
+    
+    private prevMessageId: number = undefined;
+    
+    private digestCycle() {
+        // cleanup the second-to-last cycle
+        let messageIds = Object.keys(this.responseMap);
+        messageIds.forEach((messageId) => {
+            let id = parseInt(messageId);
+            if (this.prevMessageId < this.messageIdSeed) {
+                /**
+                 * message ids have NOT recycled
+                 * 
+                 *   [] = full range: 0..Number.MAX_SAFE_INTEGER
+                 *   <  = prevMessageId
+                 *   >  = messageIdSeed (next messageId)
+                 *   -  = active messageId
+                 *   o  = id
+                 * 
+                 *   [      -o-<--->      ]
+                 *   [o<--->            --]
+                 */
+                if (id <= this.prevMessageId || id > this.messageIdSeed) {
+                    let cb = this.responseMap[messageId];
+                    cb(undefined, new Error('timeout expired'));
+                    delete this.responseMap[messageId];
+                }
+            } else {
+                /**
+                 * message ids HAVE recycled
+                 * 
+                 *   [] = full range: 0..Number.MAX_SAFE_INTEGER
+                 *   <  = prevMessageId
+                 *   >  = messageIdSeed (next messageId)
+                 *   -  = active messageId
+                 *   o  = id
+                 * 
+                 *   [--->      -o-<    --]
+                 */
+                if (id <= this.prevMessageId && id > this.messageIdSeed) {
+                    let cb = this.responseMap[messageId];
+                    cb(undefined, new Error('timeout expired'));
+                    delete this.responseMap[messageId];
+                }
+            }
+        });
+        // shift the ids down, store the current id for the next cycle
+        this.prevMessageId = this.messageIdSeed;
+    }
+    
     private heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
@@ -153,8 +271,6 @@ export default class Transport extends EventEmitter {
         }
     }
 
-    // reconnect
-        
 }
 
 
