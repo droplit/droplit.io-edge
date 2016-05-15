@@ -26,6 +26,7 @@ transport.on('disconnected', () => {
 
 transport.on('#discover', (data: any) => {
     
+    
 });
 
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
@@ -48,6 +49,17 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
 // transport.on('#plugin setting', (data: any, cb: (response: any) => void) => {
     
 // });
+
+
+/**
+ * Discovers devices for a single plugin. If not specified, runs discovery for all plugins.
+ * 
+ * @export
+ * @param {string} [pluginName] Plugin to run discovery
+ */
+export function discover(pluginName?: string) {
+    
+}
 
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);

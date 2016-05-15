@@ -48,14 +48,14 @@ export abstract class DroplitPlugin extends EventEmitter {
     
     
     /**
-     * discover - discover all devices
+     * discover all devices
      * 
      * @abstract
      */
     public abstract discover(): void
     
     /**
-     * connect - Start tracking the specified device
+     * Start tracking the specified device
      * 
      * @param {string} localId - device unique identifier
      * @abstract
@@ -63,12 +63,23 @@ export abstract class DroplitPlugin extends EventEmitter {
     public abstract connect(localId: string): void
     
     /**
-     * disconnect - Stop tracking the specified device
+     * Stop tracking the specified device
      * 
      * @param {string} localId - device unique identifier
      * @abstract
      */
     public abstract disconnect(localId: string): void
+    
+    /**
+     * Device message from upstream
+     * 
+     * @param {string} localId - device unique identifier
+     * @param {*} data - message body
+     * @param {(response: any) => void} [callback] Response callback (undefined if no response is expected)
+     */
+    public deviceMessage(localId: string, data: any, callback?: (response: any) => void): void {
+        
+    }
     
     /**
      * callMethod - Call a service method
@@ -189,7 +200,7 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @abstract
      * @param {string} idenrifier (description)
      */
-    public abstract dropDevice(idenrifier: string): void
+    public abstract dropDevice(localId: string): boolean
     
     /**
      * log - Write to the log
@@ -209,6 +220,22 @@ export abstract class DroplitPlugin extends EventEmitter {
      */
     protected logError(... args: any[]): void {
         this.emit('log error', args);
+    }
+    
+    /**
+     * Settings
+     */
+    
+    protected writeSetting(key: string, value: any) {
+        this.emit('plugin setting', key, value);
+    }
+    
+    protected readSetting(key: string, callback: (value: any) => void) {
+        
+    }
+    
+    protected listSettings(callback: (keys: string[]) => {}) {
+        
     }
     
     /**

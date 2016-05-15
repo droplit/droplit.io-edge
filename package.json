@@ -4,6 +4,7 @@
   "description": "Instant Cloud Control for smart devices",
   "main": "index.js",
   "scripts": {
+    "start": "projects/droplit-edge/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Droplit, Inc.",
@@ -23,7 +24,9 @@
   ],
   "license": "ISC",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "source-map-support": "^0.4.0"
+  },
   "devDependencies": {
     "async": "^1.5.2",
     "del": "^2.2.0",

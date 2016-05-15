@@ -57,9 +57,9 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
         this.deviceConnected[localId] = false;
     }
     
-    public dropDevice(localId: string) {
+    public dropDevice(localId: string): boolean {
         this.disconnect(localId);
-        
+        return true;
     }
     
     protected BinarySwitch_get_switch(localId: string, index: string, callback: (value: any) => void): boolean {

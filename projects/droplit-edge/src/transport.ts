@@ -70,14 +70,15 @@ export default class Transport extends EventEmitter {
     
     // reconnect
 
-    private retryConnect() {
+    private retryConnect(callback?: (success: boolean) => void) {
         this.connectOperation.attempt((currentAttempt: any) => {
             log('reconnecting...');
-            this.restart();
+            let success = this.restart();
+            if (callback) callback(success);
         });
     }
     
-    private restart() {
+    private restart(): boolean {
         try {
             this.ws = new WebSocket(this.settings.host);
             this.ws.on('open', this.onOpen.bind(this));
@@ -86,9 +87,11 @@ export default class Transport extends EventEmitter {
             this.ws.on('ping', this.onPing.bind(this));
             this.ws.on('pong', this.onPong.bind(this));
             this.ws.on('error', this.onError.bind(this));
+            return true;
         } catch (err) {
             console.log('connect error', err.stack);
         }
+        return false;
     }
     
     private onOpen() {
@@ -153,20 +156,40 @@ export default class Transport extends EventEmitter {
         this._send(JSON.stringify(packet), cb);
     }
     
-    // private sendBuffer: any[] = [];
+    private sendBuffer: any[] = [];
     
-    // private buffer: {
-    //     queueAndPeek: (packet: any) => {
-            
-    //     },
-    //     dequeue: () => {}
-    // };
+    private queue(packet: any) {
+        this.sendBuffer.push(packet);
+    }
+    
+    private peek(): any {
+        if (this.sendBuffer.length > 0) {
+            return this.sendBuffer[0];
+        } else {
+            return undefined;
+        }
+    }
+    
+    private queueAndPeek(packet: any): any {
+        this.queue(packet);
+        return this.sendBuffer[0];
+    }
+    
+    private dequeue(): any {
+        return this.sendBuffer.shift();
+    }
+    
+    // private sendBacklog() {
+    //     do {
+    //         this.ws.send(nextPacket, cb);
+    //         this.dequeue();
+    //         nextPacket = this.peek();
+    //     } while (nextPacket);
+    // }
     
     private _send(packet: any, cb?: (err: Error) => void) {
         if (this.ws) {
-            // this.sendBuffer.push(packet);
             try {
-                // let x = this.buffer.queueAndPeek(null);
                 this.ws.send(packet, cb);
             } catch (err) {
                 log('send error', err.stack);
@@ -174,7 +197,7 @@ export default class Transport extends EventEmitter {
                 this.retryConnect();
             }
         } else {
-            // connection was closed intentionally
+            // connection was closed intentionally or never opened
             cb(new Error('not connected'));
         }
     }
