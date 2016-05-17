@@ -19,6 +19,13 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         
         // virtual device tracking
         let deviceConnected = {};
+        
+        this.services = {
+            BinarySwitch: {
+                get_switch: BinarySwitch_get_switch,
+                set_switch: BinarySwitch_set_switch
+            }
+        }
     }
     
     /**
@@ -104,6 +111,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         }
         return false;
     }
+    
     
 }
 

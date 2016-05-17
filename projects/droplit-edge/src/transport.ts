@@ -2,7 +2,7 @@ import * as WebSocket from 'ws';
 import {EventEmitter} from 'events';
 const retry = require('retry');
 import * as debug from 'debug';
-let log = debug('droplit-edge:transport');
+let log = debug('droplit:transport');
 
 /**
  * Connected event
@@ -60,7 +60,7 @@ export default class Transport extends EventEmitter {
     constructor() {
         super();
         EventEmitter.call(this);
-        this.messageTimer = setInterval(this.digestCycle, this.messageTimeout);
+        this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
     
     public start(settings: any) {

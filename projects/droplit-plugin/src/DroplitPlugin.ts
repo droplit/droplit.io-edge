@@ -17,6 +17,7 @@ export interface DeviceServiceMember {
     index: string;
     member: string;
     value?: any;
+    error?: Error;
 }
 
 /**
@@ -60,7 +61,9 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @param {string} localId - device unique identifier
      * @abstract
      */
-    public abstract connect(localId: string): void
+    public connect(localId: string): boolean {
+        return false;
+    }
     
     /**
      * Stop tracking the specified device
@@ -68,7 +71,9 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @param {string} localId - device unique identifier
      * @abstract
      */
-    public abstract disconnect(localId: string): void
+    public disconnect(localId: string): boolean {
+        return false;
+    }
     
     /**
      * Device message from upstream
@@ -77,8 +82,8 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @param {*} data - message body
      * @param {(response: any) => void} [callback] Response callback (undefined if no response is expected)
      */
-    public deviceMessage(localId: string, data: any, callback?: (response: any) => void): void {
-        
+    public deviceMessage(localId: string, data: any, callback?: (response: any) => void): boolean {
+        return false;
     }
     
     /**
@@ -167,6 +172,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     
     /**
      * getProperties - Gets multiple service property values
+     * Override this method if you need to handle multiple properties in a single callback
      * 
      * @param {DeviceServiceMember[]} properties - properties to get
      * @param {(values: DeviceServiceMember[]) => void} callback - callback for results
@@ -175,10 +181,21 @@ export abstract class DroplitPlugin extends EventEmitter {
     public getProperties(properties: DeviceServiceMember[], callback: (values: DeviceServiceMember[]) => void): boolean[] {
         // could use `async` library, but didn't want external dependency
         let values: DeviceServiceMember[] = Array.apply(null, Array(properties.length)); // init all values to undefined
+        let expiryTimeout = setTimeout(() => {
+            if (callback) {
+                callback(values);
+            }
+        }, 10000);
         return properties.map((property, index) => {
             let cb = (value: any) => {
                 values[index] = value;
-                if (values.every(value => value !== undefined)) callback(values);
+                if (values.every(value => value !== undefined)) {
+                    if (callback) {
+                        clearTimeout(expiryTimeout);
+                        callback(values);
+                        callback = undefined;
+                    }
+                }
             };
             return this.getProperty(property, cb);
         });
@@ -291,11 +308,11 @@ export abstract class DroplitPlugin extends EventEmitter {
     }
     
     protected getServiceMember(service: string, member: string): () => void {
-        let methodFunc = this.getFuntion(this, `services.${service}.${member}`);
+        let methodFunc = this.getFunction(this, `services.${service}.${member}`);
         return methodFunc;
     }
     
-    protected getFuntion(obj: any, path: string): () => void {
+    protected getFunction(obj: any, path: string): () => void {
         return path.split('.').reduce(function(o, x) {
             return (typeof o === undefined || o === null) ? o : o[x];
         }, obj);
