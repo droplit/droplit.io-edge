@@ -2,5 +2,12 @@
     "transport": {
         "host1": "wss://dev-ws-droplit-io.azurewebsites.net/edge",
         "host": "ws://127.0.0.1:3003/edge"
-    }
+    },
+    "pluginPaths": [
+        "./plugins",
+        "../"
+    ],
+    "plugins": [
+        "droplit-plugin-ts-example"
+    ]
 }

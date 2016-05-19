@@ -76,6 +76,10 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
     return results;
 }
 
+export function getProperties(commands: DeviceCommand[]): boolean[] {
+    return undefined;
+}
+
 function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.DeviceServiceMember[]} {
     let map: {[pluginName: string]: DP.DeviceServiceMember[]} = {};
     commands.forEach((command, index) => {
@@ -100,6 +104,10 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 
 function getPluginName(command: DeviceCommand) {
     return cache.getDeviceByDeviceId(command.deviceId).pluginName;
+}
+
+function loadPlugins() {
+    
 }
 
 transport.start(settings.transport);

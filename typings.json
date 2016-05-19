@@ -1,5 +1,6 @@
 {
   "ambientDependencies": {
+    "async": "registry:dt/async#1.4.2+20160501155344",
     "commander": "registry:dt/commander#2.3.0+20160317120654",
     "debug": "registry:dt/debug#0.0.0+20160317120654",
     "easy-table": "registry:dt/easy-table#0.2.0+20160317120654",

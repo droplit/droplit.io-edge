@@ -2,6 +2,7 @@ import * as WebSocket from 'ws';
 import {EventEmitter} from 'events';
 const retry = require('retry');
 import * as debug from 'debug';
+import * as async from 'async';
 let log = debug('droplit:transport');
 
 /**
@@ -67,7 +68,16 @@ export default class Transport extends EventEmitter {
         this.settings = settings;
         this.retryConnect();
     }
-    
+
+    public stop() {
+        if (this.ws !== undefined) {
+            this.ws.close();
+            this.ws = undefined;
+        }
+        this.stopHeartbeat();
+        log('disconnected');
+        this.emit('disconnected');
+    }
     // reconnect
 
     private retryConnect(callback?: (success: boolean) => void) {
@@ -97,6 +107,7 @@ export default class Transport extends EventEmitter {
     private onOpen() {
         this.isOpen = true;
         this.startHeartbeat();
+        this.sendBacklog();
         log('connected');
         this.emit('connected');
     }
@@ -116,7 +127,9 @@ export default class Transport extends EventEmitter {
             let cb = this.responseMap[packet.r];
             if (cb) {
                 cb(packet.d);
+                delete this.responseMap[packet.r];
             } else {
+                // this shouldn't happen
                 log('unknown message response', packet);
             }
         } else {
@@ -156,6 +169,26 @@ export default class Transport extends EventEmitter {
         this._send(JSON.stringify(packet), cb);
     }
     
+    public sendReliable(message: string, data?: any) {
+        let packet: any = { m: message, d: data, i: this.getNextMessageId() };
+        this._send(JSON.stringify(packet), (err) => {
+            if (err) {
+                this.queue(packet);
+            }
+        });
+    }
+    
+    public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
+        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        this.responseMap[packet.i] = cb;
+        this._send(JSON.stringify(packet), (err) => {
+            // only happens if there was an error, so presumably the callback won't be called from a valid response
+            cb(undefined, err);
+            delete this.responseMap[packet.i];
+            log('request send error', packet, err);
+        });
+    }
+    
     private sendBuffer: any[] = [];
     
     private queue(packet: any) {
@@ -170,6 +203,10 @@ export default class Transport extends EventEmitter {
         }
     }
     
+    private canPeek(): boolean {
+        return this.sendBuffer.length > 0;
+    }
+    
     private queueAndPeek(packet: any): any {
         this.queue(packet);
         return this.sendBuffer[0];
@@ -179,21 +216,15 @@ export default class Transport extends EventEmitter {
         return this.sendBuffer.shift();
     }
     
-    // private sendBacklog() {
-    //     do {
-    //         this.ws.send(nextPacket, cb);
-    //         this.dequeue();
-    //         nextPacket = this.peek();
-    //     } while (nextPacket);
-    // }
-    
     private _send(packet: any, cb?: (err: Error) => void) {
         if (this.ws) {
             try {
                 this.ws.send(packet, cb);
             } catch (err) {
-                log('send error', err.stack);
-                cb(err);
+                log('send error', err.stack, this.ws);
+                if (cb) {
+                    cb(err);
+                }
                 this.retryConnect();
             }
         } else {
@@ -202,14 +233,17 @@ export default class Transport extends EventEmitter {
         }
     }
     
-    public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
-        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
-        this.responseMap[packet.i] = cb;
-        this._send(JSON.stringify(packet), (err) => {
-            // only happens if there was an error, so presumably the callback won't be called from a valid response
-            cb(undefined, err);
-            delete this.responseMap[packet.i];
-            log('request send error', packet, err);
+    private sendBacklog() {
+        async.doWhilst((cb: (err: Error) => void) => {
+            let nextPacket = this.peek();
+            this._send(nextPacket, (err) => {
+                if (!err) {
+                    this.dequeue();
+                }
+                cb(err);
+            });
+        }, this.canPeek, (err) => {
+            // finsihed or error'd
         });
     }
     
@@ -229,7 +263,7 @@ export default class Transport extends EventEmitter {
                  *   [] = full range: 0..Number.MAX_SAFE_INTEGER
                  *   <  = prevMessageId
                  *   >  = messageIdSeed (next messageId)
-                 *   -  = active messageId
+                 *   -  = active messageId (not yet responded to or digested)
                  *   o  = id
                  * 
                  *   [      -o-<--->      ]
@@ -267,16 +301,6 @@ export default class Transport extends EventEmitter {
 
     private sendHeartbeat() {
         this._send(this.heartbeatPacket);
-    }
-
-    public stop() {
-        if (this.ws !== undefined) {
-            this.ws.close();
-            this.ws = undefined;
-        }
-        this.stopHeartbeat();
-        log('disconnected');
-        this.emit('disconnected');
     }
 
     // Message Id

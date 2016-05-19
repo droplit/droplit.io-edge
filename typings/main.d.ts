@@ -1,3 +1,4 @@
+/// <reference path="main/ambient/async/index.d.ts" />
 /// <reference path="main/ambient/commander/index.d.ts" />
 /// <reference path="main/ambient/debug/index.d.ts" />
 /// <reference path="main/ambient/easy-table/index.d.ts" />

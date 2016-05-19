@@ -4,7 +4,11 @@ import * as DP from 'droplit-plugin';
 let pluginMap: {[name: string]: Controller} = {};
 
 export function instance(pluginName: string): Controller {
-    pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName);
+    try {
+        return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName);
+    } catch (error) {
+        // plugin failed to load
+    }
     return undefined;
 }
 

@@ -47,14 +47,16 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
         });
     }
     
-    public connect(localId: string) {
+    public connect(localId: string): boolean {
         // track state changes on this device
         this.deviceConnected[localId] = true;
+        return true;
     }
     
-    public disconnect(localId: string) {
+    public disconnect(localId: string): boolean {
         // stop tracking state changes on this device
         this.deviceConnected[localId] = false;
+        return true;
     }
     
     public dropDevice(localId: string): boolean {
