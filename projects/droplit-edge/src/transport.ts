@@ -37,7 +37,6 @@ let log = debug('droplit:transport');
  * @extends {EventEmitter}
  */
 export default class Transport extends EventEmitter {
-    
     // Connection
     private ws: WebSocket = undefined;
     private settings: any = undefined;
@@ -234,17 +233,17 @@ export default class Transport extends EventEmitter {
     }
     
     private sendBacklog() {
-        async.doWhilst((cb: (err: Error) => void) => {
+        async.whilst(this.canPeek.bind(this), (cb: (err: Error) => void) => {
             let nextPacket = this.peek();
-            this._send(nextPacket, (err) => {
-                if (!err) {
+            if (!nextPacket)
+                return;
+                
+            this._send(nextPacket, err => {
+                if (!err)
                     this.dequeue();
-                }
                 cb(err);
             });
-        }, this.canPeek, (err) => {
-            // finsihed or error'd
-        });
+        }, err => {});
     }
     
     // message callback expiration handler
