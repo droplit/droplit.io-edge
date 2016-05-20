@@ -45,7 +45,6 @@ The service may send updated device info to the edge
 ```
 {
     deviceId: string;
-    pluginName: string;
     service: string;
     index: string;
     member: string;
@@ -53,7 +52,22 @@ The service may send updated device info to the edge
 }[]
 ```
 
-`device message` - send a raw message to a device
+### `device message` - send a raw message to a device
+
+#### request:
+```
+{
+    deviceId: string;
+    message: any;
+}
+```
+
+#### response:
+```
+{
+    true
+}
+```
 
 `property get`
 
