@@ -112,6 +112,7 @@ function loadPlugins() {
     let p = plugin.instance('droplit-plugin-js-example');
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
         cache.setDeviceInfo(deviceInfo);
+        transport.send('device info', deviceInfo, (err) => { });
     });
     // plugin.instance('droplit-plugin-ts-example');
 }
