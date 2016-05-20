@@ -3,9 +3,10 @@
 All packets are wrapped in a control envelope. 
 This specification addresses the contents of the messages once the envelope has been processed.
 
-### Cloud to Edge
+## Cloud to Edge
 
-#### `discover` - run device discovery or enable auto-discovery
+### `discover` - run device discovery or enable auto-discovery
+data:
 ```
 {
    interval?: number;
@@ -18,14 +19,29 @@ All non-zero, non-positive values are reserved for future implementaion, but wil
 `offset` determines the amount of time between each plugin's discovery cycle.
 A two-second offset is recommended for plugins using UPnP on the same IP-based network to allow for devices to recover.  
   
-#### `device info` - send updated device info
- > not yet implemented
+### `device info` - send updated device info
+#### data:
+The service may send updated device info to the edge
+```
+{
+    deviceId: string;
+    pluginName: string;
+    localId: string;
+    address?: any;
+    product?: any;
+    name?: string;
+    location?: string;
+    deviceMeta?: any;
+    services?: string[];
+    promotedMembers?: { [name: string]: string };
+}
+```
 
 `device connect`
 
 `device disconnect`
 
-#### `property set` - set service properties
+### `property set` - set service properties
 ```
 {
     deviceId: string;
@@ -52,9 +68,44 @@ A two-second offset is recommended for plugins using UPnP on the same IP-based n
 `config set`
 
 
-### Edge to Cloud
+## Edge to Cloud
 
-`device info` => deviceInfo
+### `device info` - send updated device info
+
+ - Plugins can raise a device info event any time a new device is discovered or an existing device changes in some way.
+ - Fields which are specified will be updated; omitted fields will be unmodifidied
+ -  To clear the valueof a field, set the field to null
+
+#### request:
+```
+{
+    pluginName: string;
+    localId: string;
+    address?: any;
+    product?: any;
+    name?: string;
+    location?: string;
+    deviceMeta?: any;
+    services?: string[];
+    promotedMembers?: { [name: string]: string };
+}
+```
+#### response:
+The service responds with the current device info including the system assigned deviceId and all fields.
+```
+{
+    deviceId: string;
+    pluginName: string;
+    localId: string;
+    address?: any;
+    product?: any;
+    name?: string;
+    location?: string;
+    deviceMeta?: any;
+    services?: string[];
+    promotedMembers?: { [name: string]: string };
+}
+```
 
 `property changed`
 
