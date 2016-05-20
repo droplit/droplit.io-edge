@@ -62,3 +62,21 @@ Example response:
     r: "53c09265db69fd3c0e69640c"
 }
 ```
+
+## Heartbeat Packets
+
+heartbeat packets indicate that the client is still connected
+
+```
+{
+    t: string;
+}
+```
+
+`t` indicates packet type. When unspecified, the packet is a normal message type
+
+Example heartbeat packet:
+
+```
+{t: "hb"}
+```

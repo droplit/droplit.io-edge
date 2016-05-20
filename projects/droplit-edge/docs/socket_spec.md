@@ -42,6 +42,8 @@ The service may send updated device info to the edge
 `device disconnect`
 
 ### `property set` - set service properties
+
+#### request:
 ```
 {
     deviceId: string;
@@ -51,6 +53,37 @@ The service may send updated device info to the edge
     value: any;
 }[]
 ```
+
+#### response:
+The response contains an array of supported flags indicating whether the operatoin is supported by the plugin
+
+```
+boolean[]
+```
+
+
+### `property get` - get service property values
+Gets all the service property values if supported
+#### request:
+```
+{
+    deviceId: string;
+    service: string;
+    index: string;
+    member: string;
+}[]
+```
+
+#### response:
+```
+{
+    values: any[],
+    supported: boolean[]
+}
+```
+
+
+`method call`
 
 ### `device message` - send a raw message to a device
 
@@ -69,10 +102,6 @@ The service may send updated device info to the edge
 }
 ```
 
-`property get`
-
-`method call`
-
 `plugin message`
 
 `plugin setting`
@@ -81,8 +110,48 @@ The service may send updated device info to the edge
 
 `config set`
 
+### `token update` - send a new edge node token
+```
+{
+    token: string;
+}
+```
 
 ## Edge to Cloud
+
+### `register edge` - regsiter a new edge server
+
+- If the edge Id is new, the system will issue an auth token.
+- The auth token must be persisted forever and used for all subsequent communication.
+- If the edge Id is already used, the request will have to be reviewed and allowed by a user.
+
+#### request:
+
+```
+{
+    edgeId: string;
+    software: { name: string; version: string; };
+    hardware: { type: string; version: string; };
+}
+```
+
+#### success response:
+Save this token; include it in all subsequent requests
+
+```
+{
+    token: string;
+}
+```
+
+#### failure response:
+A token will be issued later; when the new edge node has been approved
+
+```
+{
+    token: null;
+}
+```
 
 ### `device info` - send updated device info
 
