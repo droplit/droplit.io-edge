@@ -33,13 +33,18 @@ export class Controller extends EventEmitter {
     }
     
     private InitPlugin() {
-        this.pluginInstance.on('device update', this.deviceUpdateHandler);
-        this.pluginInstance.on('discover complete', this.discoverCompleteHandler);
-        this.pluginInstance.on('property changed', this.propertiesChangedHandler);
-        this.pluginInstance.on('event raised', this.eventsHandler);
+        this.pluginInstance.on('device info', this.deviceInfoHandler.bind(this));
+        this.pluginInstance.on('device update', this.deviceUpdateHandler.bind(this));
+        this.pluginInstance.on('discover complete', this.discoverCompleteHandler.bind(this));
+        this.pluginInstance.on('property changed', this.propertiesChangedHandler.bind(this));
+        this.pluginInstance.on('event raised', this.eventsHandler.bind(this));
     }
     
     // event handlers
+    
+    private deviceInfoHandler(deviceInfo: DP.DeviceInfo) {
+        this.emit('device info', deviceInfo);
+    }
     
     private deviceUpdateHandler(deviceInfo: DP.DeviceInfo) {
         this.emit('device update', deviceInfo);

@@ -1,3 +1,3 @@
 var index = require("./lib/ExamplePlugin");
 
-module.exports = index;
+module.exports = index.ExamplePlugin;

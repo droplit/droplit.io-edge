@@ -113,7 +113,15 @@ export default class Transport extends EventEmitter {
 
     private onMessage(data: any, flags: any) {
         log('message', data);
-        let packet = JSON.parse(data);
+        let packet: any;
+        try {
+            packet = JSON.parse(data);
+        } catch (err) {
+            log('message is not valid JSON');
+        }
+        if (!packet)
+            return;
+        
         if (packet.r === true) {
             // it's a request expecting a response
             this.emit('#' + packet.m, packet.d, (response: any): void => {
@@ -317,6 +325,9 @@ export default class Transport extends EventEmitter {
 
     private startHeartbeat() {
         this.stopHeartbeat();
+        if (this.settings.hasOwnProperty('enableHeartbeat') && !this.settings.enableHeartbeat)
+            return;
+            
         this.heartbeatTimer = setInterval(<() => void>(this.performHeartbeat.bind(this)), this.heartbeatInterval);
     }
 

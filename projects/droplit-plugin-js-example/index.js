@@ -1,3 +1,3 @@
-var index = require("./src/DroplitPlugin");
+var index = require("./src/ExamplePlugin");
 
 module.exports = index;

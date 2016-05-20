@@ -1,3 +1,3 @@
 import * as library from './src/ExamplePlugin';
 
-export = library;
+export = library.ExamplePlugin;

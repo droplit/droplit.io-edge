@@ -1,7 +1,9 @@
 {
     "droplit-edge": {
         "dependencies": [
-            "droplit-plugin"
+            "droplit-plugin",
+            "droplit-plugin-js-example",
+            "droplit-plugin-ts-example"
         ]
     },
     "droplit-plugin": {},

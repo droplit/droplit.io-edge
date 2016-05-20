@@ -2,7 +2,10 @@ import * as cache from './cache';
 import Transport from './transport';
 import * as plugin from './plugin';
 import * as DP from 'droplit-plugin';
+import * as debug from 'debug';
 import {DeviceInfo} from './types/DeviceInfo';
+
+let log = debug('droplit:router');
 
 export interface DeviceCommand {
     deviceId: string;
@@ -17,30 +20,25 @@ let settings = require('../settings.json');
 let transport = new Transport();
 
 transport.on('connected', () => {
-    
+    loadPlugins();
 });
 
-transport.on('disconnected', () => {
-    
-});
+transport.on('disconnected', () => { });
 
-transport.on('#discover', (data: any) => {
-    
-    
-});
+transport.on('#discover', (data: any) => { });
 
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
-    let results = setProperties(data);
-    cb(results);
+    let results: boolean[] = [];
+    if (data)
+        setProperties(data);
+        
+    if (cb)
+        cb(results);
 });
 
-transport.on('#property get', (data: any, cb: (response: any) => void) => {
-    
-});
+transport.on('#property get', (data: any, cb: (response: any) => void) => { });
 
-transport.on('#method call', (data: any, cb: (response: any) => void) => {
-    
-});
+transport.on('#method call', (data: any, cb: (response: any) => void) => { });
 
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
     
@@ -57,13 +55,11 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
  * @export
  * @param {string} [pluginName] Plugin to run discovery
  */
-export function discover(pluginName?: string) {
-    
-}
+export function discover(pluginName?: string) { }
 
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
-    let results: boolean[] =  Array.apply(null, Array(commands.length)); // init all values to undefined
+    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
     Object.keys(map).forEach((pluginName) => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
@@ -85,8 +81,10 @@ function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.Dev
     commands.forEach((command, index) => {
         (<any>command)._sequence = index; // preserve the original sequence number
         let pluginName = getPluginName(command);
-        map[pluginName] = map[pluginName] || [];
-        map[pluginName].push(getServiceMember(command));
+        if (pluginName) {
+            map[pluginName] = map[pluginName] || [];
+            map[pluginName].push(getServiceMember(command));
+        }
     });
     return map;
 }
@@ -103,11 +101,19 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 }
 
 function getPluginName(command: DeviceCommand) {
-    return cache.getDeviceByDeviceId(command.deviceId).pluginName;
+    let device = cache.getDeviceByDeviceId(command.deviceId);
+    if (device) 
+        return device.pluginName;
+    return null;
 }
 
 function loadPlugins() {
-    
+    log('load plugins');
+    let p = plugin.instance('droplit-plugin-js-example');
+    p.on('device info', (deviceInfo: DP.DeviceInfo) => {
+        cache.setDeviceInfo(deviceInfo);
+    });
+    // plugin.instance('droplit-plugin-ts-example');
 }
 
 transport.start(settings.transport);

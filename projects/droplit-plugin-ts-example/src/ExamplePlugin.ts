@@ -1,6 +1,13 @@
 import * as droplit from 'droplit-plugin';
 
+console.log('example');
+
 export class ExamplePlugin extends droplit.DroplitPlugin {
+    
+    constructor() {
+        super();
+        console.log('example construct');
+    }
     
     // virtual device states
     private devices: any = {

@@ -1,9 +1,9 @@
-"use strict";
+'use strict';
 
-import * as droplit from 'droplit-plugin';
+const droplit = require('droplit-plugin');
 
 class ExamplePlugin extends droplit.DroplitPlugin {
-    
+
     constructor() {
         super();
         
@@ -22,10 +22,24 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         
         this.services = {
             BinarySwitch: {
-                get_switch: BinarySwitch_get_switch,
-                set_switch: BinarySwitch_set_switch
+                get_switch: this.BinarySwitch_get_switch,
+                set_switch: this.BinarySwitch_set_switch
             }
         }
+        
+        setImmediate(() => {
+            this.onDeviceInfo({
+                localId: '1',
+                address: 'device.1',
+                deviceMeta: { name: 'first device'},
+                location: 'main facility',
+                name:  'device1',
+                services: ['BinarySwitch'],
+                promotedMembers: {
+                    'switch': 'BinarySwitch.switch'
+                }
+            });
+        });
     }
     
     /**
@@ -111,8 +125,6 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         }
         return false;
     }
-    
-    
 }
 
 module.exports = ExamplePlugin;
