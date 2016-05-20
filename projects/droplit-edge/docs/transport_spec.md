@@ -45,6 +45,16 @@ Example request:
 }
 ```
 
+### Response Packet Envelope
+
+```
+{
+    d: any;
+    r: string;
+}
+```
+When `r` is a `string` that contains the original message id, the packet is a response to an outstanding request.
+
 Example response:
 ```
 {
