@@ -130,6 +130,8 @@ Gets all the service property values if supported
 ```
 {
     edgeId: string;
+    ecosystemId: string;
+    profile: string; // Future use
     software: { name: string; version: string; };
     hardware: { type: string; version: string; };
 }
