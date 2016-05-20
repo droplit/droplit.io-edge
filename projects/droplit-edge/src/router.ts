@@ -109,12 +109,17 @@ function getPluginName(command: DeviceCommand) {
 
 function loadPlugins() {
     log('load plugins');
-    let p = plugin.instance('droplit-plugin-js-example');
+    loadPlugin('droplit-plugin-js-example');
+    // plugin.instance('droplit-plugin-ts-example');
+}
+
+function loadPlugin(pluginName: string) {
+    let p = plugin.instance(pluginName);
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
+        (<any>deviceInfo).pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
         transport.send('device info', deviceInfo, (err) => { });
     });
-    // plugin.instance('droplit-plugin-ts-example');
 }
 
 transport.start(settings.transport);
