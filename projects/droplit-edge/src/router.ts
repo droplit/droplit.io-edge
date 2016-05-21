@@ -20,8 +20,12 @@ let settings = require('../settings.json');
 
 let transport = new Transport();
 
+declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
+let plugins = new Map();
+
 transport.on('connected', () => {
     loadPlugins();
+    discoverAll();
 });
 
 transport.on('disconnected', () => { });
@@ -39,7 +43,9 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 
 transport.on('#property get', (data: any, cb: (response: any) => void) => { });
 
-transport.on('#method call', (data: any, cb: (response: any) => void) => { });
+transport.on('#method call', (data: any, cb: (response: any) => void) => {
+    
+});
 
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
     
@@ -56,7 +62,15 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => { });
  * @export
  * @param {string} [pluginName] Plugin to run discovery
  */
-export function discover(pluginName?: string) { }
+export function discover(pluginName?: string) {
+    if (pluginName)
+        return discoverOne(pluginName);
+    discoverAll();
+}
+
+export function getProperties(commands: DeviceCommand[]): boolean[] {
+    return undefined;
+}
 
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
@@ -75,8 +89,20 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
     return results;
 }
 
-export function getProperties(commands: DeviceCommand[]): boolean[] {
-    return undefined;
+function discoverAll() {
+    let timeout = 0;
+    plugins.forEach((plugin: any) => {
+        setTimeout(plugin => {
+            plugin.discover();
+        }, timeout, plugin);
+        timeout += 2000;
+    });
+}
+
+function discoverOne(pluginName: string) {
+    if (!plugins.has(pluginName))
+        return;
+    plugins.get(pluginName).discover();
 }
 
 function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.DeviceServiceMember[]} {
@@ -131,6 +157,7 @@ function loadPlugin(pluginName: string) {
         cache.setDeviceInfo(deviceInfo);
         transport.send('device info', deviceInfo, (err) => { });
     });
+    plugins.set(pluginName, p);
 }
 
 transport.start(settings.transport);

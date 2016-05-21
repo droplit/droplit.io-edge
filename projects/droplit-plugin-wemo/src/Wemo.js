@@ -19,7 +19,6 @@ class WemoPlugin extends droplit.DroplitPlugin {
         this.discoverer = new Discoverer();
         this.discoverer.on('discovered', onDiscovered.bind(this));
         this.discoverer.on('ipchange', onDiscoverIPChange.bind(this));
-        this.discoverer.discover();
         
         this.services = {
             BinarySwitch: {
@@ -37,6 +36,10 @@ class WemoPlugin extends droplit.DroplitPlugin {
         }
         
         function onDiscoverIPChange(data) { }
+    }
+    
+    discover() {
+        this.discoverer.discover();
     }
     
     setProperties(properties) {
@@ -160,7 +163,7 @@ class WemoClient {
         return new WemoSwitch(init);
     }
     
-    static soappayload() {
+    static SoappyLoad() {
         return [
             '<?xml version="1.0" encoding="utf-8"?>',
             '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
@@ -198,7 +201,7 @@ class WemoSwitch extends WemoClient {
     }
     
     switchOff(callback) {
-        let payload = util.format(WemoClient.soappayload(), 'SetBinaryState', 0, 'SetBinaryState');
+        let payload = util.format(WemoClient.SoappyLoad(), 'SetBinaryState', 0, 'SetBinaryState');
         let opts = {
             method: 'POST',
             body: payload,
@@ -213,7 +216,7 @@ class WemoSwitch extends WemoClient {
     }
     
     switchOn(callback) {
-        let payload = util.format(WemoClient.soappayload(), 'SetBinaryState', 1, 'SetBinaryState');
+        let payload = util.format(WemoClient.SoappyLoad(), 'SetBinaryState', 1, 'SetBinaryState');
         let opts = {
             method: 'POST',
             body: payload,
