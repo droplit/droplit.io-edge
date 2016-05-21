@@ -44,7 +44,11 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 transport.on('#property get', (data: any, cb: (response: any) => void) => { });
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
-    
+    if (data)
+        callMethods(data);
+        
+    if (cb)
+        cb(true);
 });
 
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
@@ -55,6 +59,15 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
     
 // });
 
+
+export function callMethods(commands: DeviceCommand[]): void {
+    let map = groupByPlugin(commands);
+    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    Object.keys(map).forEach(pluginName => {
+        // send commands to plugin
+        plugin.instance(pluginName).callMethods(map[pluginName]);
+    });
+}
 
 /**
  * Discovers devices for a single plugin. If not specified, runs discovery for all plugins.

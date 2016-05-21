@@ -22,7 +22,9 @@ class WemoPlugin extends droplit.DroplitPlugin {
         
         this.services = {
             BinarySwitch: {
-                set_switch: this.setSwitch
+                set_switch: this.setSwitch,
+                switchOff: this.switchOff,
+                switchOn: this.switchOn
             }
         }
         
@@ -40,6 +42,17 @@ class WemoPlugin extends droplit.DroplitPlugin {
     
     discover() {
         this.discoverer.discover();
+    }
+    
+    callMethods(properties) {
+        properties.forEach(p => {
+            if (!p.service || !p.member)
+                return;
+            if (this.services[p.service] && this.services[p.service][p.member]) {
+                let serviceCall = this.services[p.service][p.member];
+                serviceCall.bind(this)(p.localId, p.index, p.value);
+            }
+        });
     }
     
     setProperties(properties) {
