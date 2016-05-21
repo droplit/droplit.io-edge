@@ -9,6 +9,7 @@ let log = debug('droplit:router');
 
 export interface DeviceCommand {
     deviceId: string;
+    localId?: string;
     service: string;
     index: string;
     member: string;
@@ -60,14 +61,16 @@ export function discover(pluginName?: string) { }
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
-    Object.keys(map).forEach((pluginName) => {
+    Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
-        // reorganize the results to the original sequence
-        sectionResults.forEach((result, index) => {
-            let resultIndex = (<any>map[pluginName][index])._sequence;
-            results[resultIndex] = result;
-        });
+        if (sectionResults) {
+            // reorganize the results to the original sequence
+            sectionResults.forEach((result, index) => {
+                let resultIndex = (<any>map[pluginName][index])._sequence;
+                results[resultIndex] = result;
+            });
+        }
     });
     return results;
 }
@@ -91,9 +94,11 @@ function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.Dev
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     let deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
+    // HACK: Allows easier testing via wscat
+    let localId = command.localId || deviceInfo.localId;
     return {
-        localId: deviceInfo.localId,
-        service: command.member,
+        localId: localId,
+        service: command.service,
         index: command.index,
         member: command.member,
         value: command.value
@@ -101,9 +106,15 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 }
 
 function getPluginName(command: DeviceCommand) {
+    // HACK: Allows easier testing via wscat
+    let local = cache.getDeviceByLocalId(command.localId);
+    if (local)
+        return local.pluginName;
+        
     let device = cache.getDeviceByDeviceId(command.deviceId);
     if (device) 
         return device.pluginName;
+
     return null;
 }
 
@@ -116,7 +127,7 @@ function loadPlugins() {
 function loadPlugin(pluginName: string) {
     let p = plugin.instance(pluginName);
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
-        (<any>deviceInfo).pluginName = pluginName;
+        deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
         transport.send('device info', deviceInfo, (err) => { });
     });

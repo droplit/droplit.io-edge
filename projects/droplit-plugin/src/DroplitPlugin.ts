@@ -43,6 +43,7 @@ export interface DeviceInfo {
     deviceMeta?: any;
     services?: string[];
     promotedMembers?: { [name: string]: string };
+    pluginName?: string;
 }
 
 export abstract class DroplitPlugin extends EventEmitter {

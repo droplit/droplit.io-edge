@@ -5,6 +5,7 @@ const EventEmitter = require('events').EventEmitter;
 const request = require('request');
 const ssdp = require('node-ssdp').Client;
 const url = require('url');
+const util = require('util');
 const xml = require('xml2js');
 
 const upnpSearch = 'urn:Belkin:service:basicevent:1';
@@ -20,16 +21,58 @@ class WemoPlugin extends droplit.DroplitPlugin {
         this.discoverer.on('ipchange', onDiscoverIPChange.bind(this));
         this.discoverer.discover();
         
+        this.services = {
+            BinarySwitch: {
+                set_switch: this.setSwitch
+            }
+        }
+        
         function onDiscovered(device) {
             if (this.devices.has(device.identifier))
                 return;
             
             let client = WemoClient.create(device);
-            this.devices.set(device.identifier, device);
+            this.devices.set(device.identifier, client);
             this.onDeviceInfo(client.discoverObject());
         }
         
         function onDiscoverIPChange(data) { }
+    }
+    
+    setProperties(properties) {
+        properties.forEach(p => {
+            if (!p.service || !p.member)
+                return;
+            if (this.services[p.service] && this.services[p.service][`set_${p.member}`]) {
+                let serviceCall = this.services[p.service][`set_${p.member}`];
+                serviceCall.bind(this)(p.localId, p.index, p.value);
+            }
+        });
+        return properties.map(p => true);
+    }
+    
+    // BinarySwitch Implementation
+    getSwitch(localId, index, callback) {
+        
+    }
+    
+    setSwitch(localId, index, value) {
+        if (value === 'off')
+            this.switchOff(localId, index);
+        else if (value === 'on')
+            this.switchOn(localId, index);
+    }
+    
+    switchOff(localId, index) {
+        let device = this.devices.get(localId);
+        if (device && device.switchOff)
+            device.switchOff(() => { });
+    }
+    
+    switchOn(localId, index) {
+        let device = this.devices.get(localId);
+        if (device && device.switchOn)
+            device.switchOn(() => { });
     }
 }
 
@@ -100,7 +143,7 @@ class Discoverer extends EventEmitter {
 
 class WemoClient {
     constructor(init) {
-        this.address = init.location.address;
+        this.address = init.location.host;
         this.identifier = init.identifier;
         this.product = {
             friendlyName: init.info.device.friendlyName,
@@ -115,6 +158,19 @@ class WemoClient {
         if (init.info.device.modelName === 'CoffeeMaker')
             return new WemoCoffeeMaker(init);
         return new WemoSwitch(init);
+    }
+    
+    static soappayload() {
+        return [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
+            ' <s:Body>',
+            '  <u:%s xmlns:u="urn:Belkin:service:basicevent:1">',
+            '   <BinaryState>%s</BinaryState>',
+            '  </u:%s>',
+            ' </s:Body>',
+            '</s:Envelope>'
+        ].join('\n');
     }
     
     discoverObject() {
@@ -139,6 +195,36 @@ class WemoSwitch extends WemoClient {
             switchOn: 'BinarySwitch.switchOn'
         };
         this.services = ['BinarySwitch'];
+    }
+    
+    switchOff(callback) {
+        let payload = util.format(WemoClient.soappayload(), 'SetBinaryState', 0, 'SetBinaryState');
+        let opts = {
+            method: 'POST',
+            body: payload,
+            headers: {
+                'Content-Type':'text/xml; charset="utf-8"',
+                SOAPACTION:'"urn:Belkin:service:basicevent:1#SetBinaryState"',
+                'Content-Length':payload.length
+            },
+            uri: `http://${this.address}/upnp/control/basicevent1`
+        };
+        request(opts, callback);
+    }
+    
+    switchOn(callback) {
+        let payload = util.format(WemoClient.soappayload(), 'SetBinaryState', 1, 'SetBinaryState');
+        let opts = {
+            method: 'POST',
+            body: payload,
+            headers: {
+                'Content-Type':'text/xml; charset="utf-8"',
+                SOAPACTION:'"urn:Belkin:service:basicevent:1#SetBinaryState"',
+                'Content-Length':payload.length
+            },
+            uri: `http://${this.address}/upnp/control/basicevent1`
+        };
+        request(opts, callback);
     }
 }
 
