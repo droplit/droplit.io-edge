@@ -17,9 +17,14 @@ class WemoPlugin extends droplit.DroplitPlugin {
         
         this.services = {
             BinarySwitch: {
+                get_switch: this.getSwitch,
                 set_switch: this.setSwitch,
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
+            },
+            CoffeeMaker: {
+                brew: this.brew,
+                get_state: this.getState
             }
         }
         
@@ -42,51 +47,52 @@ class WemoPlugin extends droplit.DroplitPlugin {
         this.discoverer.discover();
     }
     
-    callMethods(properties) {
-        properties.forEach(p => {
-            if (!p.service || !p.member)
-                return;
-            if (this.services[p.service] && this.services[p.service][p.member]) {
-                let serviceCall = this.services[p.service][p.member];
-                serviceCall.bind(this)(p.localId, p.index, p.value);
-            }
-        });
-    }
-    
-    setProperties(properties) {
-        properties.forEach(p => {
-            if (!p.service || !p.member)
-                return;
-            if (this.services[p.service] && this.services[p.service][`set_${p.member}`]) {
-                let serviceCall = this.services[p.service][`set_${p.member}`];
-                serviceCall.bind(this)(p.localId, p.index, p.value);
-            }
-        });
-        return properties.map(p => true);
-    }
-    
     // BinarySwitch Implementation
-    getSwitch(localId, index, callback) {
-        
+    getSwitch(localId, callback) {
+        let device = this.devices.get(localId);
+        if (device && device.getState)
+            device.getState((err, state) => {
+                if (err)
+                    return;
+                callback(state ? 'on' : 'off');
+            });
     }
     
-    setSwitch(localId, index, value) {
+    setSwitch(localId, value) {
         if (value === 'off')
-            this.switchOff(localId, index);
+            this.switchOff(localId);
         else if (value === 'on')
-            this.switchOn(localId, index);
+            this.switchOn(localId);
     }
     
-    switchOff(localId, index) {
+    switchOff(localId) {
         let device = this.devices.get(localId);
         if (device && device.switchOff)
             device.switchOff(() => { });
     }
     
-    switchOn(localId, index) {
+    switchOn(localId) {
         let device = this.devices.get(localId);
         if (device && device.switchOn)
             device.switchOn(() => { });
+    }
+    
+    // CoffeeMaker Implementation
+    brew(localId) {
+        let device = this.devices.get(localId);
+        if (device && device.brew)
+            device.brew(() => { });
+    }
+    
+    getState(localId, callback) {
+        let device = this.devices.get(localId);
+        if (device && device.getMode) {
+            device.getMode((err, mode) => {
+                if (err)
+                    return;
+                callback(mode);
+            });
+        }
     }
 }
 

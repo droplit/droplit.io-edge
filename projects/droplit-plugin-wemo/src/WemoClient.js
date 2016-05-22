@@ -117,13 +117,26 @@ class WemoClient extends EventEmitter {
         return new WemoSwitch(init);
     }
     
-    static SoappyLoad() {
+    static BasicEventSoap() {
         return [
             '<?xml version="1.0" encoding="utf-8"?>',
             '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
             ' <s:Body>',
             '  <u:%s xmlns:u="urn:Belkin:service:basicevent:1">',
             '   <BinaryState>%s</BinaryState>',
+            '  </u:%s>',
+            ' </s:Body>',
+            '</s:Envelope>'
+        ].join('\n');
+    }
+    
+    static DeviceEventSoap() {
+        return [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
+            ' <s:Body>',
+            '  <u:%s xmlns:u="urn:Belkin:service:deviceevent:1">',
+            '   %s',
             '  </u:%s>',
             ' </s:Body>',
             '</s:Envelope>'
@@ -201,6 +214,61 @@ class WemoCoffeeMaker extends WemoClient {
             });
         }
     }
+    
+    brew(callback) {
+        let payloadBody = '<attributeList>&lt;attribute&gt;&lt;name&gt;Mode&lt;/name&gt;&lt;value&gt;4&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;ModeTime&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;TimeRemaining&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;WaterLevelReached&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;CleanAdvise&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;FilterAdvise&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;Brewing&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;Brewed&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;Cleaning&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;&lt;attribute&gt;&lt;name&gt;LastCleaned&lt;/name&gt;&lt;value&gt;NULL&lt;/value&gt;&lt;/attribute&gt;</attributeList>';
+        let payload = util.format(WemoClient.DeviceEventSoap(), 'SetAttributes', payloadBody, 'SetAttributes');
+        let opts = {
+            method: 'POST',
+            body: payload,
+            headers: {
+                'Content-Type':'text/xml; charset="utf-8"',
+                SOAPACTION:'"urn:Belkin:service:deviceevent:1#SetAttributes"',
+                'Content-Length':payload.length
+            },
+            uri: `http://${this.address}/upnp/control/deviceevent1`
+        };
+        request(opts, (e, r, b) => {
+            if (!b)
+                return callback();
+            xml.Parser(xmlOpts).parseString(b, (error, result) => {
+                if (error)
+                    return callback(error);
+                callback(error || null, null);
+            });
+        });
+    }
+    
+    getMode(callback) {
+        let payload = util.format(WemoClient.DeviceEventSoap(), 'GetAttributes', '', 'GetAttributes');
+        let opts = {
+            method: 'POST',
+            body: payload,
+            headers: {
+                'Content-Type':'text/xml; charset="utf-8"',
+                SOAPACTION:'"urn:Belkin:service:deviceevent:1#GetAttributes"',
+                'Content-Length':payload.length
+            },
+            uri: `http://${this.address}/upnp/control/deviceevent1`
+        };
+        request(opts, (e, r, b) => {
+            if (!b)
+                return callback();
+            xml.Parser(xmlOpts).parseString(b, (error, result) => {
+                if (error)
+                    return callback(error);
+                if (result['s:Body']['s:Fault'])
+                    callback({ error: result['s:Body']['s:Fault'].detail });
+                else {
+                    var state = result['s:Body']['u:GetAttributesResponse'].attributeList.replace(/[&]lt;/gi, '<').replace(/[&]gt;/gi, '>');
+                    xml.Parser(xmlOpts).parseString(state, (error, result) => {
+                        let mode = !this.coffeeMode[result.value] ? 'notReady' : this.coffeeMode[result.value];
+                        callback(error || null, mode);
+                    });
+                }
+            });
+        });
+    }
 }
 
 class WemoSwitch extends WemoClient {
@@ -227,8 +295,37 @@ class WemoSwitch extends WemoClient {
         }
     }
     
+    getState(callback) {
+        let payload = util.format(WemoClient.BasicEventSoap(), 'GetBinaryState', '', 'GetBinaryState');
+        let opts = {
+            method: 'POST',
+            body: payload,
+            headers: {
+                'Content-Type':'text/xml; charset="utf-8"',
+                SOAPACTION:'"urn:Belkin:service:basicevent:1#GetBinaryState"',
+                'Content-Length':payload.length
+            },
+            uri: `http://${this.address}/upnp/control/basicevent1`
+        };
+        request(opts, (e, r, b) => {
+            if (!b)
+                return callback();
+            xml.Parser(xmlOpts).parseString(b, (error, result) => {
+                if (error)
+                    return callback(error);
+                let state;
+                try {
+                    state = result['s:Body']['u:GetBinaryStateResponse'].BinaryState;
+                } catch (err) {
+                    error = { error: 'Unknown Error' };
+                }
+                callback(error || null, parseInt(state));
+            });
+        });
+    }
+    
     switchOff(callback) {
-        let payload = util.format(WemoClient.SoappyLoad(), 'SetBinaryState', 0, 'SetBinaryState');
+        let payload = util.format(WemoClient.BasicEventSoap(), 'SetBinaryState', 0, 'SetBinaryState');
         let opts = {
             method: 'POST',
             body: payload,
@@ -243,7 +340,7 @@ class WemoSwitch extends WemoClient {
     }
     
     switchOn(callback) {
-        let payload = util.format(WemoClient.SoappyLoad(), 'SetBinaryState', 1, 'SetBinaryState');
+        let payload = util.format(WemoClient.BasicEventSoap(), 'SetBinaryState', 1, 'SetBinaryState');
         let opts = {
             method: 'POST',
             body: payload,
