@@ -83,7 +83,7 @@ class WemoClient extends EventEmitter {
         function subscribe(path) {
             let headers = { TIMEOUT: `Second-${subscriptionTimeout}` };
             if (subIds.has(path))
-                headers.SID = subids.get(path);
+                headers.SID = subIds.get(path);
             else {
                 headers.CALLBACK = `<http://${localAddress}:${notificationPort}>`;
                 headers.NT = 'upnp:event';
@@ -102,10 +102,10 @@ class WemoClient extends EventEmitter {
                 
                 subIds.set(path, r.headers.sid);
                 if (r.statusCode === 200)
-                    setTimeout(() => subscribe(path), subscriptionTimeout * 500);
+                    setTimeout(() => subscribe.bind(this)(path), subscriptionTimeout * 500);
                 else {
                     subIds.delete(path);
-                    setTimeout(() => subscribe(path), 30000);
+                    setTimeout(() => subscribe.bind(this)(path), 30000);
                 }
             });
         }
