@@ -40,7 +40,15 @@ class WemoPlugin extends droplit.DroplitPlugin {
             this.onDeviceInfo(client.discoverObject());
         }
         
-        function onDiscoverIPChange(data) { }
+        function onDiscoverIPChange(data) {
+            let identifier = data.identifier;
+            let address = data.ip.host;
+            let client = this.devices.get(identifier);
+            if (!client)
+                return;
+            client.address = address;
+            this.onDeviceInfo({ address, identifier });
+        }
     }
     
     discover() {

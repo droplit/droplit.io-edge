@@ -96,7 +96,7 @@ class WemoClient extends EventEmitter {
             };
             request(opts, (e, r, b) => {
                 if (e) {
-                    console.log('error', e);
+                    console.log('error subscribing', e);
                     return;
                 }
                 
@@ -192,7 +192,7 @@ class WemoCoffeeMaker extends WemoClient {
             let attListValue = `<attributeList>${atts}</attributeList>`;
             xml.Parser(xmlOpts).parseString(attListValue, (error, result) => {
                 if (error) {
-                    console.log('err', error);
+                    console.log('err on notification', error);
                     return;
                 }
                 if (result.hasOwnProperty('attribute')) {

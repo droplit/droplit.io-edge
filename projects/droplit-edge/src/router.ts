@@ -16,8 +16,13 @@ export interface DeviceCommand {
     value?: any;
 }
 
-let settings = require('../settings.json');
+// Amount of time (ms) to wait before turning on auto discover
+const AutoDiscoverDelay = 2 * 60 * 1000;
+// Amount of time (ms) between discovery attempts
+const AutoDiscoverCadence = 60000;
 
+let settings = require('../settings.json');
+let autodiscoverTimer: number;
 let transport = new Transport();
 
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
@@ -26,6 +31,8 @@ let plugins = new Map();
 transport.on('connected', () => {
     loadPlugins();
     discoverAll();
+    if (settings.router.autodiscover)
+        setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
 });
 
 transport.on('disconnected', () => { });
@@ -188,6 +195,16 @@ function loadPlugin(pluginName: string) {
         transport.send('property changed', properties, err => {});
     });
     plugins.set(pluginName, p);
+}
+
+function startAutodiscover() {
+    // Already auto-discovering
+    if (autodiscoverTimer)
+        return;
+        
+    // First auto should be immediate
+    discoverAll.bind(this)();
+    autodiscoverTimer = setInterval(discoverAll.bind(this), AutoDiscoverCadence);
 }
 
 transport.start(settings.transport);
