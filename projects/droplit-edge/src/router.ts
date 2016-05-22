@@ -165,10 +165,16 @@ function loadPlugins() {
 
 function loadPlugin(pluginName: string) {
     let p = plugin.instance(pluginName);
+    if (!p)
+        return;
+        
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
-        transport.send('device info', deviceInfo, (err) => { });
+        transport.send('device info', deviceInfo, err => {});
+    });
+    p.on('property changed', (properties: DP.DeviceServiceMember[]) => {
+        transport.send('property changed', properties, err => {});
     });
     plugins.set(pluginName, p);
 }

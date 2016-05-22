@@ -8,6 +8,7 @@ export function instance(pluginName: string): Controller {
         return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName);
     } catch (error) {
         // plugin failed to load
+        console.log('error', error);
     }
     return undefined;
 }
