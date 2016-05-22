@@ -41,7 +41,10 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
         cb(results);
 });
 
-transport.on('#property get', (data: any, cb: (response: any) => void) => { });
+transport.on('#property get', (data: any, cb: (response: any) => void) => {
+    if (data)
+        getProperties(data);
+});
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
     if (data)
@@ -82,7 +85,15 @@ export function discover(pluginName?: string) {
 }
 
 export function getProperties(commands: DeviceCommand[]): boolean[] {
-    return undefined;
+    let map = groupByPlugin(commands);
+    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    Object.keys(map).forEach(pluginName => {
+        // send commands to plugin
+        let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName], values => {
+            console.log('values', values);
+        });
+    });
+    return results;
 }
 
 export function setProperties(commands: DeviceCommand[]): boolean[] {
