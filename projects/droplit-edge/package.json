@@ -35,5 +35,7 @@
     "vm2": "^2.0.2",
     "ws": "^1.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "heapdump": "^0.3.7"
+  }
 }

@@ -12,5 +12,8 @@
     ],
     "plugins": [
         "droplit-plugin-ts-example"
-    ]
+    ],
+    "debug": {
+        "generateHeapDump": false
+    }
 }

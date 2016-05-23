@@ -5,6 +5,8 @@ import * as DP from 'droplit-plugin';
 import * as debug from 'debug';
 import {DeviceInfo} from './types/DeviceInfo';
 
+const heapdump = require('heapdump');
+
 let log = debug('droplit:router');
 
 export interface DeviceCommand {
@@ -27,6 +29,23 @@ let transport = new Transport();
 
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
 let plugins = new Map();
+
+if (settings.debug.generateHeapDump) {
+    const heapInterval = 30 * 60 * 1000;
+    
+    writeSnapshot.bind(this)();
+    setInterval(writeSnapshot.bind(this), heapInterval);
+    
+    function writeSnapshot() {
+        heapdump.writeSnapshot(`droplit-${Date.now()}.heapsnapshot`, (err: any, filename: string) => {
+            if (err) {
+                console.log('error writing heap snapshot:', err);
+                return;
+            }
+            console.log(`wrote heap snaphot: ${filename}`);
+        });
+    }
+}
 
 transport.on('connected', () => {
     loadPlugins();
