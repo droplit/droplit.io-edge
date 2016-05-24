@@ -3,6 +3,7 @@
         "dependencies": [
             "droplit-plugin",
             "droplit-plugin-js-example",
+            "droplit-plugin-lifx",
             "droplit-plugin-ts-example",
             "droplit-plugin-wemo"
         ]
@@ -14,6 +15,11 @@
         ]
     },
     "droplit-plugin-js-example": {
+        "dependencies": [
+            "droplit-plugin"
+        ]
+    },
+    "droplit-plugin-lifx": {
         "dependencies": [
             "droplit-plugin"
         ]

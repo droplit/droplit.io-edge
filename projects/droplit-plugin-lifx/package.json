@@ -1,0 +1,15 @@
+{
+  "name": "droplit-plugin-lifx",
+  "description": "Droplit Edge Lifx plugin",
+  "author": "Droplit, Inc.",
+  "version": "0.1.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": { }
+}

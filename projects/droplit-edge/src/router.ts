@@ -197,7 +197,7 @@ function getPluginName(command: DeviceCommand) {
 function loadPlugins() {
     log('load plugins');
     loadPlugin('droplit-plugin-wemo');
-    // plugin.instance('droplit-plugin-ts-example');
+    loadPlugin('droplit-plugin-lifx');
 }
 
 function loadPlugin(pluginName: string) {
