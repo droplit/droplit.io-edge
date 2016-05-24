@@ -142,6 +142,19 @@ packets = {
         length: 0,
         fields: []
     },
+    0x66: {
+        name: 'Set Light Color',
+        shortname: 'setColor',
+        length: 13,
+        fields: [
+            { name: 'reserved', type: type.uint8 },
+            { name: 'hue', type: type.uint16_le },
+            { name: 'saturation', type: type.uint16_le },
+            { name: 'brightness', type: type.uint16_le },
+            { name: 'kelvin', type: type.uint16_le },
+            { name: 'duration', type: type.uint32_le }
+        ]
+    },
     0x6B: {
         name: 'Light State',
         shortname: 'lightState',
@@ -155,6 +168,23 @@ packets = {
             { name: 'power', type: type.uint16_le },
             { name: 'label', type: type.string32 },
             { name: 'reserved2', type: type.uint64 }
+        ]
+    },
+    0x6F: {
+        name:"Light temperature",
+		shortname:"lightTemperature",
+        length: 2,
+        fields: [
+            { name: 'temperature', type: type.uint16_le }
+        ]
+    },
+    0x75: {
+        name: 'Set Light Power',
+        shortname: 'setLightPower',
+        length: 6,
+        fields: [
+            { name: 'level', type: type.uint16 },
+            { name: 'duration', type: type.uint32 }
         ]
     }
 };
