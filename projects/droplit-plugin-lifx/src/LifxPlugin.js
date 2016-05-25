@@ -4,12 +4,15 @@ const dgram  = require('dgram');
 const droplit = require('droplit-plugin');
 const EventEmitter = require('events').EventEmitter;
 const os = require('os');
+const process = require('process');
 const lifxPacket = require('./Packet');
 
 const MulticastPort = 56700;
 const StepSize = parseInt(0xFFFF / 10);
 const TempLower = 2500;
 const TempUpper = 9000;
+
+lifxPacket.setDebug(false);
 
 let ips = [];
 
@@ -19,6 +22,18 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
         this.bulbs = new Map();
         this.gateways = new Map();
+        
+        this.sequencer = 1;
+        this.sequence = {};
+        
+        getIps();
+
+        this.source = new Buffer(ips[0].split('.'));
+        
+        this.packetMap = {
+            0x66: { get: 'getLight', state: 'lightState' },     // setColor
+            0x75: { get: 'getLightPower', state: 'statePower' } // setLightPower
+        };
         
         this.udpClient = dgram.createSocket('udp4');
         this.udpClient.on('error', udpError.bind(this));
@@ -68,21 +83,54 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 this.onPropertiesChanged(propChanges);
         }
         
+        function bulbStateChange(bulb, newState) {
+            let state = bulb.state;
+            let propChanges = [];
+            let output = bulb.outputState(newState);
+            
+            if (!state.hasOwnProperty('power') || state.power !== newState.power)
+                propChanges.push(bulb.propertyObject('BinarySwitch', 'switch', output.on));
+                
+            if (!state.hasOwnProperty('brightness') || state.brightness !== newState.brightness) {
+                propChanges.push(bulb.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
+                if (bulb.services.some(s => s === 'MulticolorLight'))
+                    propChanges.push(bulb.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
+            }
+            
+            if (!state.hasOwnProperty('hue') || state.hue !== newState.hue)
+                propChanges.push(bulb.propertyObject('MulticolorLight', 'hue', output.hue));
+                
+            if (!state.hasOwnProperty('saturation') || state.saturation !== newState.saturation)
+                propChanges.push(bulb.propertyObject('MulticolorLight', 'saturation', output.sat));
+                
+            if (!state.hasOwnProperty('kelvin') || state.kelvin !== newState.kelvin)
+                propChanges.push(bulb.propertyObject('MulticolorLight', 'temperature', output.temp));
+            
+            if (propChanges.length > 0)
+                this.onPropertiesChanged(propChanges);
+        }
+        
         function getIps() {
             if (ips.length > 0)
                 return ips;
                 
             let ipSet = new Set();
             let interfaces = os.networkInterfaces();
-            Object.keys(interfaces).forEach(name =>
-                interfaces[name].forEach(info =>
-                    ips.add(info.address)));
+            Object.keys(interfaces).forEach(name => {
+                if (/(loopback|vmware|internal)/gi.test(name))
+                    return;
+                interfaces[name].forEach(info => {
+                    if (!info.internal && info.family === 'IPv4')
+                        ipSet.add(info.address);
+                });
+            });
                     
             ips = Array.from(ipSet);
             return ips;
         }
         
         function processPacket(packet, rinfo) {
+            let sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             let address = packet.preamble.target.toString('hex');
             
             switch (packet.packetTypeShortName) {
@@ -100,6 +148,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 address: packet.preamble.target.toString('hex')
                             };
                             this.gateways.set(rinfo.address, gateway);
+                            // process.nextTick(() => this.send(lifxPacket.getVersion(), packet.preamble.target));
+                            // setImmediate(() => this.send(lifxPacket.getVersion(), packet.preamble.target));
                             this.send(lifxPacket.getVersion(), packet.preamble.target);
                         }
                     }
@@ -116,6 +166,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         this.bulbs.get(address).on('ready', bulbReady.bind(this));
                     }
                     this.bulbs.get(address).version = packet.payload;
+                    if (this.bulbs.get(address).state === undefined)
+                        this.send(lifxPacket.getLight(), packet.preamble.target);
                     
                     break;
                 case 'lightState':
@@ -123,6 +175,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         this.bulbs.set(address, new LifxBulb(address));
                         this.bulbs.get(address).on('ready', bulbReady.bind(this));
                     }
+                    let bulb = this.bulbs.get(address); 
                     let state = {
                         hue: packet.payload.hue,
                         saturation: packet.payload.saturation,
@@ -130,18 +183,29 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         kelvin: packet.payload.kelvin,
                         power: packet.payload.power
                     };
-                    this.bulbs.get(address).state = state;
-                    if (this.bulbs.get(address).version === undefined)
+                    if (bulb.ready)
+                        bulbStateChange.bind(this)(bulb, state);
+                    bulb.state = state;
+                    if (bulb.version === undefined)
                         this.send(lifxPacket.getVersion(), packet.preamble.target);
                     
                     break;
                 case 'statePower':
-                    // if (this.bulbs.has(address) && this.bulbs.get(address).ready) {
-                    //     let state = this.bulbs.get(address).state;
-                    //     state.power = packet.payload.level;
-                    //     this.bulbs.get(address).state = state;
-                    // }
-                    break; 
+                    if (this.bulbs.has(address) && this.bulbs.get(address).ready) {
+                        let bulb = this.bulbs.get(address);
+                        let state = bulb.state;
+                        state.power = packet.payload.level;
+                        bulb.state = state;
+                        this.onPropertiesChanged([ bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState().on) ]);
+                    }
+                    break;
+                case 'acknowledgement':
+                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
+                        let data = this.sequence[packet.preamble.sequence];
+                        setTimeout(() => this.send(lifxPacket[data.get](), packet.preamble.target), 250);
+                        delete this.sequence[packet.preamble.sequence];
+                    }
+                    break;
             }
         }
         
@@ -152,13 +216,18 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 return;
 
             let packet = lifxPacket.fromBytes(msg);
-            if (packet)
+            if (packet) {
+                // if (Buffer.compare(packet.preamble.source, this.source) === 0)
                 processPacket.bind(this)(packet, rinfo);
+            }
         }
     }
     
     discover() {
-        let packet = lifxPacket.getService();
+        let packet = lifxPacket.getService({
+            source: this.source,
+            sequence: this.sequencer++
+        });
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', (err, bytes) => { });
     }
     
@@ -166,16 +235,27 @@ class LifxPlugin extends droplit.DroplitPlugin {
         // Ensure address is in buffer form
         if (typeof address === 'string')
             address = new Buffer(address, 'hex');
+        
+        this.source.copy(packet, 4);
             
         if (address)
             address.copy(packet, 8);
             
-        for (let gateway of this.gateways.values()) {
-            let site = gateway.site;
-            site.copy(packet, 16);
+        let sequenceId = this.sequencer++;
+        if (sequenceId === 0xFF)
+            this.sequencer = 1;
+             
+        packet[23] = sequenceId;
+        
+        let type = packet.readUInt16LE(32);
+        if (this.packetMap[type])
+            this.sequence[sequenceId] = this.packetMap[type];
             
-            if (gateway.address === address.toString('hex'))
+        for (let gateway of this.gateways.values()) {
+            if (gateway.address === address.toString('hex')) {
+                gateway.site.copy(packet, 16);
                 this.udpClient.send(packet, 0, packet.length, gateway.port, gateway.ip, (err, bytes) => { });
+            }
         }
     }
     
@@ -202,18 +282,14 @@ class LifxPlugin extends droplit.DroplitPlugin {
     
     switchOff(localId) {
         let bulb = this.bulbs.get(localId);
-        if (bulb) {
+        if (bulb)
             this.send(lifxPacket.setLightPower({ level: 0, duration: 0 }), bulb.address);
-            this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', 'off')]);
-        }
     }
     
     switchOn(localId) {
         let bulb = this.bulbs.get(localId);
-        if (bulb) {
+        if (bulb)
             this.send(lifxPacket.setLightPower({ level: 0xFFFF }), bulb.address);
-            this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', 'on')]);
-        }
     }
     
     // DimmableSwitch Implementation
@@ -222,15 +298,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         if (bulb) {
             let state = bulb.state;
             let brightness = normalize(value, 0, 100, 0xFFFF);
-            this.send(lifxPacket.setColor({
-                reserved: 0,
-                hue: state.hue,
-                saturation: state.sat,
-                brightness: brightness,
-                kelvin: state.kelvin,
-                duration: 0
-            }), bulb.address);
-            setTimeout(() => this.send(lifxPacket.getLight(), bulb.address), 500);
+            this.setColor(bulb.address, state.hue, state.saturation, brightness, state.kelvin);
         }
     }
     
@@ -319,14 +387,15 @@ class LifxBulb extends EventEmitter {
         };
     }
     
-    outputState() {
+    outputState(state) {
+        state = state || this.state;
         return {
-            ds_brightness: normalize(this.state.brightness, 0, 0xFFFF), 
-            hue: this.state.hue,
-            mcl_brightness: this.state.brightness,
-            on: this.state.power > 0 ? 'on' : 'off',
-            sat: this.state.saturation,
-            temp: this.state.kelvin,
+            ds_brightness: normalize(state.brightness, 0, 0xFFFF), 
+            hue: state.hue,
+            mcl_brightness: state.brightness,
+            on: state.power > 0 ? 'on' : 'off',
+            sat: state.saturation,
+            temp: state.kelvin,
             tempLowerLimit: TempLower,
             tempUpperLimit: TempUpper
         };
