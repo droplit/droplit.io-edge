@@ -1,6 +1,6 @@
-packet = {};
+let packet = {};
 
-type = {
+let type = {
     byte2: {
         size: 2,
         parse: (b, start) => b.slice(start, start + 2),
@@ -15,6 +15,11 @@ type = {
         size: 6,
         parse: (b, start) => b.slice(start, start + 6),
         unparse: (b, start, p) => p.copy(b, start, 0, 6)
+    },
+    byte8: {
+        size: 8,
+        parse: (b, start) => b.slice(start, start + 8),
+        unparse: (b, start, p) => p.copy(b, start, 0, 8)
     },
     float_le: {
         size: 4,
@@ -66,20 +71,25 @@ type = {
     },
 };
 
-preambleFields = [
+let preambleFields = [
     { name: 'size', type: type.uint16_le },
-    { name: 'protocol', type: type.uint16_le },
-    { name: 'reserved1', type: type.byte4 },
-    { name: 'bulbAddress', type: type.byte6 },
-    { name: 'reserved2', type: type.byte2 },
+    { name: 'protocol', bits: 12, type: type.uint16_le },
+    { name: 'addressable', bits: 1, type: type.uint8 },
+    { name: 'tagged', bits: 1, type: type.uint8 },
+    { name: 'origin', bits: 2, type: type.uint8 },
+    { name: 'source', type: type.uint32_le },
+    { name: 'target', type: type.byte8 },
     { name: 'site', type: type.byte6 },
-    { name: 'reserved3', type: type.byte2 },
+    { name: 'frm_rsrv', bits: 6, type: type.uint8 },
+    { name: 'ack_required', bits: 1, type: type.uint8 },
+    { name: 'res_required', bits: 1, type: type.uint8 },
+    { name: 'sequence', type: type.uint8 },
     { name: 'timestamp', type: type.uint64 },
     { name: 'packetType', type: type.uint16_le },
-    { name: 'reserved4', type: type.byte2 }
+    { name: 'proto_rsrv', type: type.byte2 }
 ];
 
-packets = {
+let packets = {
     0x02: {
         name: 'Get Service',
         shortname: 'getService',
@@ -145,6 +155,7 @@ packets = {
     0x66: {
         name: 'Set Light Color',
         shortname: 'setColor',
+        res_required: true,
         length: 13,
         fields: [
             { name: 'reserved', type: type.uint8 },
@@ -186,6 +197,14 @@ packets = {
             { name: 'level', type: type.uint16 },
             { name: 'duration', type: type.uint32 }
         ]
+    },
+    0x76: {
+        name: 'State Power',
+        shortname: 'statePower',
+        length: 6,
+        fields: [
+            { name: 'level', type: type.uint16 }
+        ]
     }
 };
 
@@ -197,15 +216,42 @@ packet.fromBytes = b => {
         return;
     
     let offset = 0;
+    let bits = 0;
     for (let i = 0; i < preambleFields.length; i++) {
         let f = preambleFields[i];
-        newPacket.preamble[f.name] = f.type.parse(b, offset);
-        offset += f.type.size;
+        
+        let parsed = f.type.parse(b, offset);
+        if (f.bits) {
+            let bytes = f.type.size * 8;
+            let mask = [];
+            for (let i = bytes - 1; i >= 0; i--) {
+                let bit = (i >= bits && i < (bits + f.bits)) ? 1 : 0;
+                mask.push(bit);
+            }
+            mask = mask.join('');
+            
+            let value = (parsed & parseInt(mask, 2)) >>> bits;
+            newPacket.preamble[f.name] = value;
+            
+            offset += Math.floor(f.bits / 8);
+            bits += f.bits % 8;
+            
+            if ((bits % 8) === 0) {
+                bits = 0;
+                offset++;
+            }
+        }
+        else {
+            newPacket.preamble[f.name] = parsed;
+            offset += f.type.size;
+        }
     }
     
     let pParser = packets[newPacket.preamble.packetType];
-    if (typeof pParser === 'undefined')
+    if (typeof pParser === 'undefined') {
         console.log(`unknown type ${newPacket.preamble.packetType}`);
+        console.log('bytes', b);
+    }
     else {
         newPacket.packetTypeName = pParser.name;
         newPacket.packetTypeShortName = pParser.shortname;
@@ -240,10 +286,12 @@ packet.fromParams = p => {
     for (let i = 0; i < parser.fields.length; i++) {
         parser.fields[i].type.unparse(newPacketPayload, offset, p[parser.fields[i].name]);
         offset += parser.fields[i].type.size;
+        // delete p[parser.fields[i].name];
     }
     
     // Generate preamble
     offset = 0;
+    let bits = 0;
     for (let i = 0; i < preambleFields.length; i++) {
         let f = preambleFields[i];
         let datum;
@@ -252,25 +300,44 @@ packet.fromParams = p => {
                 datum = 36 + parser.length;
                 break;
             case 'protocol':
-                if (typeof p[f.name] === 'undefined')
+                if (typeof p[f.name] === 'undefined') {
+                    datum = 0x0400;
+                    // Is addressable unless specified otherwise
+                    if (!parser.hasOwnProperty('addressable') || parser.addressable === true)
+                        datum += 0x1000;
+                        
                     if (parser.tagged)
-                        datum = 0x3400;
-                    else
-                        datum = 0x1400;
+                        datum += 0x2000;
+                }
                 else
                     datum = p[f.name];
                 break;
-            case 'bulbAddress':
+            case 'target':
+                if (typeof p[f.name] === 'undefined')
+                    datum = new Buffer([0, 0, 0, 0, 0, 0, 0, 0]);
+                else
+                    datum = p[f.name];
+                break;
             case 'site':
                 if (typeof p[f.name] === 'undefined')
                     datum = new Buffer([0, 0, 0, 0, 0, 0]);
                 else
                     datum = p[f.name];
                 break;
-            case 'reserved1':
-            case 'reserved2':
-            case 'reserved3':
-            case 'reserved4':
+            case 'frm_rsrv':
+                if (typeof p[f.name] === 'undefined') {
+                    datum = 0;
+                    if (parser.ack_required)
+                        datum += 0x10;
+                    if (parser.res_required)
+                        datum += 0x01;
+                }
+                else
+                    datum = p[f.name];
+                break;
+            case 'source':
+            case 'sequence':
+            case 'proto_rsrv':
             case 'timestamp':
                 datum = new Buffer(f.type.size);
                 datum.fill(0);
@@ -279,9 +346,21 @@ packet.fromParams = p => {
                 datum = parser.packetType;
                 break;
         }
-        f.type.unparse(newPacket, offset, datum);
-        offset += f.type.size;
+        if (datum !== undefined)
+            f.type.unparse(newPacket, offset, datum);
+        
+        if (f.bits) {
+            offset += Math.floor(f.bits / 8);
+            bits += f.bits % 8;
+            if ((bits % 8) === 0) {
+                bits = 0;
+                offset++;
+            }
+        }
+        else
+            offset += f.type.size;
     }
+    
     return newPacket;
 };
 

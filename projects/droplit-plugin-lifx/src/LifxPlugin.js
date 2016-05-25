@@ -8,6 +8,8 @@ const lifxPacket = require('./Packet');
 
 const MulticastPort = 56700;
 const StepSize = parseInt(0xFFFF / 10);
+const TempLower = 2500;
+const TempUpper = 9000;
 
 let ips = [];
 
@@ -81,7 +83,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         }
         
         function processPacket(packet, rinfo) {
-            let address = packet.preamble.bulbAddress.toString('hex');
+            let address = packet.preamble.target.toString('hex');
             
             switch (packet.packetTypeShortName) {
                 case 'getService':
@@ -95,10 +97,10 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 site: packet.preamble.site,
                                 service: packet.payload.service,
                                 protocol: packet.preamble.protocol,
-                                bulbAddress: packet.preamble.bulbAddress.toString('hex')
+                                address: packet.preamble.target.toString('hex')
                             };
                             this.gateways.set(rinfo.address, gateway);
-                            this.send(lifxPacket.getVersion(), packet.preamble.bulbAddress);
+                            this.send(lifxPacket.getVersion(), packet.preamble.target);
                         }
                     }
                     break;
@@ -130,8 +132,15 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     };
                     this.bulbs.get(address).state = state;
                     if (this.bulbs.get(address).version === undefined)
-                        this.send(lifxPacket.getVersion(), packet.preamble.bulbAddress);
+                        this.send(lifxPacket.getVersion(), packet.preamble.target);
                     
+                    break;
+                case 'statePower':
+                    // if (this.bulbs.has(address) && this.bulbs.get(address).ready) {
+                    //     let state = this.bulbs.get(address).state;
+                    //     state.power = packet.payload.level;
+                    //     this.bulbs.get(address).state = state;
+                    // }
                     break; 
             }
         }
@@ -149,7 +158,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
     
     discover() {
-        this.udpClient.send(lifxPacket.getService(), 0, packet.length, MulticastPort, '255.255.255.255', (err, bytes) => { });
+        let packet = lifxPacket.getService();
+        this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', (err, bytes) => { });
     }
     
     send(packet, address) {
@@ -164,21 +174,22 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let site = gateway.site;
             site.copy(packet, 16);
             
-            if (gateway.bulbAddress === address.toString('hex'))
+            if (gateway.address === address.toString('hex'))
                 this.udpClient.send(packet, 0, packet.length, gateway.port, gateway.ip, (err, bytes) => { });
         }
     }
     
     setColor(address, hue, saturation, brightness, temperature) {
-        this.send(lifxPacket.setColor({
+        let packet = lifxPacket.setColor({
             reserved: 0,
             hue,
             saturation,
             brightness,
             kelvin: temperature,
             duration: 0
-        }), address);
-        setTimeout(() => this.send(lifxPacket.getLight(), address), 500);
+        });
+        this.send(packet, address);
+        // setTimeout(() => this.send(lifxPacket.getLight(), address), 500);
     }
     
     // BinarySwitch Implementation
@@ -192,7 +203,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
     switchOff(localId) {
         let bulb = this.bulbs.get(localId);
         if (bulb) {
-            this.send(lifxPacket.setLightPower({ level: 0 }), bulb.address);
+            this.send(lifxPacket.setLightPower({ level: 0, duration: 0 }), bulb.address);
             this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', 'off')]);
         }
     }
@@ -201,7 +212,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         let bulb = this.bulbs.get(localId);
         if (bulb) {
             this.send(lifxPacket.setLightPower({ level: 0xFFFF }), bulb.address);
-            this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', 'off')]);
+            this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', 'on')]);
         }
     }
     
@@ -214,7 +225,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             this.send(lifxPacket.setColor({
                 reserved: 0,
                 hue: state.hue,
-                saturation: state.saturation,
+                saturation: state.sat,
                 brightness: brightness,
                 kelvin: state.kelvin,
                 duration: 0
@@ -237,7 +248,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
         if (bulb) {
             let state = bulb.state;
             let brightness = normalize(Math.min(state.brightness + StepSize, 0xFFFF), 0, 0xFFFF, 100);
-            console.log('brightness', brightness);
             this.setDSBrightness(localId, brightness);
         }
     }
@@ -280,14 +290,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
 const _ready = Symbol('ready');
 const _state = Symbol('state');
 const _version = Symbol('version');
-
-function normalize(value, min, max, mult) {
-    mult = mult || 100;
-    return parseInt(((value - min) / (max - min)) * mult);
-}
-
-const TempLower = 2500;
-const TempUpper = 9000;
 
 class LifxBulb extends EventEmitter {
     constructor(address) {
@@ -339,6 +341,8 @@ class LifxBulb extends EventEmitter {
         };
     }
     
+    get ready() { return this[_ready]; }
+    
     get state() { return this[_state]; }
     set state(state) {
         this[_state] = state;
@@ -363,6 +367,11 @@ class LifxBulb extends EventEmitter {
             this.emit('ready', this);
         }
     }
+}
+
+function normalize(value, min, max, mult) {
+    mult = mult || 100;
+    return parseInt(((value - min) / (max - min)) * mult);
 }
 
 module.exports = LifxPlugin;
