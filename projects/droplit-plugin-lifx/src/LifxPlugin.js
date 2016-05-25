@@ -32,6 +32,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         
         this.packetMap = {
             0x66: { get: 'getLight', state: 'lightState' },     // setColor
+            0x74: { state: 'statePower' },
             0x75: { get: 'getLightPower', state: 'statePower' } // setLightPower
         };
         
@@ -41,7 +42,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         
         this.services = {
             BinarySwitch: {
-                // get_switch: this.getSwitch,
+                get_switch: this.getSwitch,
                 set_switch: this.setSwitch,
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
@@ -190,18 +191,23 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         this.send(lifxPacket.getVersion(), packet.preamble.target);
                     
                     break;
-                case 'statePower':
-                    if (this.bulbs.has(address) && this.bulbs.get(address).ready) {
-                        let bulb = this.bulbs.get(address);
-                        let state = bulb.state;
-                        state.power = packet.payload.level;
-                        bulb.state = state;
-                        this.onPropertiesChanged([ bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState().on) ]);
+                case 'statePower': {
+                    let bulb = this.bulbs.get(address);
+                    let state = bulb.state;
+                    state.power = packet.payload.level;
+                    bulb.state = state;
+                    
+                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
+                        this.sequence[packet.preamble.sequence].callback(bulb.outputState().on);
+                        delete this.sequence[packet.preamble.sequence];
                     }
+                    else if (this.bulbs.has(address) && this.bulbs.get(address).ready)    
+                        this.onPropertiesChanged([ bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState().on) ]);
                     break;
+                }
                 case 'acknowledgement':
                     if (sourceMatch && this.sequence[packet.preamble.sequence]) {
-                        let data = this.sequence[packet.preamble.sequence];
+                        let data = this.sequence[packet.preamble.sequence].map;
                         setTimeout(() => this.send(lifxPacket[data.get](), packet.preamble.target), 250);
                         delete this.sequence[packet.preamble.sequence];
                     }
@@ -231,7 +237,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', (err, bytes) => { });
     }
     
-    send(packet, address) {
+    send(packet, address, callback) {
         // Ensure address is in buffer form
         if (typeof address === 'string')
             address = new Buffer(address, 'hex');
@@ -249,7 +255,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         
         let type = packet.readUInt16LE(32);
         if (this.packetMap[type])
-            this.sequence[sequenceId] = this.packetMap[type];
+            this.sequence[sequenceId] = { callback, map: this.packetMap[type] };
             
         for (let gateway of this.gateways.values()) {
             if (gateway.address === address.toString('hex')) {
@@ -269,10 +275,15 @@ class LifxPlugin extends droplit.DroplitPlugin {
             duration: 0
         });
         this.send(packet, address);
-        // setTimeout(() => this.send(lifxPacket.getLight(), address), 500);
     }
     
     // BinarySwitch Implementation
+    getSwitch(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb)
+            this.send(lifxPacket.getLightPower(), bulb.address, callback);
+    }
+    
     setSwitch(localId, value) {
         if (value === 'off')
             this.switchOff(localId);
