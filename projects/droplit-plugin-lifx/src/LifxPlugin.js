@@ -23,16 +23,20 @@ class LifxPlugin extends droplit.DroplitPlugin {
         this.bulbs = new Map();
         this.gateways = new Map();
         
+        // Start at 1; 0 is for non-sequenced packets
         this.sequencer = 1;
         this.sequence = {};
         
         getIps();
 
+        // Use local IP as source to identify LIFX packets for this server
         this.source = new Buffer(ips[0].split('.'));
         
+        // Packet types that should be sequenced
         this.packetMap = {
+            0x65: { state: 'lightState' },                      // getLight
             0x66: { get: 'getLight', state: 'lightState' },     // setColor
-            0x74: { state: 'statePower' },
+            0x74: { state: 'statePower' },                      // getLightPower
             0x75: { get: 'getLightPower', state: 'statePower' } // setLightPower
         };
         
@@ -48,11 +52,18 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 switchOn: this.switchOn
             },
             DimmableSwitch: {
+                get_brightness: this.getDSBrightness,
                 set_brightness: this.setDSBrightness,
                 stepDown: this.stepDown,
                 stepUp: this.stepUp
             },
             MulticolorLight: {
+                get_brightness: this.getMclBrightness,
+                get_hue: this.getHue,
+                get_saturation: this.getSaturation,
+                get_temperature: this.getTemperature,
+                get_tempLowerLimit: this.getTempLowerLimit,
+                get_tempUpperLimit: this.getTempUpperLimit,
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
                 set_saturation: this.setSaturation,
@@ -60,11 +71,11 @@ class LifxPlugin extends droplit.DroplitPlugin {
             }
         }
         
-        // May discover devices prior to explicit discover if other devices on network are discovering
-        this.udpClient.bind(MulticastPort, '0.0.0.0', () => {
-            this.udpClient.setBroadcast(true);
-        });
+        // Listen to UDP multicast on the network for the designated LIFX port
+        this.udpClient.bind(MulticastPort, '0.0.0.0', () => 
+            this.udpClient.setBroadcast(true));
         
+        // Called when a bulb's state and version are known
         function bulbReady(bulb) {
             this.onDeviceInfo(bulb.discoverObject());
             let output = bulb.outputState();
@@ -80,10 +91,12 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 propChanges.push(bulb.propertyObject('MulticolorLight', 'tempLowerLimit', output.tempLowerLimit));
                 propChanges.push(bulb.propertyObject('MulticolorLight', 'tempUpperLimit', output.tempUpperLimit));
             }
+            
             if (propChanges.length > 0)
                 this.onPropertiesChanged(propChanges);
         }
         
+        // Called when a lightState packet is retrieved, any differences to known state are pushed out as property changes
         function bulbStateChange(bulb, newState) {
             let state = bulb.state;
             let propChanges = [];
@@ -111,6 +124,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 this.onPropertiesChanged(propChanges);
         }
         
+        // Find IP addresses for this machine
         function getIps() {
             if (ips.length > 0)
                 return ips;
@@ -130,14 +144,14 @@ class LifxPlugin extends droplit.DroplitPlugin {
             return ips;
         }
         
+        // Processes LIFX packets
         function processPacket(packet, rinfo) {
+            // Packet is in response to one we sent
             let sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             let address = packet.preamble.target.toString('hex');
             
             switch (packet.packetTypeShortName) {
-                case 'getService':
-                    break;
-                case 'stateService':
+                case 'stateService': {
                     if (packet.payload.service === 1 && packet.payload.port > 0) {
                         if (!this.gateways.has(rinfo.address)) {
                             let gateway = {
@@ -149,33 +163,31 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 address: packet.preamble.target.toString('hex')
                             };
                             this.gateways.set(rinfo.address, gateway);
-                            // process.nextTick(() => this.send(lifxPacket.getVersion(), packet.preamble.target));
-                            // setImmediate(() => this.send(lifxPacket.getVersion(), packet.preamble.target));
                             this.send(lifxPacket.getVersion(), packet.preamble.target);
                         }
                     }
                     break;
-                case 'stateHostInfo':
-                    break;
-                case 'stateWifiInfo':
-                    break;
-                case 'getVersion':
-                    break;
-                case 'stateVersion':
+                }
+                case 'stateVersion': {
                     if (!this.bulbs.has(address)) {
                         this.bulbs.set(address, new LifxBulb(address));
                         this.bulbs.get(address).on('ready', bulbReady.bind(this));
                     }
-                    this.bulbs.get(address).version = packet.payload;
-                    if (this.bulbs.get(address).state === undefined)
+                    
+                    let bulb = this.bulbs.get(address); 
+                    bulb.version = packet.payload;
+                    
+                    if (bulb.state === undefined)
                         this.send(lifxPacket.getLight(), packet.preamble.target);
                     
                     break;
-                case 'lightState':
+                }
+                case 'lightState': {
                     if (!this.bulbs.has(address)) {
                         this.bulbs.set(address, new LifxBulb(address));
                         this.bulbs.get(address).on('ready', bulbReady.bind(this));
                     }
+                    
                     let bulb = this.bulbs.get(address); 
                     let state = {
                         hue: packet.payload.hue,
@@ -184,48 +196,68 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         kelvin: packet.payload.kelvin,
                         power: packet.payload.power
                     };
+                    
+                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
+                        let seqData = this.sequence[packet.preamble.sequence];
+
+                        // This packet is in response to an explicit get request
+                        if (seqData.callback && seqData.state)
+                            seqData.callback(bulb.outputState(state)[seqData.state]);
+                            
+                        delete this.sequence[packet.preamble.sequence];
+                    }
+                    
                     if (bulb.ready)
                         bulbStateChange.bind(this)(bulb, state);
-                    bulb.state = state;
+                        
+                    bulb.state = state;    
+                    
                     if (bulb.version === undefined)
                         this.send(lifxPacket.getVersion(), packet.preamble.target);
                     
                     break;
+                }
                 case 'statePower': {
+                    if (!this.bulbs.has(address))
+                        break;
+                        
                     let bulb = this.bulbs.get(address);
                     let state = bulb.state;
                     state.power = packet.payload.level;
                     bulb.state = state;
                     
+                    // This packet is in response to an explicit get request
                     if (sourceMatch && this.sequence[packet.preamble.sequence]) {
                         this.sequence[packet.preamble.sequence].callback(bulb.outputState().on);
                         delete this.sequence[packet.preamble.sequence];
                     }
-                    else if (this.bulbs.has(address) && this.bulbs.get(address).ready)    
+                    else if (bulb.ready)    
                         this.onPropertiesChanged([ bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState().on) ]);
+                        
                     break;
                 }
-                case 'acknowledgement':
+                case 'acknowledgement': {
+                    // Call the get for a set we explicitly asked for an acknowledgement on
                     if (sourceMatch && this.sequence[packet.preamble.sequence]) {
                         let data = this.sequence[packet.preamble.sequence].map;
                         setTimeout(() => this.send(lifxPacket[data.get](), packet.preamble.target), 250);
                         delete this.sequence[packet.preamble.sequence];
                     }
                     break;
+                }
             }
         }
         
         function udpError(err) { }
         
+        // Handle udp messages
         function udpMessage(msg, rinfo) {
             if (ips.some(ip => ip === rinfo.address))
                 return;
 
             let packet = lifxPacket.fromBytes(msg);
-            if (packet) {
-                // if (Buffer.compare(packet.preamble.source, this.source) === 0)
+            if (packet)
                 processPacket.bind(this)(packet, rinfo);
-            }
         }
     }
     
@@ -234,28 +266,36 @@ class LifxPlugin extends droplit.DroplitPlugin {
             source: this.source,
             sequence: this.sequencer++
         });
+        // Discovery is done through UDP broadcast to port 56700
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', (err, bytes) => { });
     }
     
-    send(packet, address, callback) {
+    send(packet, address, callback, state) {
         // Ensure address is in buffer form
         if (typeof address === 'string')
             address = new Buffer(address, 'hex');
         
+        // Add source to all outbound packets
         this.source.copy(packet, 4);
-            
+        
+        // Add address to outbound packets, if specified
         if (address)
             address.copy(packet, 8);
-            
+        
+        // Add sequence to all outbound packets
         let sequenceId = this.sequencer++;
         if (sequenceId === 0xFF)
-            this.sequencer = 1;
-             
+            this.sequencer = 1;             
         packet[23] = sequenceId;
         
+        // If packet type is in map, we want to do something special with the response that has the same sequence id
         let type = packet.readUInt16LE(32);
         if (this.packetMap[type])
-            this.sequence[sequenceId] = { callback, map: this.packetMap[type] };
+            this.sequence[sequenceId] = {
+                callback,
+                map: this.packetMap[type],
+                state
+            };
             
         for (let gateway of this.gateways.values()) {
             if (gateway.address === address.toString('hex')) {
@@ -304,6 +344,15 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
     
     // DimmableSwitch Implementation
+    getDSBrightness(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'ds_brightness');
+            return;
+        }
+        callback();
+    }
+    
     setDSBrightness(localId, value) {
         let bulb = this.bulbs.get(localId);
         if (bulb) {
@@ -332,6 +381,60 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
     
     // MulticolorLight Implementation
+    getMclBrightness(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'mcl_brightness');
+            return;
+        }
+        callback();
+    }
+    
+    getHue(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'hue');
+            return;
+        }
+        callback();
+    }
+    
+    getSaturation(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'sat');
+            return;
+        }
+        callback();
+    }
+    
+    getTemperature(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'temp');
+            return;
+        }
+        callback();
+    }
+    
+    getTempLowerLimit(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            callback(TempLower);
+            return;
+        }
+        callback();
+    }
+    
+    getTempUpperLimit(localId, callback) {
+        let bulb = this.bulbs.get(localId);
+        if (bulb) {
+            callback(TempLower);
+            return;
+        }
+        callback();
+    }
+    
     setHue(localId, value) {
         let bulb = this.bulbs.get(localId);
         if (bulb) {
@@ -366,6 +469,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 }
 
+// Encapsulate private fields via symbols
 const _ready = Symbol('ready');
 const _state = Symbol('state');
 const _version = Symbol('version');
