@@ -58,6 +58,11 @@ transport.on('disconnected', () => { });
 
 transport.on('#discover', (data: any) => { });
 
+transport.on('#drop', (data: any) => {
+    if (data)
+        dropDevice(data);
+});
+
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
     let results: boolean[] = [];
     if (data)
@@ -108,6 +113,17 @@ export function discover(pluginName?: string) {
     if (pluginName)
         return discoverOne(pluginName);
     discoverAll();
+}
+
+export function dropDevice(commands: DeviceCommand[]) {
+    let map = groupByPlugin(commands);
+    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    Object.keys(map).forEach(pluginName => {
+        map[pluginName].forEach(device => {
+            // send commands to plugin
+            plugin.instance(pluginName).dropDevice(device.localId);
+        });
+    });
 }
 
 export function getProperties(commands: DeviceCommand[]): boolean[] {
