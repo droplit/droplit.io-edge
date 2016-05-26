@@ -71,6 +71,10 @@ class Discoverer extends EventEmitter {
     discover() {
         this.client.search(upnpSearch);
     }
+    
+    undiscover(identifier) {
+        this.found.delete(identifier);
+    }
 }
 
 module.exports = Discoverer;

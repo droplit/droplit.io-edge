@@ -55,6 +55,17 @@ class WemoPlugin extends droplit.DroplitPlugin {
         this.discoverer.discover();
     }
     
+    dropDevice(localId) {
+        let device = this.devices.get(localId);
+        if (!device)
+            return false;
+        
+        let identifier = device.identifier;
+        device.removeAllListeners('prop-change');
+        this.devices.delete(identifier);
+        this.discoverer.undiscover(identifier);
+    }
+    
     // BinarySwitch Implementation
     getSwitch(localId, callback) {
         let device = this.devices.get(localId);
