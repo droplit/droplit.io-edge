@@ -1,0 +1,19 @@
+{
+  "name": "droplit-plugin-philips-hue",
+  "description": "Droplit Edge Philips Hue plugin",
+  "author": "Droplit, Inc.",
+  "version": "0.1.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": {
+    "node-ssdp": "^2.7.1",
+    "request": "^2.72.0",
+    "xml2js": "^0.4.16"
+  }
+}
