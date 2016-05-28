@@ -13,6 +13,7 @@ import {EventEmitter} from 'events';
  */
 export interface DeviceServiceMember {
     localId: string;
+    address?: any;
     service: string;
     index: string;
     member: string;

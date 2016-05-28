@@ -190,6 +190,7 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     let localId = command.localId || deviceInfo.localId;
     return {
         localId: localId,
+        address: deviceInfo.address,
         service: command.service,
         index: command.index,
         member: command.member,
