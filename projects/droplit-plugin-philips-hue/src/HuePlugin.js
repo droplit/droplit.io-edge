@@ -67,7 +67,15 @@ class HuePlugin extends droplit.DroplitPlugin {
             }
         }
         
-        function onDiscoverIPChange(data) { }
+        function onDiscoverIPChange(data) {
+            let identifier = data.identifier;
+            let address = data.ip.host;
+            let bridge = this.bridges.get(identifier);
+            if (!bridge)
+                return;
+            bridge.address = address;
+            this.onDeviceInfo({ address, identifier });
+        }
         
         function onLightDiscovered(light) {
             this.onDeviceInfo(light.discoverObject());

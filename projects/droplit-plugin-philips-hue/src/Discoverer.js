@@ -21,13 +21,10 @@ class Discoverer extends EventEmitter {
         this.client.on('response', udpResponse.bind(this));
         
         this._checkBrokerServer = checkBrokerServer.bind(this);
-        this.checkedBroker = false;
+        this.checkBroker = false;
         
         function checkBrokerServer() {           
-            this.checkedBroker = true;
-            
-            // Couldn’t find any bridges with upnp
-            if (this.found.size > 0)
+            if (!this.checkBroker)
                 return;
                 
             request('http://www.meethue.com/api/nupnp', (e, r, b) => {
@@ -38,13 +35,23 @@ class Discoverer extends EventEmitter {
                     bridgeData.forEach(data => {
                         let identifier = data.id.toUpperCase();
                         let ip = data.internalipaddress;
+                        let location = url.parse(`http://${ip}:80/description.xml`);
+                        
+                        if (this.found.has(identifier)) {
+                            if (this.found.get(identifier).location.hostname === ip)
+                                return;
+                            // Hue bridge has changed IP address since last discoveryData
+                            this.found.get(identifier).location = location;
+                            this.emit('ipchange', { identifier: identifier, ip: this.found.get(identifier).location });
+                            return;
+                        }
+                        
                         let discoveryData = {
                             identifier,
-                            location: url.parse(`http://${ip}:80/description.xml`)
+                            location
                         };
                         
-                        if (!this.found.has(identifier))
-                            this.found.set(identifier, discoveryData);
+                        this.found.set(identifier, discoveryData);
                         
                         if (!this.found.get(identifier).hasOwnProperty('info') && !this.reading[identifier]) {
                             this.reading[identifier] = true;
@@ -82,6 +89,8 @@ class Discoverer extends EventEmitter {
             if (!headers['HUE-BRIDGEID'] || !headers.USN)
                 return;
             
+            this.checkBroker = false;
+            
             // If no bridge id, fallback to USN    
             let identifier = (headers['HUE-BRIDGEID'] || headers.USN).toUpperCase();
             if (this.found.has(identifier)) {
@@ -109,9 +118,9 @@ class Discoverer extends EventEmitter {
     
     discover() {
         this.client.search(upnpSearch);
-        if (!this.checkedBroker)
-            setTimeout(() =>
-                this._checkBrokerServer(), 10000);
+        this.checkBroker = true;
+        setTimeout(() =>
+            this._checkBrokerServer(), 10000);
     }
     
     undiscover(identifier) { }
