@@ -20,16 +20,24 @@ class HuePlugin extends droplit.DroplitPlugin {
         this.discoverer.on('discovered', onDiscovered.bind(this));
         this.discoverer.on('ipchange', onDiscoverIPChange.bind(this));
         
+        this._getBridgeByLight = function (identifier) {
+            for (let bridge of this.bridges.values()) {
+                if (bridge.lights.has(identifier))
+                    return bridge;
+            }
+            return null;
+        }
+        
         this.services = {
             BinarySwitch: {
                 // get_switch: this.getSwitch,
-                // set_switch: this.setSwitch,
-                // switchOff: this.switchOff,
-                // switchOn: this.switchOn
+                set_switch: this.setSwitch,
+                switchOff: this.switchOff,
+                switchOn: this.switchOn
             },
             DimmableSwitch: {
                 // get_brightness: this.getDSBrightness,
-                // set_brightness: this.setDSBrightness,
+                set_brightness: this.setDSBrightness,
                 // stepDown: this.stepDown,
                 // stepUp: this.stepUp
             },
@@ -40,10 +48,10 @@ class HuePlugin extends droplit.DroplitPlugin {
                 // get_temperature: this.getTemperature,
                 // get_tempLowerLimit: this.getTempLowerLimit,
                 // get_tempUpperLimit: this.getTempUpperLimit,
-                // set_brightness: this.setMclBrightness,
-                // set_hue: this.setHue,
-                // set_saturation: this.setSaturation,
-                // set_temperature: this.setTemperature
+                set_brightness: this.setMclBrightness,
+                set_hue: this.setHue,
+                set_saturation: this.setSaturation,
+                set_temperature: this.setTemperature
             }
         }
         
@@ -75,16 +83,35 @@ class HuePlugin extends droplit.DroplitPlugin {
     // BinarySwitch Implementation
     getSwitch(localId, callback) { }
     
-    setSwitch(localId, value) { }
+    setSwitch(localId, value) {
+        if (value === 'off')
+            this.switchOff(localId);
+        else if (value === 'on')
+            this.switchOn(localId);
+    }
     
-    switchOff(localId) { }
+    switchOff(localId) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge)
+            bridge.setState(localId, { on: false });
+    }
     
-    switchOn(localId) { }
+    switchOn(localId) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge)
+            bridge.setState(localId, { on: true });
+    }
         
     // DimmableSwitch Implementation
     getDSBrightness(localId, callback) { }
     
-    setDSBrightness(localId, value) { }
+    setDSBrightness(localId, value) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge) {
+            let brightness = Math.min(Math.max(normalize(value, 0, 99, 255), 0), 255);
+            bridge.setState(localId, { bri: brightness });
+        }
+    }
     
     stepDown(localId) { }
     
@@ -103,13 +130,35 @@ class HuePlugin extends droplit.DroplitPlugin {
     
     getTempUpperLimit(localId, callback) { }
     
-    setHue(localId, value) { }
+    setHue(localId, value) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge)
+            bridge.setState(localId, { hue: +value });
+    }
     
-    setMclBrightness(localId, value) { }
+    setMclBrightness(localId, value) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge) {
+            let brightness = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+            bridge.setState(localId, { bri: brightness });
+        }
+    }
     
-    setSaturation(localId, value) { }
+    setSaturation(localId, value) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge) {
+            let saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+            bridge.setState(localId, { sat: saturation });
+        }
+    }
     
-    setTemperature(localId, value) { }
+    setTemperature(localId, value) {
+        let bridge = this._getBridgeByLight(localId);
+        if (bridge) {
+            let temperature = microReciprocal(value);
+            bridge.setState(localId, { ct: temperature });
+        }
+    }
     
 }
 
@@ -189,6 +238,30 @@ class Bridge extends EventEmitter {
                 callback(e, b);
         });
     }
+    
+    setState(identifier, state, callback) {
+        let light = this.lights.get(identifier);
+        if (!light)
+            return;
+            
+        let opts = {
+            json: state,
+            method: 'PUT',
+            timeout: 3000,
+            url: `http://${this.address}/api/${this.key}/lights/${light.pathId}/state`
+        };
+        request(opts, (e, r, b) => {
+            if (e) {
+                if (callback)
+                    callback(e);
+                return;
+            }
+            
+            if (callback)
+                callback(e, b);
+        });
+    }
+    
 }
 
 class Light {
@@ -243,6 +316,15 @@ class Light {
             promotedMembers: this.promotedMembers
         }
     }
+}
+
+function microReciprocal(value) {
+    return parseInt((1000000 / value).toString());
+}
+
+function normalize(value, min, max, mult) {
+    mult = mult || 100;
+    return Math.round(((value - min) / (max - min)) * mult);
 }
 
 module.exports = HuePlugin;
