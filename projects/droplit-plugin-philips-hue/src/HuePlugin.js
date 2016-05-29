@@ -30,24 +30,24 @@ class HuePlugin extends droplit.DroplitPlugin {
         
         this.services = {
             BinarySwitch: {
-                // get_switch: this.getSwitch,
+                get_switch: this.getSwitch,
                 set_switch: this.setSwitch,
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
             },
             DimmableSwitch: {
-                // get_brightness: this.getDSBrightness,
+                get_brightness: this.getDSBrightness,
                 set_brightness: this.setDSBrightness,
-                // stepDown: this.stepDown,
-                // stepUp: this.stepUp
+                stepDown: this.stepDown,
+                stepUp: this.stepUp
             },
             MulticolorLight: {
-                // get_brightness: this.getMclBrightness,
-                // get_hue: this.getHue,
-                // get_saturation: this.getSaturation,
-                // get_temperature: this.getTemperature,
-                // get_tempLowerLimit: this.getTempLowerLimit,
-                // get_tempUpperLimit: this.getTempUpperLimit,
+                get_brightness: this.getMclBrightness,
+                get_hue: this.getHue,
+                get_saturation: this.getSaturation,
+                get_temperature: this.getTemperature,
+                get_tempLowerLimit: this.getTempLowerLimit,
+                get_tempUpperLimit: this.getTempUpperLimit,
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
                 set_saturation: this.setSaturation,
@@ -116,8 +116,24 @@ class HuePlugin extends droplit.DroplitPlugin {
     
     dropDevice(localId) { }
     
+    getState(localId, state, callback) {
+        let bridge = this._getBridgeByLight(localId);
+        if (!bridge)
+            return callback();
+            
+        bridge.getLightState(localId, (err, success) => {
+            if (err)
+                return callback();
+            
+            let output = Bridge.outputState(success);
+            callback(output[state]);
+        });
+    }
+    
     // BinarySwitch Implementation
-    getSwitch(localId, callback) { }
+    getSwitch(localId, callback) {
+        this.getState(localId, 'on', callback);
+    }
     
     setSwitch(localId, value) {
         if (value === 'off')
@@ -143,7 +159,9 @@ class HuePlugin extends droplit.DroplitPlugin {
     }
         
     // DimmableSwitch Implementation
-    getDSBrightness(localId, callback) { }
+    getDSBrightness(localId, callback) {
+        this.getState(localId, 'ds_brightness', callback);
+    }
     
     setDSBrightness(localId, value) {
         let bridge = this._getBridgeByLight(localId);
@@ -154,22 +172,56 @@ class HuePlugin extends droplit.DroplitPlugin {
         bridge.setState(localId, { bri: brightness });
     }
     
-    stepDown(localId) { }
+    stepDown(localId) {
+        console.log('step down');
+        this.getDSBrightness(localId, value => {
+            console.log('value', value);
+            if (value === undefined)
+                return;
+            this.setDSBrightness(localId, Math.max(value - StepSize, 0));
+        });
+    }
     
-    stepUp(localId) { }
+    stepUp(localId) {
+        this.getDSBrightness(localId, value => {
+            if (value === undefined)
+                return;
+            this.setDSBrightness(localId, Math.min(value + StepSize, 99));
+        });
+    }
     
     // MulticolorLight Implementation
-    getMclBrightness(localId, callback) { }
+    getMclBrightness(localId, callback) {
+        this.getState(localId, 'mcl_brightness', callback);
+    }
     
-    getHue(localId, callback) { }
+    getHue(localId, callback) {
+        this.getState(localId, 'hue', callback);
+    }
     
-    getSaturation(localId, callback) { }
+    getSaturation(localId, callback) {
+        this.getState(localId, 'sat', callback);
+    }
     
-    getTemperature(localId, callback) { }
+    getTemperature(localId, callback) {
+        this.getState(localId, 'ct', callback);
+    }
     
-    getTempLowerLimit(localId, callback) { }
+    getTempLowerLimit(localId, callback) {
+        let bridge = this._getBridgeByLight(localId);
+        if (!bridge)
+            return callback();
+            
+        callback(TempLower);
+    }
     
-    getTempUpperLimit(localId, callback) { }
+    getTempUpperLimit(localId, callback) {
+        let bridge = this._getBridgeByLight(localId);
+        if (!bridge)
+            return callback();
+            
+        callback(TempUpper);
+    }
     
     setHue(localId, value) {
         let bridge = this._getBridgeByLight(localId);
@@ -259,6 +311,28 @@ class Bridge extends EventEmitter {
             services: this.services,
             promotedMembers: this.promotedMembers
         };
+    }
+    
+    getLightState(identifier, callback) {
+        let light = this.lights.get(identifier);
+        if (!light)
+            return;
+        
+        let opts = {
+            json: true,
+            method: 'GET',
+            timeout: 3000,
+            url: `http://${this.address}/api/${this.key}/lights/${light.pathId}`
+        };
+        request(opts, (e, r, b) => {
+            if (e) {
+                if (callback)
+                    callback(e);
+                return;
+            }
+            
+            callback(null, b.state);
+        });
     }
     
     getLights(callback) {
