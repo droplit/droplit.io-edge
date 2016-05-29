@@ -61,6 +61,7 @@ class HuePlugin extends droplit.DroplitPlugin {
             if (bridge === undefined) {
                 bridge = new Bridge(data);
                 bridge.on('discovered', onLightDiscovered.bind(this));
+                bridge.on('state-changes', onStateChanges.bind(this));
                 
                 this.bridges.set(identifier, bridge);
                 this.onDeviceInfo(bridge.discoverObject());
@@ -79,6 +80,33 @@ class HuePlugin extends droplit.DroplitPlugin {
         
         function onLightDiscovered(light) {
             this.onDeviceInfo(light.discoverObject());
+        }
+        
+        function onStateChanges(data) {
+            let output = data.light.outputState;
+            let changes = data.changes.reduce((p, c) => {
+                if (c.state === 'on')
+                    p.push(data.light.propertyObject('BinarySwitch', 'switch', output.on));
+                    
+                if (c.state === 'bri') {
+                    p.push(data.light.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
+                    p.push(data.light.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
+                }
+                    
+                if (c.state === 'hue')
+                    p.push(data.light.propertyObject('MulticolorLight', 'hue', output.hue));
+                    
+                if (c.state === 'sat')
+                    p.push(data.light.propertyObject('MulticolorLight', 'saturation', output.sat));
+                    
+                if (c.state === 'ct')
+                    p.push(data.light.propertyObject('MulticolorLight', 'temperature', output.ct));
+                    
+                return p;
+            }, []);
+            
+            if (changes.length > 0)
+                this.onPropertiesChanged(changes);
         }
     }
     
@@ -100,14 +128,18 @@ class HuePlugin extends droplit.DroplitPlugin {
     
     switchOff(localId) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge)
-            bridge.setState(localId, { on: false });
+        if (!bridge)
+            return;
+            
+        bridge.setState(localId, { on: false });
     }
     
     switchOn(localId) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge)
-            bridge.setState(localId, { on: true });
+        if (!bridge)
+            return;
+            
+        bridge.setState(localId, { on: true });
     }
         
     // DimmableSwitch Implementation
@@ -115,10 +147,11 @@ class HuePlugin extends droplit.DroplitPlugin {
     
     setDSBrightness(localId, value) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge) {
-            let brightness = Math.min(Math.max(normalize(value, 0, 99, 255), 0), 255);
-            bridge.setState(localId, { bri: brightness });
-        }
+        if (!bridge)
+            return;
+            
+        let brightness = Math.min(Math.max(normalize(value, 0, 99, 255), 0), 255);
+        bridge.setState(localId, { bri: brightness });
     }
     
     stepDown(localId) { }
@@ -140,32 +173,37 @@ class HuePlugin extends droplit.DroplitPlugin {
     
     setHue(localId, value) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge)
-            bridge.setState(localId, { hue: +value });
+        if (!bridge)
+            return;
+            
+        bridge.setState(localId, { hue: +value });
     }
     
     setMclBrightness(localId, value) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge) {
-            let brightness = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-            bridge.setState(localId, { bri: brightness });
-        }
+        if (!bridge)
+            return;
+            
+        let brightness = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        bridge.setState(localId, { bri: brightness });
     }
     
     setSaturation(localId, value) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge) {
-            let saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-            bridge.setState(localId, { sat: saturation });
-        }
+        if (!bridge)
+            return;
+            
+        let saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        bridge.setState(localId, { sat: saturation });
     }
     
     setTemperature(localId, value) {
         let bridge = this._getBridgeByLight(localId);
-        if (bridge) {
-            let temperature = microReciprocal(value);
-            bridge.setState(localId, { ct: temperature });
-        }
+        if (!bridge)
+            return;
+            
+        let temperature = microReciprocal(value);
+        bridge.setState(localId, { ct: temperature });
     }
     
 }
@@ -198,6 +236,18 @@ class Bridge extends EventEmitter {
         this.lights = new Map();
         
         this.getLights();
+    }
+    
+    static outputState(state) {
+        return {
+            ct: microReciprocal(state.ct),
+            ds_brightness: normalize(state.bri, 0, 254),
+            hue: state.hue,
+            mcl_brightness: normalize(state.bri, 0, 254, 0xffff),
+            on: !state.reachable ? 'off' :
+                state.on ? 'on' : 'off',
+            sat: normalize(state.sat, 0, 254, 0xffff)
+        };
     }
     
     discoverObject() {
@@ -265,8 +315,32 @@ class Bridge extends EventEmitter {
                 return;
             }
             
+            let errors = [];
+            let success = {};
+            let changes = [];
+            
+            b.forEach(response => {
+                if (response.error) {
+                    errors.push(response.error);
+                    return;
+                }
+                
+                let stateRegex = new RegExp(`\/lights\/${light.pathId}\/state\/(.+)`);
+                Object.keys(response.success).forEach(key => {
+                    let stateName = stateRegex.exec(key)[1];
+                    success[stateName] = response.success[key];
+                    if (light.state[stateName] !== response.success[key]) {
+                        changes.push({ state: stateName, value: response.success[key] });
+                        light.state[stateName] = response.success[key];
+                    }
+                });
+            });
+            
+            if (changes.length > 0)
+                this.emit('state-changes', { light, changes });
+            
             if (callback)
-                callback(e, b);
+                callback(errors, success);
         });
     }
     
@@ -285,6 +359,10 @@ class Light {
     
     static formatId(id) {
         return id.replace(/[:-]/g, '');
+    }
+    
+    get outputState() {
+        return Bridge.outputState(this.state);
     }
     
     get promotedMembers() {
@@ -323,6 +401,15 @@ class Light {
             services: this.services,
             promotedMembers: this.promotedMembers
         }
+    }
+    
+    propertyObject(service, member, value) {
+        return {
+            localId: this.uniqueid,
+            service,
+            member,
+            value
+        };
     }
 }
 
