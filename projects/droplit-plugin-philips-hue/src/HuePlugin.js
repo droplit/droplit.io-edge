@@ -138,7 +138,25 @@ class HuePlugin extends droplit.DroplitPlugin {
         this.discoverer.discover();
     }
     
-    dropDevice(localId) { }
+    dropDevice(localId) {
+        // Check if identifier is for bridge
+        if (this.bridges.has(localId)) {
+            let bridge = this.bridges.get(localId);
+            bridge.removeAllListeners('discovered');
+            bridge.removeAllListeners('installed');
+            bridge.removeAllListeners('stateChanges');
+            this.bridges.delete(localId);
+            this.discoverer.undiscover(localId);
+            return;
+        }
+        
+        // Check if identifier is for light
+        let bridge = this._getBridgeByLight(localId);
+        if (!bridge)
+            return;
+            
+        bridge.lights.delete(localId);
+    }
     
     getState(localId, state, callback) {
         let bridge = this._getBridgeByLight(localId);

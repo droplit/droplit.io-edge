@@ -123,7 +123,9 @@ class Discoverer extends EventEmitter {
             this._checkBrokerServer(), 10000);
     }
     
-    undiscover(identifier) { }
+    undiscover(identifier) {
+        this.found.delete(identifier);
+    }
 }
 
 module.exports = Discoverer;
