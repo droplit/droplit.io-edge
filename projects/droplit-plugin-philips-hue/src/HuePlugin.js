@@ -6,9 +6,10 @@ const droplit = require('droplit-plugin');
 const EventEmitter = require('events').EventEmitter;
 const request = require('request');
 
+const PollInterval = 1000 * 10; // in ms
 const StepSize = 10;
-const TempLower = 2000;
-const TempUpper = 6500;
+const TempLower = 2000; // in Kelvins
+const TempUpper = 6500; // in Kelvins
 
 class HuePlugin extends droplit.DroplitPlugin {
     constructor() {
@@ -54,6 +55,15 @@ class HuePlugin extends droplit.DroplitPlugin {
                 set_temperature: this.setTemperature
             }
         }
+     
+        // TODO: Off/on with connect/disconnect
+        setInterval(() => {
+            if (this.bridges.size === 0)
+                return;
+                
+            for (let bridge of this.bridges.values())
+                bridge.getLights();
+        }, PollInterval);
         
         function onDiscovered(data) {
             let identifier = data.identifier;
@@ -85,22 +95,26 @@ class HuePlugin extends droplit.DroplitPlugin {
         function onStateChanges(data) {
             let output = data.light.outputState;
             let changes = data.changes.reduce((p, c) => {
-                if (c.state === 'on')
+                if (data.light.services.some(s => s === 'BinarySwitch') && (c.state === 'on'))
                     p.push(data.light.propertyObject('BinarySwitch', 'switch', output.on));
                     
-                if (c.state === 'bri') {
+                if (data.light.services.some(s => s === 'DimmableSwitch') && (c.state === 'bri'))
                     p.push(data.light.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
-                    p.push(data.light.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
+                    
+                if (data.light.services.some(s => s === 'MulticolorLight')) {
+                    if (c.state === 'bri')
+                        p.push(data.light.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
+                    if (c.state === 'hue')
+                        p.push(data.light.propertyObject('MulticolorLight', 'hue', output.hue));
+                    if (c.state === 'sat')
+                        p.push(data.light.propertyObject('MulticolorLight', 'saturation', output.sat));
+                    if (c.state === 'ct')
+                        p.push(data.light.propertyObject('MulticolorLight', 'temperature', output.ct));
+                    if (c.state === 'temp_low')
+                        p.push(data.light.propertyObject('MulticolorLight', 'tempLowerLimit', c.value));
+                    if (c.state === 'temp_high')
+                        p.push(data.light.propertyObject('MulticolorLight', 'tempUpperLimit', c.value));    
                 }
-                    
-                if (c.state === 'hue')
-                    p.push(data.light.propertyObject('MulticolorLight', 'hue', output.hue));
-                    
-                if (c.state === 'sat')
-                    p.push(data.light.propertyObject('MulticolorLight', 'saturation', output.sat));
-                    
-                if (c.state === 'ct')
-                    p.push(data.light.propertyObject('MulticolorLight', 'temperature', output.ct));
                     
                 return p;
             }, []);
@@ -173,9 +187,7 @@ class HuePlugin extends droplit.DroplitPlugin {
     }
     
     stepDown(localId) {
-        console.log('step down');
         this.getDSBrightness(localId, value => {
-            console.log('value', value);
             if (value === undefined)
                 return;
             this.setDSBrightness(localId, Math.max(value - StepSize, 0));
@@ -348,23 +360,36 @@ class Bridge extends EventEmitter {
                 return;
             }
             
+            let deviceChanges = [];
             // New devices
             Object.keys(b).forEach(id => {
                 let lightData = b[id];
                 let identifier = Light.formatId(lightData.uniqueid);
                 if (!this.lights.has(identifier)) {
-                    this.lights.set(identifier, new Light(lightData, id));
-                    this.emit('discovered', this.lights.get(identifier));
+                    let light = new Light(lightData, id);
+                    this.lights.set(identifier, light);
+                    this.emit('discovered', light);
+                    deviceChanges.push({ light, changes: light.stateAsChanges() });
                     return;
                 }
+
+                let light = this.lights.get(identifier);
+                let changes = [];
+                [ 'on', 'bri', 'hue', 'sat', 'ct' ].forEach(state => {
+                    if (lightData.state[state] !== light.state[state])
+                        changes.push({ state, value: lightData.state[state] });
+                });
+                if (changes.length > 0)
+                    deviceChanges.push({ light, changes });
+                    
+                light.state = lightData.state;
                 
-                // TODO: Handle changes
-                
-                // let light = this.lights.get(identifier);
-                // // Correct the path id if changed
-                // if (light.pathId !== id)
-                //     light.pathId = id;
+                // TODO: May need to handle id changes
             });
+            
+            if (deviceChanges.length > 0)
+                deviceChanges.forEach(dc =>
+                    this.emit('state-changes', { light: dc.light, changes: dc.changes }));
             
             if (callback)
                 callback(e, b);
@@ -417,7 +442,6 @@ class Bridge extends EventEmitter {
                 callback(errors, success);
         });
     }
-    
 }
 
 class Light {
@@ -475,6 +499,25 @@ class Light {
             services: this.services,
             promotedMembers: this.promotedMembers
         }
+    }
+    
+    stateAsChanges() {
+        let props = [];
+        if (this.state.hasOwnProperty('on'))
+            props.push({ state: 'on', value: this.state.on });
+        if (this.state.hasOwnProperty('bri'))
+            props.push({ state: 'bri', value: this.state.bri });
+        if (this.state.hasOwnProperty('hue'))
+            props.push({ state: 'hue', value: this.state.hue });
+        if (this.state.hasOwnProperty('sat'))
+            props.push({ state: 'sat', value: this.state.sat });
+        if (this.state.hasOwnProperty('ct')) {
+            props.push({ state: 'ct', value: this.state.ct });
+            props.push({ state: 'temp_low', value: TempLower });
+            props.push({ state: 'temp_high', value: TempUpper });
+        }
+            
+        return props;
     }
     
     propertyObject(service, member, value) {
