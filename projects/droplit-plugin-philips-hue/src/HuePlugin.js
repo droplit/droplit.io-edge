@@ -23,6 +23,8 @@ class HuePlugin extends droplit.DroplitPlugin {
         
         this._getBridgeByLight = function (identifier) {
             for (let bridge of this.bridges.values()) {
+                if (!bridge.isInstalled)
+                    continue;
                 if (bridge.lights.has(identifier))
                     return bridge;
             }
@@ -30,6 +32,9 @@ class HuePlugin extends droplit.DroplitPlugin {
         }
         
         this.services = {
+            BasicAuthBridge: {
+                register: this.register
+            },
             BinarySwitch: {
                 get_switch: this.getSwitch,
                 set_switch: this.setSwitch,
@@ -65,12 +70,17 @@ class HuePlugin extends droplit.DroplitPlugin {
                 bridge.getLights();
         }, PollInterval);
         
+        function onBridgeInstalled(bridge) {
+            this.onDeviceInfo({ localId: bridge.identifier, isInstalled: true });
+        }
+        
         function onDiscovered(data) {
             let identifier = data.identifier;
             let bridge = this.bridges.get(identifier);
             if (bridge === undefined) {
                 bridge = new Bridge(data);
                 bridge.on('discovered', onLightDiscovered.bind(this));
+                bridge.on('installed', onBridgeInstalled.bind(this));
                 bridge.on('state-changes', onStateChanges.bind(this));
                 
                 this.bridges.set(identifier, bridge);
@@ -142,6 +152,14 @@ class HuePlugin extends droplit.DroplitPlugin {
             let output = Bridge.outputState(success);
             callback(output[state]);
         });
+    }
+    
+    // BasicAuthBridge Implementation
+    register(localId) {
+        let bridge = this.bridges.get(localId);
+        if (!bridge)
+            return;
+        bridge.register();
     }
     
     // BinarySwitch Implementation
@@ -272,7 +290,7 @@ class HuePlugin extends droplit.DroplitPlugin {
     
 }
 
-const AppName = 'droplit-hub';
+const AppName = 'droplit#edge';
 
 class Bridge extends EventEmitter {
     constructor(config) {
@@ -285,6 +303,7 @@ class Bridge extends EventEmitter {
         };
         this.key = crypto.createHash('md5').update(AppName).digest('hex');
         this.identifier = config.identifier;
+        this.isInstalled = false;
         this.product = {
             friendlyName: config.info.device.friendlyName,
             manufacturer: config.info.device.manufacturer,
@@ -360,6 +379,19 @@ class Bridge extends EventEmitter {
                 return;
             }
             
+            // See if response is an error
+            if (Array.isArray(b) && b[0].hasOwnProperty('error')) {
+                // App is not registered
+                if (b[0].error.type === 1)
+                    setImmediate(() => this.register.bind(this)());
+                return;
+            }
+            
+            if (!this.isInstalled) {
+                this.isInstalled = true;
+                this.emit('installed', this);
+            }
+            
             let deviceChanges = [];
             // New devices
             Object.keys(b).forEach(id => {
@@ -393,6 +425,36 @@ class Bridge extends EventEmitter {
             
             if (callback)
                 callback(e, b);
+        });
+    }
+    
+    register(callback) {
+        let opts = {
+            json: {
+                devicetype: AppName,
+                username: this.key
+            },
+            method: 'POST',
+            timeout: 3000,
+            url: `http://${this.address}/api`
+        };
+        request(opts, (e, r, b) => {
+            if (e) {
+                if (callback)
+                    callback(e);
+                return;
+            }
+            
+            if (b[0].hasOwnProperty('error')) {
+                // Link button not pressed
+                if (b[0].error.type === 101) {
+                    // TODO: Notify to press button
+                    // console.log('User not authorized, press link button');
+                }
+                return;
+            }
+            
+            setImmediate(() => this.getLights.bind(this));
         });
     }
     
