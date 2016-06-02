@@ -190,9 +190,11 @@ export default class Transport extends EventEmitter {
         this.responseMap[packet.i] = cb;
         this._send(JSON.stringify(packet), (err) => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
-            cb(undefined, err);
-            delete this.responseMap[packet.i];
-            log('request send error', packet, err);
+            if (err) {
+                cb(undefined, err);
+                delete this.responseMap[packet.i];
+                log('request send error', packet, err);
+            }
         });
     }
     

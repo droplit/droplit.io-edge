@@ -83,7 +83,17 @@ Gets all the service property values if supported
 ```
 
 
-`method call`
+### `method call` - Call a service method
+```
+{
+    deviceId: string;
+    service: string;
+    index: string;
+    method: string;
+    value: any;
+}
+```
+
 
 ### `device message` - send a raw message to a device
 
@@ -193,8 +203,26 @@ The service responds with the current device info including the system assigned 
 ```
 
 `property changed`
+```
+{
+    deviceId: string;
+    service: string;
+    index: string;
+    property: string;
+    value: any;
+}
+```
 
 `event raised`
+```
+{
+    deviceId: string;
+    service: string;
+    index: string;
+    event: string;
+    value: any;
+}
+```
 
 `log info`
 
