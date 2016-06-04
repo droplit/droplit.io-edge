@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 const retry = require('retry');
 import * as debug from 'debug';
 import * as async from 'async';
-let log = debug('droplit:transport');
+let log = debug('droplit:transport-edge');
 
 /**
  * Connected event
