@@ -328,4 +328,11 @@ export abstract class DroplitPlugin extends EventEmitter {
             return isSupported;
         }
     }
+    
+    /**
+     * Service Method Handler Function
+     * 
+     * this.services.SERVICE_NAME.METHOD_NAME()
+     * 
+     */
 }
