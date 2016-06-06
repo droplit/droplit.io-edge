@@ -4,6 +4,7 @@
             "droplit-plugin",
             "droplit-plugin-lifx",
             "droplit-plugin-philips-hue",
+            "droplit-plugin-sonos",
             "droplit-plugin-wemo",
             "droplit-plugin-js-example",
             "droplit-plugin-ts-example"
@@ -14,6 +15,9 @@
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-philips-hue": {
+        "dependencies": [ "droplit-plugin" ]
+    },
+    "droplit-plugin-sonos": {
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-wemo": {
