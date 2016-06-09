@@ -5,8 +5,6 @@ import * as DP from 'droplit-plugin';
 import * as debug from 'debug';
 import {DeviceInfo} from './types/DeviceInfo';
 
-const heapdump = require('heapdump');
-
 let log = debug('droplit:router');
 
 export interface DeviceCommand {
@@ -31,6 +29,7 @@ declare var Map: any; // Work-around typescript not knowing Map when it exists f
 let plugins = new Map();
 
 if (settings.debug.generateHeapDump) {
+    const heapdump = require('heapdump');
     const heapInterval = 30 * 60 * 1000;
     
     writeSnapshot.bind(this)();
@@ -215,6 +214,7 @@ function loadPlugins() {
     log('load plugins');
     loadPlugin('droplit-plugin-lifx');
     loadPlugin('droplit-plugin-philips-hue');
+    // loadPlugin('droplit-plugin-sonos');
     loadPlugin('droplit-plugin-wemo');
 }
 
