@@ -212,10 +212,10 @@ function getPluginName(command: DeviceCommand) {
 
 function loadPlugins() {
     log('load plugins');
-    loadPlugin('droplit-plugin-lifx');
-    loadPlugin('droplit-plugin-philips-hue');
-    // loadPlugin('droplit-plugin-sonos');
-    loadPlugin('droplit-plugin-wemo');
+    // loadPlugin('droplit-plugin-lifx');
+    // loadPlugin('droplit-plugin-philips-hue');
+    // loadPlugin('droplit-plugin-wemo');
+    loadPlugin('droplit-plugin-ts-example');
 }
 
 function loadPlugin(pluginName: string) {
@@ -226,8 +226,11 @@ function loadPlugin(pluginName: string) {
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
-        transport.send('device info', deviceInfo, err => {});
+        transport.sendRequest('device info', deviceInfo, (response) => {
+            
+        });
     });
+
     p.on('property changed', (properties: DP.DeviceServiceMember[]) => {
         transport.send('property changed', properties, err => {});
     });
@@ -244,4 +247,25 @@ function startAutodiscover() {
     autodiscoverTimer = setInterval(discoverAll.bind(this), AutoDiscoverCadence);
 }
 
-transport.start(settings.transport);
+let _edgeId: string = undefined;
+
+function getEdgeId(callback: (edgeId: string) => void) {
+    if (_edgeId) {
+        callback(_edgeId);
+    } else {
+        let mac = require('getmac');
+        mac.getMac((err: Error, macAddress: string) => {
+            if (err) throw err;
+            _edgeId = macAddress;
+            callback(_edgeId);
+        });
+    }
+}
+
+getEdgeId((edgeId) => {
+    let localSettings = require('../localsettings.json');
+    transport.start(settings.transport, {
+        "x-edge-id": edgeId,
+        "x-ecosystem-id": localSettings.ecosystemId
+    });
+});

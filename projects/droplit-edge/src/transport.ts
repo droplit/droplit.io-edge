@@ -49,6 +49,7 @@ export default class Transport extends EventEmitter {
         forever: true
     });
     private isOpen = false;
+    private headers: {[key: string]: string} = undefined;
     
     // timeout
     private messageTimeout = 5000;
@@ -63,8 +64,9 @@ export default class Transport extends EventEmitter {
         this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
     
-    public start(settings: any) {
+    public start(settings: any, headers: {[key: string]: string}) {
         this.settings = settings;
+        this.headers = headers;
         this.retryConnect();
     }
 
@@ -89,7 +91,9 @@ export default class Transport extends EventEmitter {
     
     private restart(): boolean {
         try {
-            this.ws = new WebSocket(this.settings.host);
+            this.ws = new WebSocket(this.settings.host, {
+                headers: this.headers
+            });
             this.ws.on('open', this.onOpen.bind(this));
             this.ws.on('message', this.onMessage.bind(this));
             this.ws.on('close', this.onClose.bind(this));

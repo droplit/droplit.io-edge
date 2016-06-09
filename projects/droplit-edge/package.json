@@ -29,7 +29,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "debug": "^2.2.0",
-    "getmac": "^1.0.7",
+    "getmac": "^1.2.1",
     "retry": "^0.9.0",
     "strong-service-install": "^2.0.2",
     "vm2": "^2.0.2",
