@@ -89,7 +89,7 @@ Gets all the service property values if supported
     index: string;
     method: string;
     value: any;
-}
+}[]
 ```
 
 
