@@ -1,0 +1,27 @@
+{
+  "name": "droplit-plugin-voyager",
+  "description": "Droplit Edge Voyager plugin",
+  "author": "Droplit, Inc.",
+  "version": "0.0.1",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Bryan Jenks",
+      "email": "bryan@droplit.io"
+    },
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    },
+    {
+      "name": "Chris Woodle",
+      "email": "chris@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": {
+    "node-ssdp": "^2.7.2",
+    "request": "^2.72.0"
+  },
+  "devDependencies": {}
+}
