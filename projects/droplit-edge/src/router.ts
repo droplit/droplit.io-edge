@@ -64,6 +64,11 @@ transport.on('#drop', (data: any) => {
 
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
     let results: boolean[] = [];
+
+    // Wrap single property in an array
+    if (!Array.isArray(data) && typeof data === 'object')
+        data = [ data ];
+
     if (data)
         setProperties(data);
         
@@ -72,11 +77,19 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 });
 
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
+    // Wrap single property in an array
+    if (!Array.isArray(data) && typeof data === 'object')
+        data = [ data ];
+
     if (data)
         getProperties(data);
 });
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
+    // Wrap single method in an array
+    if (!Array.isArray(data) && typeof data === 'object')
+        data = [ data ];
+
     if (data)
         callMethods(data);
         
@@ -214,6 +227,7 @@ function loadPlugins() {
     log('load plugins');
     // loadPlugin('droplit-plugin-lifx');
     // loadPlugin('droplit-plugin-philips-hue');
+    // loadPlugin('droplit-plugin-sonos');
     // loadPlugin('droplit-plugin-wemo');
     loadPlugin('droplit-plugin-ts-example');
 }

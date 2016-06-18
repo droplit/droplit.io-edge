@@ -29,9 +29,7 @@ The service may send updated device info to the edge
     localId: string;
     address?: any;
     product?: any;
-    name?: string;
-    location?: string;
-    deviceMeta?: any;
+    localData?: any;
     services?: string[];
     promotedMembers?: { [name: string]: string };
 }

@@ -39,9 +39,8 @@ export interface DeviceInfo {
     localId: string;
     address?: any;
     product?: any;
-    name?: string;
-    location?: string;
-    deviceMeta?: any;
+    localName?: string;
+    localData?: any;
     services?: string[];
     promotedMembers?: { [name: string]: string };
     pluginName?: string;
