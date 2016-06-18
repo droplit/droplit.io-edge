@@ -24,7 +24,7 @@ ssdp.on('response', (headers: any, statusCode: any, rinfo: any) => {
 
     let ipRegEx = new RegExp("([^http/]+)");
     let idRegEx = new RegExp('^voyager:ecp:([a-zA-Z0-9.]+)');
-    
+
     let idMatch = headers.USN.match(idRegEx);
     let ipMatch = 'http://' + headers.LOCATION.match(ipRegEx)[1] + '/';
 
@@ -51,7 +51,7 @@ ssdp.on('response', (headers: any, statusCode: any, rinfo: any) => {
         port: rinfo.port,
         server: headers.SERVER
     };
-    
+
     discoveryData.location.hostname = rinfo.address;
 
     query(discoveryData.location.href).then((result) => {
@@ -61,7 +61,13 @@ ssdp.on('response', (headers: any, statusCode: any, rinfo: any) => {
         console.log(`Cooltemp ${result.body.cooltemp}`);
         console.log(`Heattemp ${result.body.heattemp}`);
         console.log(`Setpointdelta ${result.body.setpointdelta}`);
-        control(discoveryData.location.href, "fan", 0).then((result) => {
+        let mode = result.body.fan;
+        if(mode == 0){
+            mode = 1;
+        } else {
+            mode = 0;
+        }
+        control(discoveryData.location.href, "fan", mode).then((result) => {
             console.log(result);
             query(discoveryData.location.href).then((result) => {
                 console.log(`\n"Space" temperature ${result.body.spacetemp}`);
@@ -187,17 +193,19 @@ ssdp.on('response', (headers: any, statusCode: any, rinfo: any) => {
                         resolve(postResult);
                     }).catch((postResult) => {
                         request.debug = false;
-                        query(localId).then((queryResult) => {
-                            let res: Response = {status: 200};
-                            if (queryResult.body.fan === value) {
-                                res.body = 'fan changed';
-                                resolve(res);
-                            } else {
-                                res.status = 400;
-                                res.body = 'fan error';
-                                reject(res);
-                            }
-                        });
+                        setTimeout(() => {
+                            query(localId).then((queryResult) => {
+                                let res: Response = { status: 200 };
+                                if (queryResult.body.fan === value) {
+                                    res.body = 'fan changed';
+                                    resolve(res);
+                                } else {
+                                    res.status = 400;
+                                    res.body = 'fan error';
+                                    reject(res);
+                                }
+                            });
+                        }, 3000);
                     });
                 } else {
                     controls[property] = value;
@@ -214,31 +222,31 @@ ssdp.on('response', (headers: any, statusCode: any, rinfo: any) => {
     }
     function controlPost(localId: string, object: any) {
         return new Promise<Response>((resolve, reject) => {
-            request.post(localId,
-            {form: object},
-            (error, response, body) => {
-                if (!error) {
-                    let res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body);
-                        if (res.body.error === true) {
-                            reject(res);
+            request.post(localId + 'control',
+                { form: object },
+                (error, response, body) => {
+                    if (!error) {
+                        let res: Response = { status: response.statusCode };
+                        if (body === '') {
+                            res.body = null;
+                        } else {
+                            res.body = JSON.parse(body);
+                            if (res.body.error === true) {
+                                reject(res);
+                            }
                         }
+                        resolve(res);
+                    } else {
+                        console.log(error);
+                        reject(error);
                     }
-                    resolve(res);
-                } else {
-                    console.log(error);
-                    reject(error);
-                }
-            });
-        })
+                });
+        });
     }
 
 });
 
-function getDescription (identifier: any) {
+function getDescription(identifier: any) {
     console.log('description: ', identifier);
 }
 
@@ -252,5 +260,5 @@ console.log('searching');
 ssdp.search(upnpSearch); // Update after finding the ST
 
 setTimeout(function () {
-  ssdp.stop();
+    ssdp.stop();
 }, 5000);
