@@ -9,3 +9,5 @@ npm-debug.log
 #project specific
 /projects/droplit-edge/cache
 /projects/droplit-edge/plugins
+
+.vscode
