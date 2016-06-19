@@ -57,7 +57,7 @@ The response contains an array of supported flags indicating whether the operato
 
 ```
 {
-    supported: boolean[]
+    supported: boolean[];
 }
 ```
 
