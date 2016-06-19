@@ -56,7 +56,9 @@ The service may send updated device info to the edge
 The response contains an array of supported flags indicating whether the operatoin is supported by the plugin
 
 ```
-boolean[]
+{
+    supported: boolean[]
+}
 ```
 
 
@@ -106,7 +108,7 @@ Gets all the service property values if supported
 #### response:
 ```
 {
-    true
+    response: any;
 }
 ```
 
