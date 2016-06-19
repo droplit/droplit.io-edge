@@ -36,6 +36,7 @@
     "gulp-param": "^1.0.3",
     "gulp-plumber": "^1.1.0",
     "gulp-sequence": "^0.4.5",
+    "gulp-size": "^2.1.0",
     "gulp-sloc": "^1.0.4",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tslint": "^4.3.5",

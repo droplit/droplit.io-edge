@@ -77,8 +77,8 @@ Gets all the service property values if supported
 #### response:
 ```
 {
-    values: any[],
-    supported: boolean[]
+    values: any[];
+    supported: boolean[];
 }
 ```
 
@@ -89,11 +89,19 @@ Gets all the service property values if supported
     deviceId: string;
     service: string;
     index: string;
-    method: string;
+    member: string;
     value: any;
 }[]
 ```
 
+#### response:
+The response contains an array of supported flags indicating whether the operatoin is supported by the plugin
+
+```
+{
+    supported: boolean[];
+}
+```
 
 ### `device message` - send a raw message to a device
 
