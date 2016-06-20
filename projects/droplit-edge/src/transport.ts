@@ -50,6 +50,7 @@ export default class Transport extends EventEmitter {
     });
     private isOpen = false;
     private headers: {[key: string]: string} = undefined;
+    private connectedCallback: (connected: boolean) => void = undefined;
     
     // timeout
     private messageTimeout = 5000;
@@ -64,10 +65,11 @@ export default class Transport extends EventEmitter {
         this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
     
-    public start(settings: any, headers: {[key: string]: string}) {
+    public start(settings: any, headers: {[key: string]: string}, callback?: (connected: boolean) => void) {
         this.settings = settings;
         this.headers = headers;
         this.retryConnect();
+        this.connectedCallback = callback;
     }
 
     public stop() {
@@ -113,6 +115,10 @@ export default class Transport extends EventEmitter {
         this.sendBacklog();
         log('connected');
         this.emit('connected');
+        if (this.connectedCallback) {
+            this.connectedCallback(true);
+            this.connectedCallback = undefined;
+        }
     }
 
     private onMessage(data: any, flags: any) {
@@ -173,6 +179,10 @@ export default class Transport extends EventEmitter {
         this.isOpen = false;
         this.stopHeartbeat();
         this.connectOperation.retry(error);
+        if (this.connectedCallback) {
+            this.connectedCallback(false);
+            this.connectedCallback = undefined;
+        }
     }
     
     public send(message: string, data?: any, cb?: (err: Error) => void) {
