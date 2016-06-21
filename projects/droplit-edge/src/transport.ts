@@ -182,6 +182,7 @@ export default class Transport extends EventEmitter {
         if (this.connectedCallback) {
             this.connectedCallback(false);
             this.connectedCallback = undefined;
+            console.log(error);
         }
     }
     

@@ -11,6 +11,9 @@
         "typings/main.d.ts",
         "projects/{project}/src/**/*.ts"
     ],
+    "resources": [
+        "projects/{project}/src/**/*.!(ts)"
+    ],
     "dest": "projects/{project}/lib/",
     "resourceExtensions": [
         ".md",

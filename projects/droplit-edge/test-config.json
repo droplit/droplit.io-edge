@@ -4,6 +4,6 @@
         "host": "ws://127.0.0.1:3003/edge"
     },
     "loadTest": {
-        "numConnections": 2000
+        "numConnections":500
     }
 }

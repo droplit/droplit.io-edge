@@ -184,7 +184,9 @@ projectNames.forEach((project) => {
             tsResult.js
                 // .pipe(G$.sourcemaps.write()) // inline sourcemaps
                 .pipe(G$.sourcemaps.write('.')) // separate .js.map files
-                .pipe(gulp.dest(dest))
+                .pipe(gulp.dest(dest)),
+                // all other files
+                gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest))
         ]);
     });
 });
