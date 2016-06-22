@@ -14,26 +14,24 @@ function start() {
         // TODO: Count maximum supported connections
         let totalConnections = config.loadTest.numConnections;
         let count = 0;
-        for (let ii = 0; ii < config.loadTest.numConnections; ii++) {
+        for (let ii = 0; ii <= config.loadTest.numConnections; ii++) {
             console.log("Sent", ii);
             startConnection(edgeId, (connected) => {
                 count++;
                 console.log(connected);
-                if(connected){
+                if (connected) {
                     connections++;
                 }
                 console.log(ii);
-                if(count === config.loadTest.numConnections - 1) {
+                if (count === config.loadTest.numConnections - 1) {
                     console.log("count", count);
-                    console.log("connections", connections);
-                    
+                    console.log("Successful initial connections", connections);
                 }
             });
         }
     });
 
 }
-
 
 function startConnection(edgeId: string, callback: (connected: boolean) => void) {
     let transport = new Transport();
