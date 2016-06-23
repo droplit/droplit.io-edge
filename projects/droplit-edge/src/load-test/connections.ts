@@ -24,8 +24,8 @@ function start() {
                 }
                 console.log(ii);
                 if (count === config.loadTest.numConnections - 1) {
-                    console.log("count", count);
-                    console.log("Successful initial connections", connections);
+                    console.log("connections assigned", count);
+                    console.log("Successful connections", connections);
                 }
             });
         }

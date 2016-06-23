@@ -117,7 +117,8 @@ export default class Transport extends EventEmitter {
         this.emit('connected');
         if (this.connectedCallback) {
             this.connectedCallback(true);
-            this.connectedCallback = undefined;
+
+          this.connectedCallback = undefined;
         }
     }
 
@@ -175,14 +176,15 @@ export default class Transport extends EventEmitter {
     }
     
     private onError(error: any) {
-        // log('conn error', error.stack);
+        log('conn error', error.stack);
         this.isOpen = false;
         this.stopHeartbeat();
         this.connectOperation.retry(error);
         if (this.connectedCallback) {
             this.connectedCallback(false);
-            this.connectedCallback = undefined;
-            console.log(error);
+
+              this.connectedCallback = undefined;
+            // console.log(error);
         }
     }
     
