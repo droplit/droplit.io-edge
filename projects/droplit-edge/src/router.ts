@@ -46,7 +46,7 @@ if (settings.debug.generateHeapDump) {
     }
 }
 
-transport.on('connected', () => {
+transport.once('connected', () => {
     loadPlugins();
     discoverAll();
     if (settings.router.autodiscover)
