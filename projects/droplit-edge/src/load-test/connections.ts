@@ -14,18 +14,16 @@ function start() {
         // TODO: Count maximum supported connections
         let totalConnections = config.loadTest.numConnections;
         let count = 0;
-        for (let ii = 0; ii <= config.loadTest.numConnections; ii++) {
-            console.log("Sent", ii);
+        for (let ii = 0; ii <= config.loadTest.numConnections - 1; ii++) {
             startConnection(edgeId, (connected) => {
                 count++;
-                console.log(connected);
-                if (connected) {
-                    connections++;
-                }
+                if (connected)
+                connections++;
                 console.log(ii);
                 if (count === config.loadTest.numConnections - 1) {
                     console.log("connections assigned", count);
                     console.log("Successful connections", connections);
+
                 }
             });
         }
