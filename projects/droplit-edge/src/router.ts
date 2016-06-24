@@ -153,18 +153,17 @@ export function getProperties(commands: DeviceCommand[]): boolean[] {
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+
     log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
         log(`sectionResults:`, sectionResults);
 
-
-
         if (sectionResults) {
             // reorganize the results to the original sequence
             sectionResults.forEach((result, index) => {
-                let resultIndex = (<any>map[pluginName][index])._sequence;
+                let resultIndex = (<any>map)._sequence || 0;
                 results[resultIndex] = result;
             });
         }
@@ -266,6 +265,8 @@ function loadPlugin(pluginName: string) {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
         transport.sendRequest('device info', deviceInfo, (response, err) => {
+            if (!response)
+                return;
             let refreshedInfo: DP.DeviceInfo = JSON.parse(response);
             if (!response) {
                 log(`loadPlugin: device info: no device information returned in packet:`, err);
