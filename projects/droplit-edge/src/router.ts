@@ -31,10 +31,10 @@ let plugins = new Map();
 if (settings.debug.generateHeapDump) {
     const heapdump = require('heapdump');
     const heapInterval = 30 * 60 * 1000;
-    
+
     writeSnapshot.bind(this)();
     setInterval(writeSnapshot.bind(this), heapInterval);
-    
+
     function writeSnapshot() {
         heapdump.writeSnapshot(`droplit-${Date.now()}.heapsnapshot`, (err: any, filename: string) => {
             if (err) {
@@ -67,11 +67,11 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
-        data = [ data ];
+        data = [data];
 
     if (data)
         setProperties(data);
-        
+
     if (cb)
         cb(results);
 });
@@ -79,7 +79,7 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
-        data = [ data ];
+        data = [data];
 
     if (data)
         getProperties(data);
@@ -88,21 +88,21 @@ transport.on('#property get', (data: any, cb: (response: any) => void) => {
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
     // Wrap single method in an array
     if (!Array.isArray(data) && typeof data === 'object')
-        data = [ data ];
+        data = [data];
 
     if (data)
         callMethods(data);
-        
+
     if (cb)
         cb(true);
 });
 
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
-    
+
 // });
 
 // transport.on('#plugin setting', (data: any, cb: (response: any) => void) => {
-    
+
 // });
 
 
@@ -144,7 +144,7 @@ export function getProperties(commands: DeviceCommand[]): boolean[] {
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName], values => {
-            console.log('values', values);
+            // console.log('values', values);
         });
     });
     return results;
@@ -153,9 +153,14 @@ export function getProperties(commands: DeviceCommand[]): boolean[] {
 export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
+        log(`sectionResults:`, sectionResults);
+
+
+
         if (sectionResults) {
             // reorganize the results to the original sequence
             sectionResults.forEach((result, index) => {
@@ -164,6 +169,8 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
             });
         }
     });
+    log(`property set.. results`, results);
+
     return results;
 }
 
@@ -183,8 +190,8 @@ function discoverOne(pluginName: string) {
     plugins.get(pluginName).discover();
 }
 
-function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.DeviceServiceMember[]} {
-    let map: {[pluginName: string]: DP.DeviceServiceMember[]} = {};
+function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.DeviceServiceMember[] } {
+    let map: { [pluginName: string]: DP.DeviceServiceMember[] } = {};
     commands.forEach((command, index) => {
         (<any>command)._sequence = index; // preserve the original sequence number
         let pluginName = getPluginName(command);
@@ -192,14 +199,20 @@ function groupByPlugin(commands: DeviceCommand[]): {[pluginName: string]: DP.Dev
             map[pluginName] = map[pluginName] || [];
             map[pluginName].push(getServiceMember(command));
         }
+        log(`groupByPlugin:`, pluginName, `for command`, command);
     });
     return map;
 }
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
+    log(`getServiceMember: command`, command);
     let deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
+    log(`getServiceMember: deviceInfo`, deviceInfo);
+
+
     // HACK: Allows easier testing via wscat
     let localId = command.localId || deviceInfo.localId;
+    log(`getServiceMember: localinfo`, localId);
     return {
         localId: localId,
         address: deviceInfo ? deviceInfo.address : null,
@@ -212,41 +225,58 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 
 function getPluginName(command: DeviceCommand) {
     // HACK: Allows easier testing via wscat
-    let local = cache.getDeviceByLocalId(command.localId);
-    if (local)
-        return local.pluginName;
-        
-    let device = cache.getDeviceByDeviceId(command.deviceId);
-    if (device) 
-        return device.pluginName;
 
+    let local = cache.getDeviceByLocalId(command.localId);
+    if (local) {
+        log(`
+            found by local id`, local, `
+        `);
+        return local.pluginName;
+    }
+
+    let device = cache.getDeviceByDeviceId(command.deviceId);
+    if (device) {
+        log(`
+            found by device id`, device, `
+        `);
+        return device.pluginName;
+    }
+
+    log(`
+            didnt find anything :(
+        `);
     return null;
 }
 
 function loadPlugins() {
     log('load plugins');
-    // loadPlugin('droplit-plugin-lifx');
+    loadPlugin('droplit-plugin-lifx');
     // loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
     // loadPlugin('droplit-plugin-wemo');
-    loadPlugin('droplit-plugin-ts-example');
+    // loadPlugin('droplit-plugin-ts-example');
 }
 
 function loadPlugin(pluginName: string) {
     let p = plugin.instance(pluginName);
     if (!p)
         return;
-        
+
     p.on('device info', (deviceInfo: DP.DeviceInfo) => {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
-        transport.sendRequest('device info', deviceInfo, (response) => {
-            
+        transport.sendRequest('device info', deviceInfo, (response, err) => {
+            let refreshedInfo: DP.DeviceInfo = JSON.parse(response);
+            if (!response) {
+                log(`loadPlugin: device info: no device information returned in packet:`, err);
+                return;
+            }
+            cache.setDeviceInfo(refreshedInfo);
         });
     });
 
     p.on('property changed', (properties: DP.DeviceServiceMember[]) => {
-        transport.send('property changed', properties, err => {});
+        transport.send('property changed', properties, err => { });
     });
     plugins.set(pluginName, p);
 }
@@ -255,7 +285,7 @@ function startAutodiscover() {
     // Already auto-discovering
     if (autodiscoverTimer)
         return;
-        
+
     // First auto should be immediate
     discoverAll.bind(this)();
     autodiscoverTimer = setInterval(discoverAll.bind(this), AutoDiscoverCadence);

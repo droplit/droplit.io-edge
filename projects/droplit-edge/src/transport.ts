@@ -49,23 +49,23 @@ export default class Transport extends EventEmitter {
         forever: true
     });
     private isOpen = false;
-    private headers: {[key: string]: string} = undefined;
+    private headers: { [key: string]: string } = undefined;
     private connectedCallback: (connected: boolean) => void = undefined;
-    
+
     // timeout
     private messageTimeout = 5000;
     private messageTimer: NodeJS.Timer = undefined;
-    
+
     // request-response mapping
-    private responseMap: {[id: string]: (response: string, err?: Error) => void} = {};
+    private responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
 
     constructor() {
         super();
         EventEmitter.call(this);
         this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
-    
-    public start(settings: any, headers: {[key: string]: string}, callback?: (connected: boolean) => void) {
+
+    public start(settings: any, headers: { [key: string]: string }, callback?: (connected: boolean) => void) {
         this.settings = settings;
         this.headers = headers;
         this.retryConnect();
@@ -90,7 +90,7 @@ export default class Transport extends EventEmitter {
             if (callback) callback(success);
         });
     }
-    
+
     private restart(): boolean {
         try {
             this.ws = new WebSocket(this.settings.host, {
@@ -108,7 +108,7 @@ export default class Transport extends EventEmitter {
         }
         return false;
     }
-    
+
     private onOpen() {
         this.isOpen = true;
         this.startHeartbeat();
@@ -122,34 +122,39 @@ export default class Transport extends EventEmitter {
     }
 
     private onMessage(data: any, flags: any) {
-        log('message', data);
+        // log('onMessage: message', JSON.parse(data));
         let packet: any;
         try {
             packet = JSON.parse(data);
         } catch (err) {
-            log('message is not valid JSON');
+            log('onMessage: message is not valid JSON');
         }
         if (!packet)
             return;
-        
+
         if (packet.r === true) {
+            // log(`onMessage: request expecting a result`);
             // it's a request expecting a response
             this.emit('#' + packet.m, packet.d, (response: any): void => {
                 let responseMessageId = packet.i;
                 let responsePacket: any = { d: response, r: responseMessageId };
                 this._send(JSON.stringify(responsePacket));
             });
-        } else if (typeof(packet.r) === 'string') {
+        } else if (typeof (packet.r) === 'string') {
+            // log(`onMessage: response to request`);
             // it's the reponse to a request
             let cb = this.responseMap[packet.r];
             if (cb) {
-                cb(packet.d);
+                // log(`onMessage: callback found`);
+                cb(JSON.stringify(packet.d));
                 delete this.responseMap[packet.r];
             } else {
+                log(`onMessage: callback not found`);
                 // this shouldn't happen
                 log('unknown message response', packet);
             }
         } else {
+            // log(`onMessage: it's a normal message`);
             // it's a normal message
             this.emit('#' + packet.m, packet.d);
         }
@@ -173,7 +178,7 @@ export default class Transport extends EventEmitter {
     private onPong(data: any, flags: any) {
         log('pong');
     }
-    
+
     private onError(error: any) {
         // log('conn error', error.stack);
         this.isOpen = false;
@@ -185,12 +190,12 @@ export default class Transport extends EventEmitter {
             console.log(error);
         }
     }
-    
+
     public send(message: string, data?: any, cb?: (err: Error) => void) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId() };
         this._send(JSON.stringify(packet), cb);
     }
-    
+
     public sendReliable(message: string, data?: any) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId() };
         this._send(JSON.stringify(packet), (err) => {
@@ -199,7 +204,7 @@ export default class Transport extends EventEmitter {
             }
         });
     }
-    
+
     public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.responseMap[packet.i] = cb;
@@ -212,13 +217,13 @@ export default class Transport extends EventEmitter {
             }
         });
     }
-    
+
     private sendBuffer: any[] = [];
-    
+
     private queue(packet: any) {
         this.sendBuffer.push(packet);
     }
-    
+
     private peek(): any {
         if (this.sendBuffer.length > 0) {
             return this.sendBuffer[0];
@@ -226,20 +231,20 @@ export default class Transport extends EventEmitter {
             return undefined;
         }
     }
-    
+
     private canPeek(): boolean {
         return this.sendBuffer.length > 0;
     }
-    
+
     private queueAndPeek(packet: any): any {
         this.queue(packet);
         return this.sendBuffer[0];
     }
-    
+
     private dequeue(): any {
         return this.sendBuffer.shift();
     }
-    
+
     private _send(packet: any, cb?: (err: Error) => void) {
         if (this.ws) {
             try {
@@ -256,25 +261,25 @@ export default class Transport extends EventEmitter {
             cb(new Error('not connected'));
         }
     }
-    
+
     private sendBacklog() {
         async.whilst(this.canPeek.bind(this), (cb: (err: Error) => void) => {
             let nextPacket = this.peek();
             if (!nextPacket)
                 return;
-                
+
             this._send(nextPacket, err => {
                 if (!err)
                     this.dequeue();
                 cb(err);
             });
-        }, err => {});
+        }, err => { });
     }
-    
+
     // message callback expiration handler
-    
+
     private prevMessageId: number = undefined;
-    
+
     private digestCycle() {
         // cleanup the second-to-last cycle
         let messageIds = Object.keys(this.responseMap);
@@ -320,7 +325,7 @@ export default class Transport extends EventEmitter {
         // shift the ids down, store the current id for the next cycle
         this.prevMessageId = this.messageIdSeed;
     }
-    
+
     private heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
@@ -332,9 +337,9 @@ export default class Transport extends EventEmitter {
 
     private getNextMessageId() {
         if (this.messageIdSeed === (<any>Number).MAX_SAFE_INTEGER) this.messageIdSeed = 0;
-        return ++ this.messageIdSeed;
+        return ++this.messageIdSeed;
     }
-    
+
     // Heartbeat
 
     private heartbeatInterval = 1000;
@@ -344,7 +349,7 @@ export default class Transport extends EventEmitter {
         this.stopHeartbeat();
         if (this.settings.hasOwnProperty('enableHeartbeat') && !this.settings.enableHeartbeat)
             return;
-            
+
         this.heartbeatTimer = setInterval(<() => void>(this.performHeartbeat.bind(this)), this.heartbeatInterval);
     }
 
