@@ -70,7 +70,7 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
         data = [data];
 
     if (data)
-        setProperties(data);
+        results = setProperties(data);
 
     if (cb)
         cb(results);
@@ -144,7 +144,7 @@ export function getProperties(commands: DeviceCommand[]): boolean[] {
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName], values => {
-            // console.log('values', values);
+            console.log('values', values);
         });
     });
     return results;
@@ -154,11 +154,12 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
 
-    log(`setProperties: mapped:`, map);
+
+    // log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
-        log(`sectionResults:`, sectionResults);
+        // log(`sectionResults:`, sectionResults);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
@@ -168,8 +169,6 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
             });
         }
     });
-    log(`property set.. results`, results);
-
     return results;
 }
 
@@ -198,20 +197,18 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
             map[pluginName] = map[pluginName] || [];
             map[pluginName].push(getServiceMember(command));
         }
-        log(`groupByPlugin:`, pluginName, `for command`, command);
+        // log(`groupByPlugin:`, pluginName, `for command`, command);
     });
     return map;
 }
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
-    log(`getServiceMember: command`, command);
+    // log(`getServiceMember: command`, command);
     let deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
-    log(`getServiceMember: deviceInfo`, deviceInfo);
-
-
+    // log(`getServiceMember: deviceInfo`, deviceInfo);
     // HACK: Allows easier testing via wscat
     let localId = command.localId || deviceInfo.localId;
-    log(`getServiceMember: localinfo`, localId);
+    // log(`getServiceMember: localinfo`, localId);
     return {
         localId: localId,
         address: deviceInfo ? deviceInfo.address : null,
@@ -224,26 +221,16 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 
 function getPluginName(command: DeviceCommand) {
     // HACK: Allows easier testing via wscat
-
     let local = cache.getDeviceByLocalId(command.localId);
     if (local) {
-        log(`
-            found by local id`, local, `
-        `);
         return local.pluginName;
     }
 
     let device = cache.getDeviceByDeviceId(command.deviceId);
     if (device) {
-        log(`
-            found by device id`, device, `
-        `);
         return device.pluginName;
     }
 
-    log(`
-            didnt find anything :(
-        `);
     return null;
 }
 
@@ -253,7 +240,10 @@ function loadPlugins() {
     // loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
     // loadPlugin('droplit-plugin-wemo');
-    // loadPlugin('droplit-plugin-ts-example');
+    loadPlugin('droplit-plugin-ts-example');
+
+
+
 }
 
 function loadPlugin(pluginName: string) {
