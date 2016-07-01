@@ -314,9 +314,9 @@ export abstract class DroplitPlugin extends EventEmitter {
     }
     
     protected getFunction(obj: any, path: string): () => void {
-        return path.split('.').reduce(function(o, x) {
-            return (typeof o === undefined || o === null) ? o : o[x];
-        }, obj);
+        return path.split('.').reduce((o, x) =>
+            (typeof o === undefined || o === null) ? o : o.hasOwnProperty(x) ? o[x] : null
+        , obj);
     }
     // reference: http://stackoverflow.com/questions/23808928/javascript-elegant-way-to-check-nested-object-properties-for-null-undefined
     
