@@ -1,7 +1,6 @@
 {
     "transport": {
-        "host1": "ws://load-ws-droplit-io.azurewebsites.net/edge",
-        "host": "ws://127.0.0.1:3003/edge"
+        "host": "ws://load-ws-droplit-io.azurewebsites.net/edge"
     },
     "router": {
         "autodiscover": true
