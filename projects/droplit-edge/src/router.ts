@@ -240,6 +240,7 @@ function loadPlugins() {
     // loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
     // loadPlugin('droplit-plugin-wemo');
+    // loadPlugin('droplit-plugin-voyager');
     loadPlugin('droplit-plugin-ts-example');
 
 
