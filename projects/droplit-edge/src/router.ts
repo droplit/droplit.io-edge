@@ -214,8 +214,9 @@ function loadPlugins() {
     log('load plugins');
     // loadPlugin('droplit-plugin-lifx');
     // loadPlugin('droplit-plugin-philips-hue');
-    loadPlugin('droplit-plugin-wemo');
-    // loadPlugin('droplit-plugin-ts-example');
+    // loadPlugin('droplit-plugin-wemo');
+    // loadPlugin('droplit-plugin-voyager');
+    loadPlugin('droplit-plugin-ts-example');
 }
 
 function loadPlugin(pluginName: string) {
