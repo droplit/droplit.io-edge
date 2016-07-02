@@ -184,7 +184,9 @@ projectNames.forEach((project) => {
             tsResult.js
                 // .pipe(G$.sourcemaps.write()) // inline sourcemaps
                 .pipe(G$.sourcemaps.write('.')) // separate .js.map files
-                .pipe(gulp.dest(dest))
+                .pipe(gulp.dest(dest)),
+                // all other files
+                gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest))
         ]);
     });
 });
@@ -219,15 +221,30 @@ gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.c
 });
 
 gulp.task('stats', 'Get lines of code', function(project) {
-    console.log(project);
-    if (project) {
-        console.log('Source Lines of Code:', chalk.green(project));
-        gulp.src(mapPaths(settings.sloc_project, project)).pipe(G$.sloc({tolerant:true}));
-    } else {
-        console.log('Source Lines of Code:' + chalk.white('ALL'));
-        gulp.src(settings.sloc_all).pipe(G$.sloc({tolerant:true}));
-    }
-}, {
+        console.log(project);
+        if (project) {
+            console.log('Source Lines of Code:', chalk.green(project));
+            gulp.src(mapPaths(settings.sloc_project, project)).pipe(G$.sloc({tolerant:true}));
+        } else {
+            console.log('Source Lines of Code:' + chalk.white('ALL'));
+            gulp.src(settings.sloc_all).pipe(G$.sloc({tolerant:true}));
+        }
+    }, {
+        options: {
+            'project': "Project name: " + chalk.green(projectNames.join(chalk.white(', ')))
+        }
+});
+
+gulp.task('size', 'Get size of code', function(project) {
+        console.log(project);
+        if (project) {
+            console.log('Source Lines of Code:', chalk.green(project));
+            gulp.src(mapPaths(settings.runtimeFiles, project)).pipe(G$.size({showFiles: true}));
+        } else {
+            console.log('Source Lines of Code:' + chalk.white('ALL'));
+            gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({showFiles: true}));
+        }
+    }, {
         options: {
             'project': "Project name: " + chalk.green(projectNames.join(chalk.white(', ')))
         }
