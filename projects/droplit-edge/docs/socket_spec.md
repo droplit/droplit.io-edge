@@ -53,7 +53,7 @@ The service may send updated device info to the edge
 ```
 
 #### response:
-The response contains an array of supported flags indicating whether the operatoin is supported by the plugin
+The response contains an array of supported flags indicating whether the operation is supported by the plugin
 
 ```
 {
@@ -95,7 +95,7 @@ Gets all the service property values if supported
 ```
 
 #### response:
-The response contains an array of supported flags indicating whether the operatoin is supported by the plugin
+The response contains an array of supported flags indicating whether the operation is supported by the plugin
 
 ```
 {
@@ -213,23 +213,25 @@ The service responds with the current device info including the system assigned 
 `property changed`
 ```
 {
-    deviceId: string;
+    pluginName: string;
+    localId: string;
     service: string;
     index: string;
-    property: string;
+    member: string;
     value: any;
-}
+}[]
 ```
 
 `event raised`
 ```
 {
-    deviceId: string;
+    pluginName: string;
+    localId: string;
     service: string;
     index: string;
-    event: string;
+    member: string;
     value: any;
-}
+}[]
 ```
 
 `log info`
