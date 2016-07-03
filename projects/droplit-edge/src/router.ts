@@ -22,6 +22,12 @@ const AutoDiscoverDelay = 2 * 60 * 1000;
 const AutoDiscoverCadence = 60000;
 
 let settings = require('../settings.json');
+let localSettings = require('../localsettings.json');
+// overwrite settings with local settings
+Object.keys(localSettings).forEach((key) => {
+    settings[key] = localSettings[key];
+});
+
 let autodiscoverTimer: number;
 let transport = new Transport();
 
@@ -277,9 +283,8 @@ function getEdgeId(callback: (edgeId: string) => void) {
 }
 
 getEdgeId((edgeId) => {
-    let localSettings = require('../localsettings.json');
     transport.start(settings.transport, {
         "x-edge-id": edgeId,
-        "x-ecosystem-id": localSettings.ecosystemId
+        "x-ecosystem-id": settings.ecosystemId // requires ecosystemId to be set in localsettings.json
     });
 });
