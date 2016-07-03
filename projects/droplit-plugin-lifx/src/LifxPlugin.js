@@ -354,6 +354,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             this.switchOff(localId);
         else if (value === 'on')
             this.switchOn(localId);
+        return true;
     }
     
     switchOff(localId) {
@@ -385,6 +386,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let brightness = normalize(value, 0, 100, 0xFFFF);
             this.setColor(bulb.address, state.hue, state.saturation, brightness, state.kelvin);
         }
+        return true;
     }
     
     stepDown(localId) {
@@ -466,6 +468,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let state = bulb.state;
             this.setColor(bulb.address, value, state.saturation, state.brightness, state.kelvin);
         }
+        return true;
     }
     
     setMclBrightness(localId, value) {
@@ -474,6 +477,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let state = bulb.state;
             this.setColor(bulb.address, state.hue, state.saturation, value, state.kelvin);
         }
+        return true;
     }
     
     setSaturation(localId, value) {
@@ -482,6 +486,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let state = bulb.state;
             this.setColor(bulb.address, state.hue, value, state.brightness, state.kelvin);
         }
+        return true;
     }
     
     setTemperature(localId, value) {
@@ -491,6 +496,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             let brightness = normalize(value, 0, 100, 0xFFFF);
             this.setColor(bulb.address, state.hue, state.saturation, state.brightness, value);
         }
+        return true;
     }
 }
 

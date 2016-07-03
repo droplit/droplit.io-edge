@@ -7,7 +7,8 @@
             "droplit-plugin-sonos",
             "droplit-plugin-wemo",
             "droplit-plugin-js-example",
-            "droplit-plugin-ts-example"
+            "droplit-plugin-ts-example",
+            "droplit-plugin-voyager"
         ]
     },
     "droplit-plugin": {},
@@ -27,6 +28,9 @@
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-ts-example": {
+        "dependencies": [ "droplit-plugin" ]
+    },
+    "droplit-plugin-voyager": {
         "dependencies": [ "droplit-plugin" ]
     }
 }
