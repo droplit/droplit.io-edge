@@ -1,0 +1,6 @@
+{
+    "transport": {
+        "host": "wss://ws.droplit.io/edge"
+    },
+    "ecosystemId": ""
+}
