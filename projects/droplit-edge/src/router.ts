@@ -162,13 +162,13 @@ export function getProperties(commands: DeviceCommand[]): Promise<{ supported: b
     return new Promise<{ supported: boolean[], values: DP.DeviceServiceMember[] }>((resolve, reject) => {
 
         // If the device information does not return in the alloted time, return what we have with an error
-        let err: Error = {
+        let failedMessageError: Error = {
             message: `The request could not be fufilled or fully fufilled.
                 Command information:` + JSON.stringify(map) +
                 `Current results:` + JSON.stringify(results),
             name: `Device Property Get`,
         };
-        let timer = setTimeout(() => sendResponse(err), GET_PROPERTY_TIMEOUT);
+        let timer = setTimeout(() => sendResponse(failedMessageError), GET_PROPERTY_TIMEOUT);
 
         // Go through each mapped command and get the results
         async.each(Object.keys(map), (pluginName: string, cb: () => void) => {
