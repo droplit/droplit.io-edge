@@ -2,5 +2,8 @@
     "transport": {
         "host": "wss://ws.droplit.io/edge"
     },
-    "ecosystemId": ""
+    "ecosystemId": "",
+    "plugins": [
+        "droplit-plugin-ts-example"
+    ]
 }

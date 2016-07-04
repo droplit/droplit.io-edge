@@ -1,16 +1,4 @@
 {
-    "droplit-edge": {
-        "dependencies": [
-            "droplit-plugin",
-            "droplit-plugin-lifx",
-            "droplit-plugin-philips-hue",
-            "droplit-plugin-sonos",
-            "droplit-plugin-wemo",
-            "droplit-plugin-js-example",
-            "droplit-plugin-ts-example",
-            "droplit-plugin-voyager"
-        ]
-    },
     "droplit-plugin": {},
     "droplit-plugin-lifx": {
         "dependencies": [ "droplit-plugin" ]
@@ -32,5 +20,22 @@
     },
     "droplit-plugin-voyager": {
         "dependencies": [ "droplit-plugin" ]
+    },
+    "droplit-edge": {
+        "dependencies": [
+            "droplit-plugin",
+            "droplit-plugin-lifx",
+            "droplit-plugin-philips-hue",
+            "droplit-plugin-sonos",
+            "droplit-plugin-wemo",
+            "droplit-plugin-js-example",
+            "droplit-plugin-ts-example",
+            "droplit-plugin-voyager"
+        ]
+    },
+    "load-test": {
+        "dependencies": [
+            "droplit-edge"
+        ]
     }
 }
