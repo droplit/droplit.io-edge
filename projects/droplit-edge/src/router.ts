@@ -164,8 +164,8 @@ export function getProperties(commands: DeviceCommand[]): Promise<{ supported: b
         // If the device information does not return in the alloted time, return what we have with an error
         let err: Error = {
             message: `The request could not be fufilled or fully fufilled.
-                Command information:` + map +
-                `Current results:` + results,
+                Command information:` + JSON.stringify(map) +
+                `Current results:` + JSON.stringify(results),
             name: `Device Property Get`,
         };
         let timer = setTimeout(() => sendResponse(err), GET_PROPERTY_TIMEOUT);
