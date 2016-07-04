@@ -3,8 +3,8 @@ import Transport from './transport';
 import * as plugin from './plugin';
 import * as DP from 'droplit-plugin';
 import * as debug from 'debug';
+import * as async from 'async';
 import {DeviceInfo} from './types/DeviceInfo';
-
 let log = debug('droplit:router');
 
 export interface DeviceCommand {
@@ -85,17 +85,16 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 });
 
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
-    let results: boolean[] = [];
 
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
 
-    if (data)
-        results = getProperties(data);
+    if (data && cb)
+        getProperties(data).then(results => {
+            cb(results);
+        });
 
-    if (cb)
-        cb(results);
 });
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
@@ -151,14 +150,55 @@ export function dropDevice(commands: DeviceCommand[]) {
     });
 }
 
-export function getProperties(commands: DeviceCommand[]): boolean[] {
-    let map = groupByPlugin(commands);
-    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
-    Object.keys(map).forEach(pluginName => {
-        // send commands to plugin
-        let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName];
+export function getProperties(commands: DeviceCommand[]): Promise<{ supported: boolean[], values: DP.DeviceServiceMember[] }> {
+    let GET_PROPERTY_TIMEOUT = 3000;
+    let map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
+    let results: { supported: boolean[], values: DP.DeviceServiceMember[] } = {
+        supported: Array.apply(null, Array(commands.length)), // init all values to undefined
+        values: Array.apply(null, Array(commands.length)) // init all values to undefined
+    };
+
+    // assuming openFiles is an array of file names
+    return new Promise<{ supported: boolean[], values: DP.DeviceServiceMember[] }>((resolve, reject) => {
+
+        // If the device information does not return in the alloted time, return what we have with an error
+        let err: Error = {
+            message: `The request could not be fufilled or fully fufilled.
+                Command information:` + map +
+                `Current results:` + results,
+            name: `Device Property Get`,
+        };
+        let timer = setTimeout(() => sendResponse(err), GET_PROPERTY_TIMEOUT);
+
+        // Go through each mapped command and get the results
+        async.each(Object.keys(map), (pluginName: string, cb: () => void) => {
+            let sectionValues: DP.DeviceServiceMember[];
+            let sectionSupported = plugin.instance(pluginName).getProperties(map[pluginName], values => {
+                sectionValues = values;
+                if (sectionValues) {
+                    sectionValues.forEach((result, index) => {
+                        let resultIndex = (<any>map)._sequence || 0;
+                        results.values[resultIndex] = result;
+                    });
+                }; cb();
+            });
+            if (sectionSupported) {
+                sectionSupported.forEach((result, index) => {
+                    let resultIndex = (<any>map)._sequence || 0;
+                    results.supported[resultIndex] = result;
+                });
+            }
+        }, sendResponse);
+
+        // finally, send a response 
+        function sendResponse(err: Error) {
+            clearTimeout(timer);
+            if (err)
+                log(err);
+
+            resolve(results);
+        }
     });
-    return results;
 }
 
 export function setProperties(commands: DeviceCommand[]): boolean[] {
