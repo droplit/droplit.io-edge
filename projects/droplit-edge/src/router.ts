@@ -85,12 +85,17 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 });
 
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
+    let results: boolean[] = [];
+
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
 
     if (data)
-        getProperties(data);
+        results = getProperties(data);
+
+    if (cb)
+        cb(results);
 });
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
@@ -151,9 +156,7 @@ export function getProperties(commands: DeviceCommand[]): boolean[] {
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
-        let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName], values => {
-            console.log('values', values);
-        });
+        let sectionResults = plugin.instance(pluginName).getProperties(map[pluginName];
     });
     return results;
 }
