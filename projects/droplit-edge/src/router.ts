@@ -71,6 +71,8 @@ transport.on('#drop', (data: any) => {
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
     let results: boolean[] = [];
 
+    // console.log(`property set:`, data);
+
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
@@ -160,12 +162,11 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
     let map = groupByPlugin(commands);
     let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
 
-
     // log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
-        // log(`sectionResults:`, sectionResults);
+        // log(`plugin:`, pluginName, map[pluginName]);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
@@ -273,7 +274,16 @@ function loadPlugin(pluginName: string) {
         });
     });
 
-    p.on('property changed', (properties: DP.DeviceServiceMember[]) => {
+    // DP.DeviceServiceMember[]
+    p.on('property changed', (properties: any[]) => {
+        properties.reduce((p, c, i, a) => {
+            let d: any = cache.getDeviceByLocalId(c.localId);
+            if (d.pluginName) {
+                c.pluginName = d.pluginName;
+            }
+            return p.concat([c]);
+        }, []);
+        // console.log(`property changed: `, properties);
         transport.send('property changed', properties, err => { });
     });
     plugins.set(pluginName, p);
