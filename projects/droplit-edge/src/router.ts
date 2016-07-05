@@ -5,6 +5,9 @@ import * as DP from 'droplit-plugin';
 import * as debug from 'debug';
 import * as async from 'async';
 import {DeviceInfo} from './types/DeviceInfo';
+
+export {Transport};
+
 let log = debug('droplit:router');
 
 export interface DeviceCommand {

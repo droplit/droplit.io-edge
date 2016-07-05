@@ -1,0 +1,34 @@
+{
+  "name": "load-test",
+  "description": "Instant Cloud Control for smart devices",
+  "author": "Droplit, Inc.",
+  "engines": {
+    "node": ">=4.2.6"
+  },
+  "version": "2.0.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Bryan Jenks",
+      "email": "bryan@droplit.io"
+    },
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
+    },
+    {
+      "name": "Chris Woodle",
+      "email": "chris@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "scripts": {
+    "start": "sudo node index.js",
+    "debug": "sudo DEBUG=droplit,droplit:* node index.js"
+  },
+  "dependencies": {
+    "debug": "^2.2.0"
+  },
+  "devDependencies": {
+  }
+}
