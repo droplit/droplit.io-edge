@@ -16,6 +16,11 @@ export interface DeviceCommand {
     value?: any;
 }
 
+
+export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
+export interface SetPropertiesResponse { supported: boolean[]; }
+export interface CallMethodResponse { supported: boolean[]; }
+
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
 // Amount of time (ms) between discovery attempts
@@ -69,10 +74,7 @@ transport.on('#drop', (data: any) => {
 });
 
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
-    let results: boolean[] = [];
-
-    // console.log(`property set:`, data);
-
+    let results: SetPropertiesResponse;
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
@@ -91,7 +93,7 @@ transport.on('#property get', (data: any, cb: (response: any) => void) => {
         data = [data];
 
     if (data && cb)
-        getProperties(data).then(results => {
+        getProperties(data).then((results: GetPropertiesResponse) => {
             cb(results);
         });
 
@@ -99,14 +101,15 @@ transport.on('#property get', (data: any, cb: (response: any) => void) => {
 
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
     // Wrap single method in an array
+    let results: CallMethodResponse;
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
 
     if (data)
-        callMethods(data);
+        results = callMethods(data);
 
     if (cb)
-        cb(true);
+        cb(results);
 });
 
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
@@ -118,13 +121,16 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
 // });
 
 
-export function callMethods(commands: DeviceCommand[]): void {
+export function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     let map = groupByPlugin(commands);
-    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    let results: CallMethodResponse = {
+        supported: Array.apply(null, Array(commands.length)) // init all values to undefined
+    };
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
-        plugin.instance(pluginName).callMethods(map[pluginName]);
+        results.supported = plugin.instance(pluginName).callMethods(map[pluginName]);
     });
+    return results;
 }
 
 /**
@@ -150,22 +156,22 @@ export function dropDevice(commands: DeviceCommand[]) {
     });
 }
 
-export function getProperties(commands: DeviceCommand[]): Promise<{ supported: boolean[], values: DP.DeviceServiceMember[] }> {
+export function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse> {
     let GET_PROPERTY_TIMEOUT = 3000;
     let map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
-    let results: { supported: boolean[], values: DP.DeviceServiceMember[] } = {
+    let results: GetPropertiesResponse = {
         supported: Array.apply(null, Array(commands.length)), // init all values to undefined
         values: Array.apply(null, Array(commands.length)) // init all values to undefined
     };
 
     // assuming openFiles is an array of file names
-    return new Promise<{ supported: boolean[], values: DP.DeviceServiceMember[] }>((resolve, reject) => {
+    return new Promise<GetPropertiesResponse>((resolve, reject) => {
 
         // If the device information does not return in the alloted time, return what we have with an error
         let failedMessageError: Error = {
             message: `The request could not be fufilled or fully fufilled.
                 Command information:` + JSON.stringify(map) +
-                `Current results:` + JSON.stringify(results),
+            `Current results:` + JSON.stringify(results),
             name: `Device Property Get`,
         };
         let timer = setTimeout(() => sendResponse(failedMessageError), GET_PROPERTY_TIMEOUT);
@@ -195,15 +201,16 @@ export function getProperties(commands: DeviceCommand[]): Promise<{ supported: b
             clearTimeout(timer);
             if (err)
                 log(err);
-
             resolve(results);
         }
     });
 }
 
-export function setProperties(commands: DeviceCommand[]): boolean[] {
+export function setProperties(commands: DeviceCommand[]): SetPropertiesResponse {
     let map = groupByPlugin(commands);
-    let results: boolean[] = Array.apply(null, Array(commands.length)); // init all values to undefined
+    let results: SetPropertiesResponse = {
+        supported: Array.apply(null, Array(commands.length))
+    };
 
     // log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
@@ -215,7 +222,7 @@ export function setProperties(commands: DeviceCommand[]): boolean[] {
             // reorganize the results to the original sequence
             sectionResults.forEach((result, index) => {
                 let resultIndex = (<any>map)._sequence || 0;
-                results[resultIndex] = result;
+                results.supported[resultIndex] = result;
             });
         }
     });

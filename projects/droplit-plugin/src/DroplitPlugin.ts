@@ -47,15 +47,15 @@ export interface DeviceInfo {
 }
 
 export abstract class DroplitPlugin extends EventEmitter {
-    
-    
+
+
     /**
      * discover all devices
      * 
      * @abstract
      */
     public abstract discover(): void
-    
+
     /**
      * Start tracking the specified device
      * 
@@ -65,7 +65,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     public connect(localId: string): boolean {
         return false;
     }
-    
+
     /**
      * Stop tracking the specified device
      * 
@@ -75,7 +75,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     public disconnect(localId: string): boolean {
         return false;
     }
-    
+
     /**
      * Device message from upstream
      * 
@@ -86,7 +86,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     public deviceMessage(localId: string, data: any, callback?: (response: any) => void): boolean {
         return false;
     }
-    
+
     /**
      * callMethod - Call a service method
      * 
@@ -100,18 +100,21 @@ export abstract class DroplitPlugin extends EventEmitter {
          */
         // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array'); 
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
-        let params = method.value || [];
+        let params = method.value ? Array.isArray(method.value) ? method.value : [method.value] : [];
+        // console.log(`method`, method, `mval`, method.value, `params`, params);
         params.unshift(method.localId);
         let methodImplementation = this.getServiceMember(method.service, method.member);
         if (methodImplementation) {
             let isSupported = methodImplementation.apply(this, params);
+            // console.log('method is supported', isSupported, params);
             return this.getMethodStatus(isSupported);
         } else {
+            // console.log('method not implemented');
             // method not implemented
             return false;
         }
     }
-    
+
     /**
      * callMethods - Call multiple service methods
      * 
@@ -121,7 +124,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     public callMethods(methods: DeviceServiceMember[]): boolean[] {
         return methods.map(method => this.callMethod(method));
     }
-    
+
     /**
      * getProperty - Get a service property value
      * 
@@ -146,7 +149,7 @@ export abstract class DroplitPlugin extends EventEmitter {
             return false;
         }
     }
-    
+
     /**
      * setProperty - Set a service propery value
      * 
@@ -170,7 +173,7 @@ export abstract class DroplitPlugin extends EventEmitter {
             return false;
         }
     }
-    
+
     /**
      * getProperties - Gets multiple service property values
      * Override this method if you need to handle multiple properties in a single callback
@@ -201,7 +204,7 @@ export abstract class DroplitPlugin extends EventEmitter {
             return this.getProperty(property, cb);
         });
     }
-    
+
     /**
      * setProperties - Sets multiple service property values
      * 
@@ -211,7 +214,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     public setProperties(properties: DeviceServiceMember[]): boolean[] {
         return properties.map(property => this.setProperty(property));
     }
-    
+
     /**
      * dropDevice - clear device information from memory, disconnect
      * 
@@ -219,47 +222,47 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @param {string} idenrifier (description)
      */
     public abstract dropDevice(localId: string): boolean
-    
+
     /**
      * log - Write to the log
      * 
      * @protected
      * @param {...any[]} args (description)
      */
-    protected log(... args: any[]): void {
+    protected log(...args: any[]): void {
         this.emit('log info', args);
     }
-    
+
     /**
      * logError - Write error information to thr log
      * 
      * @protected
      * @param {...any[]} args (description)
      */
-    protected logError(... args: any[]): void {
+    protected logError(...args: any[]): void {
         this.emit('log error', args);
     }
-    
+
     /**
      * Settings
      */
-    
+
     protected writeSetting(key: string, value: any) {
         this.emit('plugin setting', key, value);
     }
-    
+
     protected readSetting(key: string, callback: (value: any) => void) {
-        
+
     }
-    
+
     protected listSettings(callback: (keys: string[]) => {}) {
-        
+
     }
-    
+
     /**
      * Events
      */
-    
+
     /**
      * onDeviceUpdate - Raises an event indicating that the device details have changed or a new device has been discovered
      * 
@@ -269,7 +272,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     protected onDeviceInfo(deviceInfo: DeviceInfo) {
         this.emit('device info', deviceInfo);
     }
-    
+
     /**
      * onDiscoverComplete - Raises an event indicting that the device discovery cycle has completed
      * 
@@ -278,7 +281,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     protected onDiscoverComplete() {
         this.emit('discover complete');
     }
-    
+
     /**
      * onPropertiesChanged - Raises an event indicating that device properties have changed state
      * 
@@ -288,7 +291,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     protected onPropertiesChanged(properties: DeviceServiceMember[]) {
         this.emit('property changed', properties);
     }
-    
+
     /**
      * onEvents - Raises an event indicating that devices have raised events
      * 
@@ -298,28 +301,28 @@ export abstract class DroplitPlugin extends EventEmitter {
     protected onEvents(events: DeviceServiceMember[]) {
         this.emit('event raised', events);
     }
-    
+
     /**
      * Helper methods
      * Internal use only to support service member routing
      */
-    
+
     protected getServiceSelector(member: DeviceServiceMember): string {
         return `${member.localId}/${member.service}${member.index ? `[${member.index}]` : ''}.${member.member}`;
     }
-    
+
     protected getServiceMember(service: string, member: string): () => void {
         let methodFunc = this.getFunction(this, `services.${service}.${member}`);
         return methodFunc;
     }
-    
+
     protected getFunction(obj: any, path: string): () => void {
         return path.split('.').reduce((o, x) =>
             (typeof o === undefined || o === null) ? o : o.hasOwnProperty(x) ? o[x] : null
-        , obj);
+            , obj);
     }
     // reference: http://stackoverflow.com/questions/23808928/javascript-elegant-way-to-check-nested-object-properties-for-null-undefined
-    
+
     protected getMethodStatus(isSupported: boolean) {
         if (isSupported === null || isSupported === undefined) {
             return true;
@@ -327,7 +330,7 @@ export abstract class DroplitPlugin extends EventEmitter {
             return isSupported;
         }
     }
-    
+
     /**
      * Service Method Handler Function
      * 
