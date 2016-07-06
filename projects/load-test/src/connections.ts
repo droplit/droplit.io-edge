@@ -1,4 +1,4 @@
-import * as router from 'droplit-edge';
+import * as router from '../../droplit-edge';
 import * as debug from 'debug';
 
 let localSettings = require('../../localsettings.json');

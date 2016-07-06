@@ -1,4 +1,4 @@
-import * as droplit from 'droplit-plugin';
+import * as droplit from '../../droplit-plugin';
 import {Discoverer} from './Discoverer';
 import {VoyagerClient} from './VoyagerClient';
 
