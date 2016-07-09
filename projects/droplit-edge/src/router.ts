@@ -368,15 +368,15 @@ function loadPlugin(pluginName: string) {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('log info', (events: EventRaised[]) => {
+    p.on('log info', (events: LogInfo[]) => {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('log error', (events: EventRaised[]) => {
+    p.on('log error', (events: LogError[]) => {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('plugin data', (events: EventRaised[]) => {
+    p.on('plugin data', (events: PluginData[]) => {
         transport.send('event raised', events, err => { });
     });
 
