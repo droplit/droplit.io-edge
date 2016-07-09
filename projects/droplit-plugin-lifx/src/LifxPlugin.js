@@ -309,8 +309,10 @@ class LifxPlugin extends droplit.DroplitPlugin {
         
         // Add sequence to all outbound packets
         let sequenceId = this.sequencer++;
-        if (sequenceId === 0xFF)
-            this.sequencer = 1;             
+        if (sequenceId === 0xFF) {
+            this.sequencer = 1;
+            sequenceId = 1;
+        }             
         packet[23] = sequenceId;
         
         // If packet type is in map, we want to do something special with the response that has the same sequence id
