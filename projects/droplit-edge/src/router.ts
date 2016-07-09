@@ -4,22 +4,17 @@ import * as plugin from './plugin';
 import * as DP from 'droplit-plugin';
 import * as debug from 'debug';
 import * as async from 'async';
-import {DeviceInfo} from './types/DeviceInfo';
-
-export {Transport};
-
+import {DeviceInfo} from './types/types';
+import {DeviceCommand} from './types/types';
+import {PropertyChanged} from './types/types';
+import {EventRaised} from './types/types';
+import {LogInfo} from './types/types';
+import {LogError} from './types/types';
+import {DiscoverComplete} from './types/types';
+import {PluginData} from './types/types';
 let log = debug('droplit:router');
 
-export interface DeviceCommand {
-    deviceId: string;
-    localId?: string;
-    service: string;
-    index: string;
-    member: string;
-    value?: any;
-}
-
-
+export {Transport};
 export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface SetPropertiesResponse { supported: boolean[]; }
 export interface CallMethodResponse { supported: boolean[]; }
@@ -69,7 +64,9 @@ transport.once('connected', () => {
 
 transport.on('disconnected', () => { });
 
-transport.on('#discover', (data: any) => { });
+transport.on('#discover', (data: any) => {
+    console.log('did we discover something?', data);
+});
 
 transport.on('#drop', (data: any) => {
     if (data)
@@ -312,7 +309,7 @@ function loadPlugin(pluginName: string) {
     if (!p)
         return;
 
-    p.on('device info', (deviceInfo: DP.DeviceInfo) => {
+    p.on('device info', (deviceInfo: DeviceInfo) => {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
         transport.sendRequest('device info', deviceInfo, (response, err) => {
@@ -336,9 +333,31 @@ function loadPlugin(pluginName: string) {
             }
             return p.concat([c]);
         }, []);
-        // console.log(`property changed: `, properties);
         transport.send('property changed', properties, err => { });
     });
+
+
+    p.on('discover complete', (devices: DeviceInfo[]) => {
+        transport.send('discover complete', devices, err => { });
+    });
+
+    p.on('event raised', (events: EventRaised[]) => {
+        transport.send('event raised', events, err => { });
+    });
+
+    p.on('log info', (events: EventRaised[]) => {
+        transport.send('event raised', events, err => { });
+    });
+
+    p.on('log error', (events: EventRaised[]) => {
+        transport.send('event raised', events, err => { });
+    });
+    
+    p.on('plugin data', (events: EventRaised[]) => {
+        transport.send('event raised', events, err => { });
+    });
+
+
     plugins.set(pluginName, p);
 }
 
