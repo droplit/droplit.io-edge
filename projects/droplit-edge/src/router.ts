@@ -6,18 +6,19 @@ import * as debug from 'debug';
 import * as async from 'async';
 import {DeviceInfo} from './types/types';
 import {DeviceCommand} from './types/types';
+import {DeviceMessage} from './types/types';
 import {PropertyChanged} from './types/types';
 import {EventRaised} from './types/types';
 import {LogInfo} from './types/types';
 import {LogError} from './types/types';
 import {DiscoverComplete} from './types/types';
 import {PluginData} from './types/types';
+import {GetPropertiesResponse} from './types/types';
+import {SetPropertiesResponse} from './types/types';
+import {CallMethodResponse} from './types/types';
+import {DeviceMessageResponse} from './types/types';
 let log = debug('droplit:router');
-
 export {Transport};
-export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
-export interface SetPropertiesResponse { supported: boolean[]; }
-export interface CallMethodResponse { supported: boolean[]; }
 
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
@@ -112,6 +113,15 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
         cb(results);
 });
 
+transport.on('#device message', (message: DeviceMessage, cb: (response: any) => void) => {
+    let result: DeviceMessageResponse;
+    if (message)
+        result = sendDeviceMessage(message);
+
+    if (cb)
+        cb(result);
+});
+
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
 
 // });
@@ -131,6 +141,21 @@ export function callMethods(commands: DeviceCommand[]): CallMethodResponse {
         results.supported = plugin.instance(pluginName).callMethods(map[pluginName]);
     });
     return results;
+}
+
+export function sendDeviceMessage(message: DeviceMessage): Promise<DeviceMessageResponse> {
+    let device: any = cache.getDeviceByDeviceId(message.deviceId);
+    let deviceId = message.deviceId;
+    let data = message.message;
+    let result: DeviceMessageResponse;
+    return new Promise<DeviceMessageResponse>((resolve, reject) => {
+        if (device && device.pluginName) {
+            plugin.instance(device).deviceMessage(deviceId, data, resolve);
+        }
+        else {
+            resolve({ supported: false });
+        }
+    });
 }
 
 /**
@@ -352,7 +377,7 @@ function loadPlugin(pluginName: string) {
     p.on('log error', (events: EventRaised[]) => {
         transport.send('event raised', events, err => { });
     });
-    
+
     p.on('plugin data', (events: EventRaised[]) => {
         transport.send('event raised', events, err => { });
     });

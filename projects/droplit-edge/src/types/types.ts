@@ -14,6 +14,11 @@ export interface DeviceCommand {
     value?: any;
 }
 
+export interface DeviceMessage {
+    deviceId: string;
+    message: any;
+}
+
 export interface PropertyChanged {
     localId: string;
     service: string;
@@ -64,3 +69,8 @@ export interface PluginData {
     member: string;
     value: any;
 }
+
+export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
+export interface SetPropertiesResponse { supported: boolean[]; }
+export interface CallMethodResponse { supported: boolean[]; }
+export interface DeviceMessageResponse { supported: boolean; }

@@ -120,11 +120,39 @@ The response contains an array of supported flags indicating whether the operati
 }
 ```
 
-`plugin message`
+### `plugin message` - sends a message down to the plugin (not persisted data)
+```
+{
+    plugin: string;
+    message: any;
+}
+```
 
-`plugin setting`
+#### response:
+```
+{
+    response: any;
+}
+```
 
-`plugin data`
+
+### `plugin setting` - sets ecosystem-wide settings for plugin of a specific type (managed by local cache // persisted in mongo)
+```
+{
+    plugin: string;
+    key: string;
+    value: any;
+}[]
+```
+
+### `plugin data` - sets edge device-wide settings for plugin of a specific type (managed by local cache // persisted in mongo)
+```
+{
+    plugin: string;
+    key: string;
+    value: any;
+}[]
+```
 
 `config set`
 
