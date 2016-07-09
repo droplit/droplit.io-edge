@@ -46,3 +46,16 @@ To observe debug output (Windows) `set DEBUG=droplit:*` prior to running.
 To run any single CLI application, run `node app_name` where app_name is the name of the CLI app.
 
 Ex: `node droplit-edge`
+
+#Raspberry Pi
+
+## Installing Node and NPM
+
+Nodejs compiled arm binaries provided by NodeSource https://github.com/nodesource/distributions
+``` 
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+```
+
+```
+sudo apt-get install -y nodejs
+```
