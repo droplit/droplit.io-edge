@@ -143,19 +143,17 @@ export function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     return results;
 }
 
-export function sendDeviceMessage(message: DeviceMessage): Promise<DeviceMessageResponse> {
+export function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
     let device: any = cache.getDeviceByDeviceId(message.deviceId);
     let deviceId = message.deviceId;
     let data = message.message;
     let result: DeviceMessageResponse;
-    return new Promise<DeviceMessageResponse>((resolve, reject) => {
-        if (device && device.pluginName) {
-            plugin.instance(device).deviceMessage(deviceId, data, resolve);
-        }
-        else {
-            resolve({ supported: false });
-        }
-    });
+    if (device && device.pluginName) {
+        return plugin.instance(device).deviceMessage(deviceId, data, () => {
+            // emit device message response through some manner
+        });
+    }
+    return { supported: false };
 }
 
 /**

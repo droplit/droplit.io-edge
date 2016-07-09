@@ -1,6 +1,7 @@
 import {EventEmitter} from 'events';
 import * as DP from 'droplit-plugin';
 import {DeviceMessage} from './types/types';
+import {DeviceMessageResponse} from './types/types';
 
 let pluginMap: { [name: string]: Controller } = {};
 
@@ -96,7 +97,7 @@ export class Controller extends EventEmitter {
         return this.pluginInstance.setProperties(properties);
     }
 
-    public deviceMessage(localId: string, data: any, callback?: (response: any) => void): boolean {
+    public deviceMessage(localId: string, data: any, callback?: (response: any) => void): DeviceMessageResponse {
         return this.pluginInstance.deviceMessage(localId, data, callback);
     }
 }
