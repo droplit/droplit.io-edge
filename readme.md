@@ -59,3 +59,14 @@ curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 ```
 sudo apt-get install -y nodejs
 ```
+
+
+Moving npm global install location: https://docs.npmjs.com/getting-started/fixing-npm-permissions
+
+```
+mkdir /npm
+mkdir /npm/cache
+npm config set prefix /npm
+npm config set cache /npm/cache
+export PATH="/npm/bin:$PATH"
+```
