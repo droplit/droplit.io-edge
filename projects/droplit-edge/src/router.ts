@@ -364,9 +364,9 @@ function getPluginName(command: DeviceCommand) {
 function loadPlugins() {
     log('load plugins');
     loadPlugin('droplit-plugin-lifx');
-    // loadPlugin('droplit-plugin-philips-hue');
+    loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
-    // loadPlugin('droplit-plugin-wemo');
+    loadPlugin('droplit-plugin-wemo');
     // loadPlugin('droplit-plugin-voyager');
     loadPlugin('droplit-plugin-ts-example');
 
