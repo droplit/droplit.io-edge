@@ -11,7 +11,7 @@ commander
             description: 'Droplit.io Edge Service',
             user: process.env.USER,
             command: 'node droplit-edge',
-            cwd: '~/droplit-edge',
+            cwd: '/home/pi/droplit.io-edge',
             systemd: true,
             force: true
         };
@@ -79,7 +79,7 @@ function reloadService() {
 }
 
 function restartService() {
-    runCommand('sudo service droplit restart', function (success) {
+    runCommand('sudo service droplit-edge restart', function (success) {
         if (success) {
             process.exit(0);
         }
