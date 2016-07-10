@@ -1,10 +1,12 @@
 import * as DP from 'droplit-plugin';
-import {DeviceInfo} from './types/DeviceInfo';
+import {DeviceInfo} from './types/types';
 
 let deviceCache_local: { [localId: string]: DP.DeviceInfo } = {};
 let deviceCache_global: { [deviceId: string]: DeviceInfo } = {};
+let pluginCache_data: { [pluginKey: string]: string } = {};
+let pluginCache_settings: { [pluginKey: string]: string } = {};
 
-export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo) {
+export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
     if ((<Object>deviceInfo).hasOwnProperty('deviceId')) {
         let deviceId: string = (<any>deviceInfo).deviceId;
         deviceCache_global[deviceId] = <DeviceInfo>deviceInfo;
@@ -38,5 +40,22 @@ export function getDeviceByDeviceId(deviceId: string): DeviceInfo {
     return deviceCache_global[deviceId];
 }
 
-// export function getGlobalWithLocal(localId: string) {
-// }
+export function setPluginData(pluginName: string, key: string, value: string): void {
+    let pluginKey = `${pluginName};${key}`;
+    pluginCache_data[pluginKey] = value;
+}
+
+export function setPluginSettings(pluginName: string, key: string, value: string): void {
+    let pluginKey = `${pluginName};${key}`;
+    pluginCache_settings[pluginKey] = value;
+}
+
+export function getPluginData(pluginName: string, key: string): string {
+    let pluginKey = `${pluginName};${key}`;
+    return pluginCache_data[pluginKey];
+}
+
+export function getPluginSetting(pluginName: string, key: string): string {
+    let pluginKey = `${pluginName};${key}`;
+    return pluginCache_settings[pluginKey];
+}
