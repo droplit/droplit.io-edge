@@ -45,7 +45,7 @@ export function setPluginData(pluginName: string, key: string, value: string): v
     pluginCache_data[pluginKey] = value;
 }
 
-export function setPluginSettings(pluginName: string, key: string, value: string): void {
+export function setPluginSetting(pluginName: string, key: string, value: string): void {
     let pluginKey = `${pluginName};${key}`;
     pluginCache_settings[pluginKey] = value;
 }
