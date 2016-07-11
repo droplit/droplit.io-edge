@@ -13,10 +13,13 @@ import {LogInfo} from './types/types';
 import {LogError} from './types/types';
 import {DiscoverComplete} from './types/types';
 import {PluginData} from './types/types';
+import {PluginSetting} from './types/types';
 import {GetPropertiesResponse} from './types/types';
 import {SetPropertiesResponse} from './types/types';
 import {CallMethodResponse} from './types/types';
 import {DeviceMessageResponse} from './types/types';
+import {PluginDataResponse} from './types/types';
+import {PluginSettingResponse} from './types/types';
 let log = debug('droplit:router');
 export {Transport};
 
@@ -122,6 +125,19 @@ transport.on('#device message', (message: DeviceMessage, cb: (response: any) => 
         cb(result);
 });
 
+transport.on('#plugin setting', (data: PluginSetting[], cb: (response: any) => void) => {
+    let results: PluginSettingResponse;
+
+    if (data)
+        results = setPluginSetting(data);
+
+    if (cb)
+        cb(results);
+});
+transport.on('#plugin data', (data: PluginData[], cb: (response: any) => void) => {
+
+});
+
 // transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
 
 // });
@@ -130,6 +146,37 @@ transport.on('#device message', (message: DeviceMessage, cb: (response: any) => 
 
 // });
 
+export function setPluginSetting(settings: PluginSetting[]): PluginSettingResponse {
+    // plugin.instance(data.plugin).
+    let results: PluginSettingResponse = {
+        supported: Array.apply(null, Array(settings.length)) // init all values to undefined
+    };
+    results.supported = settings.reduce(function (p, c, i, a) {
+        if (c && c.key && c.plugin && c.value) {
+            cache.setPluginSetting(c.plugin, c.key, c.value);
+            plugin.instance(c.plugin).emit('plugin setting', c);
+            return p.concat([true]);
+        }
+            return p.concat([false]);
+    }, []);
+    return results;
+
+}
+export function setPluginData(settings: PluginData[]): PluginDataResponse {
+    // plugin.instance(data.plugin).
+    let results: PluginDataResponse = {
+        supported: Array.apply(null, Array(settings.length))
+    };
+    results.supported = settings.reduce(function (p, c, i, a) {
+        if (c && c.key && c.plugin && c.value) {
+            cache.setPluginData(c.plugin, c.key, c.value);
+            plugin.instance(c.plugin).emit('plugin data', c);
+            return p.concat([true]);
+        }
+            return p.concat([false]);
+    }, []);
+    return results;
+}
 
 export function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     let map = groupByPlugin(commands);
@@ -317,9 +364,9 @@ function getPluginName(command: DeviceCommand) {
 function loadPlugins() {
     log('load plugins');
     loadPlugin('droplit-plugin-lifx');
-    // loadPlugin('droplit-plugin-philips-hue');
+    loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
-    // loadPlugin('droplit-plugin-wemo');
+    loadPlugin('droplit-plugin-wemo');
     // loadPlugin('droplit-plugin-voyager');
     loadPlugin('droplit-plugin-ts-example');
 
@@ -359,7 +406,6 @@ function loadPlugin(pluginName: string) {
         transport.send('property changed', properties, err => { });
     });
 
-
     p.on('discover complete', (devices: DeviceInfo[]) => {
         transport.send('discover complete', devices, err => { });
     });
@@ -368,19 +414,21 @@ function loadPlugin(pluginName: string) {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('log info', (events: EventRaised[]) => {
+    p.on('log info', (events: LogInfo[]) => {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('log error', (events: EventRaised[]) => {
+    p.on('log error', (events: LogError[]) => {
         transport.send('event raised', events, err => { });
     });
 
-    p.on('plugin data', (events: EventRaised[]) => {
-        transport.send('event raised', events, err => { });
+    p.on('plugin data', (events: PluginDataResponse[]) => {
+        transport.send('plugin data', events, err => { });
     });
 
-
+    p.on('plugin setting', (events: PluginSettingResponse[]) => {
+        transport.send('plugin setting', events, err => { });
+    });
     plugins.set(pluginName, p);
 }
 

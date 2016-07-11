@@ -19,15 +19,6 @@ export interface DeviceMessage {
     message: any;
 }
 
-export interface PropertyChanged {
-    localId: string;
-    service: string;
-    index: string;
-    member: string;
-    value: any;
-    pluginName: string;
-}
-
 export interface EventRaised {
     pluginName: string;
     localId: string;
@@ -36,41 +27,23 @@ export interface EventRaised {
     member: string;
     value: any;
 };
-
-export interface LogInfo {
-    pluginName: string;
-    localId: string;
-    service: string;
-    index: string;
-    member: string;
-    value: any;
-}
-export interface LogError {
-    pluginName: string;
-    localId: string;
-    service: string;
-    index: string;
-    member: string;
-    value: any;
-}
-export interface DiscoverComplete {
-    pluginName: string;
-    localId: string;
-    service: string;
-    index: string;
-    member: string;
-    value: any;
-}
+export interface PropertyChanged extends EventRaised { }
+export interface LogInfo extends EventRaised { }
+export interface LogError extends EventRaised { }
+export interface DiscoverComplete extends EventRaised { }
 export interface PluginData {
-    pluginName: string;
-    localId: string;
-    service: string;
-    index: string;
-    member: string;
+    plugin: string;
+    key: string;
     value: any;
 }
-
+export interface PluginSetting extends PluginData { }
+export interface PluginMessage {
+    plugin: string;
+    message: any;
+}
 export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface SetPropertiesResponse { supported: boolean[]; }
 export interface CallMethodResponse { supported: boolean[]; }
 export interface DeviceMessageResponse { supported: boolean; }
+export interface PluginDataResponse { supported: boolean[]; }
+export interface PluginSettingResponse { supported: boolean[]; }

@@ -1,0 +1,33 @@
+DROPLIT SOFTWARE LICENSE
+Version 1.0, November 23, 2015
+
+Use of the software
+* The proprietary products available from Droplit, Inc. are governed by this license agreement. By installing the software, or any update to it, you agree to the terms in this document.
+* This software program is licensed, not sold. We grant you one license to install and use this software on a single computer at any one time. If you do not agree to the following terms of this license, please uninstall and remove all copies and return the product within 30 days of your purchase for a full refund.
+* You may not distribute copies of the software.
+* You may not in any way change the original distribution file, except to package it within another archive if necessary.
+* The software is protected by the copyright laws of the United States of America and all other countries. The software and all associated elements such as copyrights, trade names, intellectual property, and information with respect to the software are owned by Droplit, Inc. You may not separately publish, sell, market, distribute, lend, lease, rent, or sublicense the software. However, this license is not to be construed as prohibiting or limiting any fair use sanctioned by copyright law, such as permitted library and classroom usage or reverse engineering. Please help us avoid the need for software protection by respecting the major investment of time and money that goes into developing quality software for you.
+* We may track or collect information about your use of the software. We will not intentionally deprive you of your ability to use any features of the software or access to your data.
+* We will not give or sell to any third party any personally identifiable information we collect without your consent, unless required to do so by law. We respect your privacy and will protect it to the same extent we protect our most valuable information.
+* You may not use this software for any life-critical applications.
+* You also agree that you will not use this software for any purposes prohibited by United States law, including, without limitation, the development, design, manufacture or production of nuclear, missiles, or chemical or biological weapons.
+
+
+Limited warranty
+* This software is provided as-is without warranty.
+* We do not warrant that the software or your ability to use it will be uninterrupted or error-free. We have taken all reasonable steps to keep the software free of viruses, spyware, "back door" entrances, or any other harmful code. To the extent permitted by applicable law, we disclaim any implied warranty of merchantability or fitness for a particular purpose.
+* We warrant to you that, to the best of our knowledge, the digital data comprising the software do not infringe the rights, including copyrights, trade names, and intellectual property, of any third party.
+
+
+Limitations on liability
+* Your exclusive remedy under the above limited warranty shall be, at our option, either a full refund of the purchase price or correction of the defective software or media. We may choose not to fix bugs in, revise, or update product versions we no longer sell.
+* While every precaution was taken to produce bug free code, you use this software at your own risk. To the fullest extent permitted by applicable law, we disclaim all liability for indirect or consequential damages that arise under this license agreement while using or mis-using this software (including damages, loss of business profits, loss of business information, data loss, or other pecuniary losses). We pledge that we will never make available any software that has known defects that may result in damage of data residing on the system.
+
+
+General provisions
+* This agreement will be governed by the laws of the United States of America.
+* If any part of this agreement is found to be invalid or unenforceable, the remaining terms will stay in effect. This agreement does not prejudice the statutory rights of any party dealing as a consumer.
+* This agreement does not supersede any express warranties we made to you. Any modification to this agreement must be agreed to in writing by both parties.
+* We periodically release free updates of our software and push these updates automatically to your system. We may require the latest update for a particular product to be installed to support certain features.
+* These are our current policies. We are free to change these at any time by posting changes to our web site or applications. The new policies will become effective once you obtain an update or download of the software.
+* This license agreement is effective until terminated. You may terminate it at any time. We reserve the right to terminate this license agreement at any time if you fail to comply with any term or condition of this license agreement. In such event, you agree to destroy the software covered by this agreement, including all copies, functionally-equivalent derivatives, all support files generated by or associated with the software, and all portions and modifications thereof in any form.

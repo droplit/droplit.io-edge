@@ -25,7 +25,9 @@
   "license": "ISC",
   "private": true,
   "dependencies": {
-    "source-map-support": "^0.4.0"
+    "commander": "^2.9.0",
+    "source-map-support": "^0.4.0",
+    "strong-service-install": "^2.0.3"
   },
   "devDependencies": {
     "async": "^1.5.2",

@@ -36,8 +36,7 @@ function start() {
                     console.log("Successful connections", connections);
                     console.log("undefined: ", undefinedCount);
                     console.log("fail count: ", failCount);
-                    console.log(eventualSuccess[7], "hello");
-
+                    console.log(eventualSuccess[1], "EventualSuccess");
                 }
             });
         }
@@ -48,7 +47,7 @@ function start() {
 function startConnection(edgeId: string, iteration: number , callback: (connected: boolean) => void) {
     let transport = new router.Transport();
     transport.on("connected", () => {
-        console.log("ishqya");
+        console.log("BABABABABAB");
         eventualSuccess[iteration];
     });
 
