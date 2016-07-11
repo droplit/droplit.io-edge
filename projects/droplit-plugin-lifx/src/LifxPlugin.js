@@ -269,8 +269,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
     
     discover() {
-        if (this.sequence === 0xFF)
-            this.sequence = 0;
+        if (this.sequencer === 0xFF)
+            this.sequencer = 0;
         let packet = lifxPacket.getService({
             source: this.source,
             sequence: this.sequencer++
@@ -310,8 +310,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
             address.copy(packet, 8);
         
         // Add sequence to all outbound packets
-        if (this.sequence === 0xFF)
-            this.sequence = 0;
+        if (this.sequencer === 0xFF)
+            this.sequencer = 0;
         let sequenceId = this.sequencer++;             
         packet[23] = sequenceId;
         
