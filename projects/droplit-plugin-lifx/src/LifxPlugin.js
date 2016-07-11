@@ -269,6 +269,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
     
     discover() {
+        if (this.sequence === 0xFF)
+            this.sequence = 0;
         let packet = lifxPacket.getService({
             source: this.source,
             sequence: this.sequencer++
@@ -308,11 +310,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
             address.copy(packet, 8);
         
         // Add sequence to all outbound packets
-        let sequenceId = this.sequencer++;
-        if (sequenceId === 0xFF) {
-            this.sequencer = 1;
-            sequenceId = 1;
-        }             
+        if (this.sequence === 0xFF)
+            this.sequence = 0;
+        let sequenceId = this.sequencer++;             
         packet[23] = sequenceId;
         
         // If packet type is in map, we want to do something special with the response that has the same sequence id
