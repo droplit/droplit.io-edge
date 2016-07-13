@@ -204,7 +204,7 @@ export class VoyagerClient extends events.EventEmitter {
                     changes.stateChanged = true;
                 }
                 if (this.device.tempunits !== result.body.tempunits) {
-                    console.log('tempunits dev|result', this.device.tempunits, result.body.tempunits);
+                    // console.log('tempunits dev|result', this.device.tempunits, result.body.tempunits);
                     changes.properties.push({
                         localId: this.device.identifier,
                         service: 'Temperature',
@@ -248,7 +248,7 @@ export class VoyagerClient extends events.EventEmitter {
 
     // BASE API FUNCTIONS
     query(): Promise<Response> {
-        console.log('ip:', this.device.address);
+        // console.log('ip:', this.device.address);
         return new Promise<Response>((resolve, reject) => {
             request.get({
                 url: this.device.address + 'query/info'

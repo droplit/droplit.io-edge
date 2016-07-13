@@ -343,7 +343,7 @@ export default class Transport extends EventEmitter {
 
     // Heartbeat
 
-    private heartbeatInterval = 1000;
+    private heartbeatInterval = 2000;
     private heartbeatTimer: NodeJS.Timer = undefined;
 
     private startHeartbeat() {

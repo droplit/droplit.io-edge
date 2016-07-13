@@ -367,11 +367,8 @@ function loadPlugins() {
     loadPlugin('droplit-plugin-philips-hue');
     // loadPlugin('droplit-plugin-sonos');
     loadPlugin('droplit-plugin-wemo');
-    // loadPlugin('droplit-plugin-voyager');
-    loadPlugin('droplit-plugin-ts-example');
-
-
-
+    loadPlugin('droplit-plugin-voyager');
+    // loadPlugin('droplit-plugin-ts-example');
 }
 
 function loadPlugin(pluginName: string) {
@@ -382,6 +379,7 @@ function loadPlugin(pluginName: string) {
     p.on('device info', (deviceInfo: DeviceInfo) => {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
+        // log(`di ${deviceInfo.pluginName}:${deviceInfo.localId}`);
         transport.sendRequest('device info', deviceInfo, (response, err) => {
             if (!response)
                 return;
@@ -403,6 +401,9 @@ function loadPlugin(pluginName: string) {
             }
             return p.concat([c]);
         }, []);
+        // properties.forEach(p => {
+        //     log(` pr ${p.localId}/${p.service}.${p.member} ${p.value}`);
+        // });
         transport.send('property changed', properties, err => { });
     });
 

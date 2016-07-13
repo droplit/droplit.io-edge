@@ -11,7 +11,7 @@ export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
         let deviceId: string = (<any>deviceInfo).deviceId;
         deviceCache_global[deviceId] = <DeviceInfo>deviceInfo;
         // let localCachedDevice = deviceCache_local[deviceInfo.localId];
-        console.log(`[G] cached ${deviceId} with ${deviceInfo.localId} >>`, deviceInfo);
+        // console.log(`[G] cached ${deviceId} with ${deviceInfo.localId} >>`, deviceInfo);
         // if (localCachedDevice) {
             // console.log(`[GL] cached ${deviceInfo.localId} >>`, deviceInfo);
             // deviceCache_local[deviceInfo.localId] = <DeviceInfo>deviceInfo;
