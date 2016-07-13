@@ -7,7 +7,7 @@ let log = debug('droplit:load-test-connections');
 
 let config: any = require('../test-config.json');
 
-let eventualSuccess: boolean[] = new Array(config.loadTest.numConnections);
+let eventualSuccess: Array<any> = new Array(config.loadTest.numConnections);
 
 function start() {
     getEdgeId((edgeId) => {
@@ -19,24 +19,28 @@ function start() {
         let retryCount = -1;
         let failCount = 0;
         for (let ii = 0; ii <= config.loadTest.numConnections - 1; ii++) {
-            startConnection(edgeId, ii , (connected) => {
+            startConnection(edgeId, ii, (connected) => {
                 count++;
+                eventualSuccess.push({
+                    id: ii,
+                    connected: false
+                });
                 if (connected === true) {
-                connections++;
-                console.log(ii);
-            } else if (connected === undefined) {
-                        undefinedCount++;
-                        retryCount++;
-                    } else if (connected === false) {
-                        failCount++;
-                        retryCount++;
-                    }
+                    connections++;
+                    console.log(ii);
+                } else if (connected === undefined) {
+                    undefinedCount++;
+                    retryCount++;
+                } else if (connected === false) {
+                    failCount++;
+                    retryCount++;
+                }
                 if (count === config.loadTest.numConnections - 1) {
                     console.log("connections assigned", count);
                     console.log("Successful connections", connections);
                     console.log("undefined: ", undefinedCount);
                     console.log("fail count: ", failCount);
-                    console.log(eventualSuccess[1], "EventualSuccess");
+                    // console.log(eventualSuccess[1], "EventualSuccess");
                 }
             });
         }
@@ -44,11 +48,15 @@ function start() {
 
 }
 
-function startConnection(edgeId: string, iteration: number , callback: (connected: boolean) => void) {
+function startConnection(edgeId: string, iteration: number, callback: (connected: boolean) => void) {
     let transport = new router.Transport();
     transport.on("connected", () => {
-        console.log("BABABABABAB");
-        eventualSuccess[iteration];
+        for (let kk = 0; kk < config.loadTest.numConnections; kk++) {
+
+            if (eventualSuccess[kk].id === iteration) {
+                eventualSuccess[kk].connected = true;
+            }
+        }
     });
 
     transport.start(config.transport, {
@@ -56,7 +64,7 @@ function startConnection(edgeId: string, iteration: number , callback: (connecte
         "x-ecosystem-id": localSettings.ecosystemId
     }, callback);
 
-}; 
+};
 let _edgeId: string = "kduhdkhdkjhd";
 
 function getEdgeId(callback: (edgeId: string) => void) {
@@ -70,7 +78,7 @@ function getEdgeId(callback: (edgeId: string) => void) {
     //         callback(_edgeId);
     //     });
     // }
-callback(_edgeId);
-    
+    callback(_edgeId);
+
 }
 start();
