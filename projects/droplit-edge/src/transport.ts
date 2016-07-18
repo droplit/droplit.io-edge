@@ -40,6 +40,7 @@ export default class Transport extends EventEmitter {
     // Connection
     private ws: WebSocket = undefined;
     private settings: any = undefined;
+    private transportId: number = undefined;
     private connectOperation = retry.operation({
         // retries: Infinity,
         factor: 1.5,
@@ -67,6 +68,7 @@ export default class Transport extends EventEmitter {
 
     public start(settings: any, headers: { [key: string]: string }, callback?: (connected: boolean) => void) {
         this.settings = settings;
+        this.transportId = this.settings.transportId;
         this.headers = headers;
         this.retryConnect();
         this.connectedCallback = callback;
@@ -86,6 +88,11 @@ export default class Transport extends EventEmitter {
     private retryConnect(callback?: (success: boolean) => void) {
         this.connectOperation.attempt((currentAttempt: any) => {
             log('reconnecting...');
+            if (this.settings.hasOwnProperty('transportId')) {
+            console.log("retry!: ", this.transportId, currentAttempt);
+                
+                this.emit(`#retry:${this.transportId}`, currentAttempt, this.transportId);
+            }
             let success = this.restart();
             if (callback) callback(success);
         });

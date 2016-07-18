@@ -1,5 +1,6 @@
-import * as router from '../../droplit-edge';
+import * as router from 'droplit-edge';
 import * as debug from 'debug';
+import * as chalk from 'chalk';
 
 let localSettings = require('../localsettings.json');
 
@@ -7,62 +8,77 @@ let log = debug('droplit:load-test-connections');
 
 let config: any = require('../test-config.json');
 
-let eventualSuccess: Array<any> = new Array(config.loadTest.numConnections);
+let connections: Array<any> = [];
+
 
 function start() {
     getEdgeId((edgeId) => {
-        let connections = 0;
+        // let connections = 0;
         // TODO: Count maximum supported connections
         let totalConnections = config.loadTest.numConnections;
         let count = 0;
         let undefinedCount = 0;
         let retryCount = -1;
         let failCount = 0;
-        for (let ii = 0; ii <= config.loadTest.numConnections - 1; ii++) {
-            startConnection(edgeId, ii, (connected) => {
-                count++;
-                eventualSuccess.push({
-                    id: ii,
-                    connected: false
-                });
-                if (connected === true) {
-                    connections++;
-                    console.log(ii);
-                } else if (connected === undefined) {
-                    undefinedCount++;
-                    retryCount++;
-                } else if (connected === false) {
-                    failCount++;
-                    retryCount++;
-                }
-                if (count === config.loadTest.numConnections - 1) {
-                    console.log("connections assigned", count);
-                    console.log("Successful connections", connections);
-                    console.log("undefined: ", undefinedCount);
-                    console.log("fail count: ", failCount);
-                    // console.log(eventualSuccess[1], "EventualSuccess");
+
+        let delay: number ; // ms
+        // delay = Math.floor((Math.random() * 1000) + 100); // randomizing delay time
+        // console.log(`${chalk.cyan(delay.toString())}`); // printing delay time
+        // setTimeout(() => {
+        for (let ii = 0; ii < config.loadTest.numConnections; ii++) {
+            startConnection(edgeId, ii, (connected: boolean, transportId: number) => {
+                log(`${transportId} finished!`);
+                for (let index = 0; index < connections.length; index++) {
+                    if (connections[index].id === transportId) {
+                        connections[index].connected = connected;
+                    }
                 }
             });
         }
+    // });
+        setTimeout(() => {
+            for (let index = 0; index < connections.length; index++) {
+                console.log(connections[index]);
+            }
+        }, 100000);
     });
-
 }
 
-function startConnection(edgeId: string, iteration: number, callback: (connected: boolean) => void) {
+function startConnection(edgeId: string, iteration: number, callback: (connected: boolean, transportId: number) => void) {
     let transport = new router.Transport();
-    transport.on("connected", () => {
-        for (let kk = 0; kk < config.loadTest.numConnections; kk++) {
 
-            if (eventualSuccess[kk].id === iteration) {
-                eventualSuccess[kk].connected = true;
+    // for (let kk = 0; kk < eventualSuccess.length; kk++) {
+    //     if (eventualSuccess[kk].id === iteration) {
+    //         eventualSuccess[kk].connected = true;
+    //     }
+    // }
+
+    connections.push({
+        id: iteration,
+        connected: false,
+        retries: 0
+    });
+
+    transport.on(`#retry:${iteration}`, (currentAttempt: any, transportId: number) => {
+        console.log("on retry", iteration, currentAttempt);
+        
+        for (let index = 0; index < connections.length; index++) {
+            // console.log(connections[index], index, connections.length);
+            if (connections[index].id === transportId) {
+                connections[index].retries = currentAttempt;
             }
         }
     });
 
+    // console.log("beforeStart");
+
+    config.transport.transportId = iteration;
     transport.start(config.transport, {
         "x-edge-id": edgeId,
         "x-ecosystem-id": localSettings.ecosystemId
-    }, callback);
+    }, (connected) => {
+        callback(connected, iteration);
+    });
 
 };
 let _edgeId: string = "kduhdkhdkjhd";
@@ -78,7 +94,8 @@ function getEdgeId(callback: (edgeId: string) => void) {
     //         callback(_edgeId);
     //     });
     // }
-    callback(_edgeId);
 
+    callback(_edgeId);
 }
+
 start();
