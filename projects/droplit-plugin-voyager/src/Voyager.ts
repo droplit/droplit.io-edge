@@ -106,7 +106,7 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
 
     getMode(localId: string, callback: any) {
         if (this.devices[localId]) {
-            console.log('this.device', this.devices);
+            // console.log('this.device', this.devices);
             this.devices[localId].getMode(callback);
         }
     }
