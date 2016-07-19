@@ -363,12 +363,12 @@ function getPluginName(command: DeviceCommand) {
 
 function loadPlugins() {
     log('load plugins');
-    loadPlugin('droplit-plugin-lifx');
-    loadPlugin('droplit-plugin-philips-hue');
-    // loadPlugin('droplit-plugin-sonos');
-    loadPlugin('droplit-plugin-wemo');
-    loadPlugin('droplit-plugin-voyager');
-    // loadPlugin('droplit-plugin-ts-example');
+    if (settings.plugins && Array.isArray(settings.plugins)) {
+        settings.plugins.forEach((name: any) => {
+            if (typeof name === 'string')
+                loadPlugin(name);
+        });
+    }
 }
 
 function loadPlugin(pluginName: string) {
