@@ -29,18 +29,17 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
                 set_mode: this.setMode,
                 get_fan: this.getFan,
                 set_fan: this.setFan,
-                get_cool: this.getCool,
-                set_cool: this.setCool,
-                get_heat: this.getHeat,
-                set_heat: this.setHeat,
-                get_cooling: this.getCooling,
-                get_heating: this.getHeating
+                get_coolTemperature: this.getCoolTemperature,
+                set_coolTemperature: this.setCoolTemperature,
+                get_heatTemperature: this.getHeatTemperature,
+                set_heatTemperature: this.setHeatTemperature,
+                get_state: this.getState,
                 // get_airFilter: this.getAirFilter
             },
             Temperature: {
                 get_temperature: this.getTemperature,
-                get_temperatureType: this.getTemperatureType,
-                set_temperatureType: this.setTemperatureType
+                get_units: this.getUnits,
+                set_units: this.setUnits
             }
             // Humidity: {
             //     get_humidity: this.getHumidity
@@ -125,22 +124,22 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
             this.devices[localId].setFan(value);
         }
     }
-    getCool(localId: string, callback: any) {
+    getCoolTemperature(localId: string, callback: any) {
         if (this.devices[localId]) {
             this.devices[localId].getCool(callback);
         }
     }
-    setCool(localId: string, value: number) {
+    setCoolTemperature(localId: string, value: number) {
         if (this.devices[localId]) {
             this.devices[localId].setCool(value);
         }
     }
-    getHeat(localId: string, callback: any) {
+    getHeatTemperature(localId: string, callback: any) {
         if (this.devices[localId]) {
             this.devices[localId].getHeat(callback);
         }
     }
-    setHeat(localId: string, value: number) {
+    setHeatTemperature(localId: string, value: number) {
         if (this.devices[localId]) {
             this.devices[localId].setHeat(value);
         }
@@ -155,24 +154,24 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
             this.devices[localId].getHeating(callback);
         }
     }
+    getState(localId: string, callback: any) {
+        if (this.devices[localId]) {
+            this.devices[localId].getState(callback);
+        }
+    }
     getTemperature(localId: string, callback: any) {
         if (this.devices[localId]) {
             this.devices[localId].getTemperature(callback);
         }
     }
-    setTemperature(localId: string, value: number) {
+    getUnits(localId: string, callback: any) {
         if (this.devices[localId]) {
-            this.devices[localId].setTemperature(value);
+            this.devices[localId].getUnits(callback);
         }
     }
-    getTemperatureType(localId: string, callback: any) {
+    setUnits(localId: string, value: number) {
         if (this.devices[localId]) {
-            this.devices[localId].getTemperatureType(callback);
-        }
-    }
-    setTemperatureType(localId: string, value: number) {
-        if (this.devices[localId]) {
-            this.devices[localId].setTemperatureType(value);
+            this.devices[localId].setUnits(value);
         }
     }
 }
