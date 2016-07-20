@@ -207,12 +207,21 @@ export class VoyagerClient extends events.EventEmitter {
                     changes.stateChanged = true;
                 }
                 if (this.device.state !== result.body.state) {
-                    changes.properties.push({
-                        localId: this.device.identifier,
-                        service: 'Thermostat',
-                        member: 'state',
-                        value: State[result.body.state]
-                    });
+                    if (State[result.body.state] === <any>State[<any>'idle']) {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'state',
+                            value: 'off'
+                        });
+                    } else {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'state',
+                            value: State[result.body.state]
+                        });
+                    }
                     this.device.state = result.body.state;
                     changes.stateChanged = true;
                     // if (result.body.state === <any>State[<any>'heating']) {
