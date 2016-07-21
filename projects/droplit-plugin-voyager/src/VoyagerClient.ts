@@ -28,6 +28,10 @@ enum State {
     lockout,
     error
 }
+enum Away {
+    home,
+    away
+}
 
 export class VoyagerClient extends events.EventEmitter {
 
@@ -131,6 +135,22 @@ export class VoyagerClient extends events.EventEmitter {
     getState(callback: any) {
         this.query().then((result) => {
             callback(State[result.body.state]);
+        });
+    }
+    getAway(callback: any) {
+        this.query().then((result) => {
+            callback(Away[result.body.away] === 'away');
+        });
+    }
+    setAway(value: boolean) {
+        let away: number;
+        if (value) {
+            away = Away['away'];
+        } else {
+            away = Away['home'];
+        }
+        this.setting('away', away).then((result) => {
+            console.log(result);
         });
     }
     // getAirFilter(callback: any) {
@@ -273,6 +293,25 @@ export class VoyagerClient extends events.EventEmitter {
                     //     this.device.state = result.body.state;
                     //     changes.stateChanged = true;
                     // }
+                }
+                if (this.device.away !== result.body.away) {
+                    if (result.body.away === <any>Away[<any>'away']) {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'away',
+                            value: true
+                        });
+                    } else {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'away',
+                            value: false
+                        });
+                    }
+                    this.device.away = result.body.away;
+                    changes.stateChanged = true;
                 }
             })
             .then(() => {

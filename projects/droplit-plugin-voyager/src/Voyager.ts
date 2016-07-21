@@ -34,6 +34,8 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
                 get_heatTemperature: this.getHeatTemperature,
                 set_heatTemperature: this.setHeatTemperature,
                 get_state: this.getState,
+                get_away: this.getAway,
+                set_away: this.setAway
                 // get_airFilter: this.getAirFilter
             },
             Temperature: {
@@ -172,6 +174,16 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
     setUnits(localId: string, value: number) {
         if (this.devices[localId]) {
             this.devices[localId].setUnits(value);
+        }
+    }
+    getAway(localId: string, callback: any) {
+        if (this.devices[localId]) {
+            this.devices[localId].getAway(callback);
+        }
+    }
+    setAway(localId: string, value: boolean) {
+        if (this.devices[localId]) {
+            this.devices[localId].setAway(value);
         }
     }
 }
