@@ -28,6 +28,10 @@ enum State {
     lockout,
     error
 }
+enum Away {
+    home,
+    away
+}
 
 export class VoyagerClient extends events.EventEmitter {
 
@@ -44,15 +48,15 @@ export class VoyagerClient extends events.EventEmitter {
         this.device.deferred = false;
 
         this.query().then((result: any) => {
-            this.device.temperature = result.body.spacetemp;
-            this.device.mode = result.body.mode;
-            this.device.fan = result.body.fan;
-            this.device.heattemp = result.body.heattemp;
-            this.device.cooltemp = result.body.cooltemp;
-            this.device.setpointdelta = result.body.setpointdelta;
-            this.device.temperatureType = result.body.tempunits;
-            this.device.state = result.body.state;
-            this.device.tempunits = result.body.tempunits;
+            // this.device.temperature = result.body.spacetemp;
+            // this.device.mode = result.body.mode;
+            // this.device.fan = result.body.fan;
+            // this.device.heattemp = result.body.heattemp;
+            // this.device.cooltemp = result.body.cooltemp;
+            // this.device.setpointdelta = result.body.setpointdelta;
+            // this.device.temperatureType = result.body.tempunits;
+            // this.device.state = result.body.state;
+            // this.device.tempunits = result.body.tempunits;
         }).then(() => {
             this.device.interval = setInterval(() => {
                 if (!this.device.deferred) {
@@ -117,27 +121,36 @@ export class VoyagerClient extends events.EventEmitter {
             callback(result.body.spacetemp);
         });
     }
-    getTemperatureType(callback: any) {
+    getUnits(callback: any) {
         this.query().then((result) => {
             callback(Tempunits[result.body.tempunits]);
         });
     }
-    setTemperatureType(value: string) {
+    setUnits(value: string) {
         let tempunits = <any>Tempunits[<any>value];
         this.setting('tempunits', tempunits).then((result) => {
             // console.log(result);
         });
     }
-    getCooling(callback: any) {
+    getState(callback: any) {
         this.query().then((result) => {
-            let state: boolean = result.body.state === 2;
-            callback(state);
+            callback(State[result.body.state]);
         });
     }
-    getHeating(callback: any) {
+    getAway(callback: any) {
         this.query().then((result) => {
-            let state: boolean = result.body.state === 1;
-            callback(state);
+            callback(Away[result.body.away] === 'away');
+        });
+    }
+    setAway(value: boolean) {
+        let away: number;
+        if (value) {
+            away = Away['away'];
+        } else {
+            away = Away['home'];
+        }
+        this.setting('away', away).then((result) => {
+            console.log(result);
         });
     }
     // getAirFilter(callback: any) {
@@ -187,7 +200,7 @@ export class VoyagerClient extends events.EventEmitter {
                     changes.properties.push({
                         localId: this.device.identifier,
                         service: 'Thermostat',
-                        member: 'heat',
+                        member: 'heatTemperature',
                         value: result.body.heattemp
                     });
                     this.device.heattemp = result.body.heattemp;
@@ -197,52 +210,117 @@ export class VoyagerClient extends events.EventEmitter {
                     changes.properties.push({
                         localId: this.device.identifier,
                         service: 'Thermostat',
-                        member: 'cool',
+                        member: 'coolTemperature',
                         value: result.body.cooltemp
                     });
                     this.device.cooltemp = result.body.cooltemp;
                     changes.stateChanged = true;
                 }
                 if (this.device.tempunits !== result.body.tempunits) {
-                    // console.log('tempunits dev|result', this.device.tempunits, result.body.tempunits);
                     changes.properties.push({
                         localId: this.device.identifier,
                         service: 'Temperature',
-                        member: 'temperatureType',
+                        member: 'units',
                         value: Tempunits[result.body.tempunits]
                     });
                     this.device.tempunits = result.body.tempunits;
                     changes.stateChanged = true;
                 }
                 if (this.device.state !== result.body.state) {
-                    if (State[this.device.state] === <any>State[<any>'heating']) {
+                    if (State[result.body.state] === <any>State[<any>'idle']) {
                         changes.properties.push({
                             localId: this.device.identifier,
                             service: 'Thermostat',
-                            member: 'heating',
-                            value: State[result.body.state]
+                            member: 'state',
+                            value: 'off'
                         });
-                        this.device.state = result.body.state;
-                        changes.stateChanged = true;
-                    } else if (State[this.device.state] === <any>State[<any>'cooling']) {
+                    } else {
                         changes.properties.push({
                             localId: this.device.identifier,
                             service: 'Thermostat',
-                            member: 'cooling',
+                            member: 'state',
                             value: State[result.body.state]
                         });
-                        this.device.state = result.body.state;
-                        changes.stateChanged = true;
                     }
+                    this.device.state = result.body.state;
+                    changes.stateChanged = true;
+                    // if (result.body.state === <any>State[<any>'heating']) {
+                    //     console.log('case 1');
+                    //     changes.properties.push({
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'heating',
+                    //         value: true
+                    //     },
+                    //     {
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'cooling',
+                    //         value: false
+                    //     });
+                    //     this.device.state = result.body.state;
+                    //     changes.stateChanged = true;
+                    // } else if (result.body.state === <any>State[<any>'cooling']) {
+                    //     console.log('case 2');
+                    //     changes.properties.push({
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'cooling',
+                    //         value: true
+                    //     },
+                    //     {
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'heating',
+                    //         value: false
+                    //     });
+                    //     this.device.state = result.body.state;
+                    //     changes.stateChanged = true;
+                    // } else if (result.body.state === <any>State[<any>'idle'] || result.body.state === <any>State[<any>'lockout'] || result.body.state === <any>State[<any>'error']) {
+                    //     console.log('case 3');
+                    //     changes.properties.push({
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'cooling',
+                    //         value: false
+                    //     },
+                    //     {
+                    //         localId: this.device.identifier,
+                    //         service: 'Thermostat',
+                    //         member: 'heating',
+                    //         value: false
+                    //     });
+                    //     this.device.state = result.body.state;
+                    //     changes.stateChanged = true;
+                    // }
+                }
+                if (this.device.away !== result.body.away) {
+                    if (result.body.away === <any>Away[<any>'away']) {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'away',
+                            value: true
+                        });
+                    } else {
+                        changes.properties.push({
+                            localId: this.device.identifier,
+                            service: 'Thermostat',
+                            member: 'away',
+                            value: false
+                        });
+                    }
+                    this.device.away = result.body.away;
+                    changes.stateChanged = true;
                 }
             })
-                .then(() => {
-                    if (changes.stateChanged === true) {
-                        resolve(changes);
-                    } else {
-                        reject(changes);
-                    }
-                });
+            .then(() => {
+                if (changes.stateChanged === true) {
+                    resolve(changes);
+                } else {
+                    reject(changes);
+                }
+            });
         });
     }
 
