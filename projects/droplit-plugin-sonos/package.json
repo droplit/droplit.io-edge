@@ -12,9 +12,6 @@
   ],
   "main": "index.js",
   "dependencies": {
-    "easysax": "^0.1.14",
-    "node-ssdp": "^2.7.1",
-    "request": "^2.72.0",
-    "xml2js": "^0.4.16"
+    "sonos-discovery": "git+https://github.com/droplit/node-sonos-discovery.git#master"
   }
 }
