@@ -50,6 +50,18 @@ Ex: `node droplit-edge`
 #Raspberry Pi
 
 ## Installing Node and NPM
+The Nodejs Foundation provides arm6,7,8 builds of node. https://nodejs.org/en/download/current/
+
+For Node v4.0.0
+```
+wget https://nodejs.org/dist/v4.0.0/node-v4.0.0-linux-armv6l.tar.gz 
+tar -xvf node-v4.0.0-linux-armv6l.tar.gz 
+cd node-v4.0.0-linux-armv6l
+sudo cp-R * /usr/local/
+```
+
+https://blog.wia.io/installing-node-js-v4-0-0-on-a-raspberry-pi
+
 
 Nodejs compiled arm binaries provided by NodeSource https://github.com/nodesource/distributions
 ``` 
