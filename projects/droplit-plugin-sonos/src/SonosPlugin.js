@@ -10,6 +10,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
         super();
 
         this.discovery = new SonosDiscovery();
+        let coordinatorLookup = new Map();
         let playerStates = new Map();
 
         this.services = {
@@ -51,17 +52,44 @@ class SonosPlugin extends droplit.DroplitPlugin {
             }
         };
 
+        this.discovery.on('group-mute', data => {
+            let playerState = playerStates.get(data.uuid) || {};
+            if (!playerState.hasOwnProperty('mute') || playerState.mute !== data.newMute) {
+                playerState.mute = data.newMute;
+                this.onPropertiesChanged([{ localId: data.uuid, service: 'AudioOutput', member: 'mute', value: data.newMute }]);
+            }
+        });
+
         this.discovery.on('transport-state', player => {
             processStateChanges.bind(this)(player.toJSON());
         });
 
         this.discovery.on('topology-change', topology => {
+            let groupChange = [];
             for (let idx in this.discovery.players) {
                 let player = this.discovery.players[idx];
 
+                // Update player grouping lookup
                 if (player.coordinator.uuid !== player.uuid) {
-                    console.log('player not own coordinator');
+                    let coordinator = coordinatorLookup.get(player.coordinator.uuid) || {};
+                    if (!coordinator.hasOwnProperty(player.uuid)) {
+                        groupChange.push(player.uuid);
+                        coordinator[player.uuid] = true;
+                        coordinatorLookup.set(player.coordinator.uuid, coordinator);
+                    }
                 }
+                else
+                    coordinatorLookup.forEach((coordinator, key) => {
+                        if (coordinator.hasOwnProperty(player.uuid)) {
+                            // Only queue as change for existing players
+                            if (playerStates.has(player.uuid))
+                                groupChange.push(player.uuid);
+                            delete coordinator[player.uuid];
+                            coordinatorLookup.set(key, coordinator);
+                        }
+                        if (Object.keys(coordinator).length === 0)
+                            coordinatorLookup.delete(key);
+                    });
                 
                 let state = playerStates.get(player.uuid);
                 // Do not emit discovered for pre-existing devices
@@ -91,6 +119,11 @@ class SonosPlugin extends droplit.DroplitPlugin {
                 let data = player.toJSON();
                 processStateChanges.bind(this)(data);
             }
+            groupChange.forEach(uuid => {
+                let player = this.discovery.getPlayerByUUID(uuid);
+                let data = player.toJSON();
+                processStateChanges.bind(this)(data);
+            });
         });
 
         function getOutputState(data) {
@@ -110,80 +143,101 @@ class SonosPlugin extends droplit.DroplitPlugin {
         }
 
         function processStateChanges(data) {
+            let changes = [];
             let state = getOutputState(data);
 
-            let changes = [];
-            let playerState = playerStates.get(data.uuid) || {};
+            let playerIds = [];
+            if (playerStates.has(data.uuid))
+                playerIds.push(data.uuid);
+            
+            // If this is the coordinator, other players in the group should have same properties
+            if (coordinatorLookup.has(data.uuid))
+                Array.prototype.push.apply(playerIds, Object.keys(coordinatorLookup.get(data.uuid)).filter(value => playerStates.has(value)));
+            
+            if (playerIds.length === 0)
+                return;
 
             let isChanged = (propName, pState, cState) => !pState.hasOwnProperty(propName) || pState[propName] !== cState[propName];
 
-            // AudioOutput.mute
-            if (isChanged('mute', playerState, state)) {
-                playerState.mute = state.mute;
-                changes.push({ localId: data.uuid, service: 'AudioOutput', member: 'mute', value: state.mute });
-            }
+            // Properties independant of group
+            (() => {
+                let playerState = playerStates.get(data.uuid) || {};
 
-            // AudioOutput.volume
-            if (isChanged('volume', playerState, state)) {
-                playerState.volume = state.volume;
-                changes.push({ localId: data.uuid, service: 'AudioOutput', member: 'volume', value: state.volume });
-            }
+                // AudioOutput.mute
+                if (isChanged('mute', playerState, state)) {
+                    playerState.mute = state.mute;
+                    changes.push({ localId: data.uuid, service: 'AudioOutput', member: 'mute', value: state.mute });
+                }
 
-            // BinarySwitch.switch
-            if (isChanged('on', playerState, state)) {
-                playerState.on = state.on;
-                changes.push({ localId: data.uuid, service: 'BinarySwitch', member: 'switch', value: state.on });
-            }
+                // AudioOutput.volume
+                if (isChanged('volume', playerState, state)) {
+                    playerState.volume = state.volume;
+                    changes.push({ localId: data.uuid, service: 'AudioOutput', member: 'volume', value: state.volume });
+                }
 
-            // MediaControl.state
-            if (isChanged('statePlaying', playerState, state)) {
-                playerState.statePlaying = state.statePlaying;
-                changes.push({ localId: data.uuid, service: 'MediaControl', member: 'state', value: state.statePlaying });
-            }
+                playerStates.set(data.uuid, playerState);
+            })();
 
-            // MediaInfo.albumArt
-            if (isChanged('albumArt', playerState, state)) {
-                playerState.albumArt = state.albumArt;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'albumArt', value: state.albumArt });
-            }
+            // Grouped properties
+            playerIds.forEach(playerId => {
+                let playerState = playerStates.get(playerId) || {};
 
-            // MediaInfo.albumTitle
-            if (isChanged('albumTitle', playerState, state)) {
-                playerState.albumTitle = state.albumTitle;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'albumTitle', value: state.albumTitle });
-            }
+                // BinarySwitch.switch
+                if (isChanged('on', playerState, state)) {
+                    playerState.on = state.on;
+                    changes.push({ localId: playerId, service: 'BinarySwitch', member: 'switch', value: state.on });
+                }
 
-            // MediaInfo.artist
-            if (isChanged('artist', playerState, state)) {
-                playerState.albumTitle = state.artist;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'artist', value: state.artist });
-            }
+                // MediaControl.state
+                if (isChanged('statePlaying', playerState, state)) {
+                    playerState.statePlaying = state.statePlaying;
+                    changes.push({ localId: playerId, service: 'MediaControl', member: 'state', value: state.statePlaying });
+                }
 
-            // MediaInfo.nextAlbum
-            if (isChanged('nextAlbumTitle', playerState, state)) {
-                playerState.nextAlbumTitle = state.nextAlbumTitle;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'nextAlbum', value: state.nextAlbumTitle });
-            }
+                // MediaInfo.albumArt
+                if (isChanged('albumArt', playerState, state)) {
+                    playerState.albumArt = state.albumArt;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'albumArt', value: state.albumArt });
+                }
 
-            // MediaInfo.nextArtist
-            if (isChanged('nextAlbumTitle', playerState, state)) {
-                playerState.nextArtist = state.nextArtist;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'nextArtist', value: state.nextArtist });
-            }
+                // MediaInfo.albumTitle
+                if (isChanged('albumTitle', playerState, state)) {
+                    playerState.albumTitle = state.albumTitle;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'albumTitle', value: state.albumTitle });
+                }
 
-            // MediaInfo.nextTrackName
-            if (isChanged('nextTrackName', playerState, state)) {
-                playerState.nextTrackName = state.nextTrackName;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'nextTrackName', value: state.nextTrackName });
-            }
+                // MediaInfo.artist
+                if (isChanged('artist', playerState, state)) {
+                    playerState.albumTitle = state.artist;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'artist', value: state.artist });
+                }
 
-            // MediaInfo.trackName
-            if (isChanged('trackName', playerState, state)) {
-                playerState.trackName = state.trackName;
-                changes.push({ localId: data.uuid, service: 'MediaInfo', member: 'trackName', value: state.trackName });
-            }
+                // MediaInfo.nextAlbum
+                if (isChanged('nextAlbumTitle', playerState, state)) {
+                    playerState.nextAlbumTitle = state.nextAlbumTitle;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'nextAlbum', value: state.nextAlbumTitle });
+                }
 
-            playerStates.set(data.uuid, playerState);
+                // MediaInfo.nextArtist
+                if (isChanged('nextAlbumTitle', playerState, state)) {
+                    playerState.nextArtist = state.nextArtist;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'nextArtist', value: state.nextArtist });
+                }
+
+                // MediaInfo.nextTrackName
+                if (isChanged('nextTrackName', playerState, state)) {
+                    playerState.nextTrackName = state.nextTrackName;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'nextTrackName', value: state.nextTrackName });
+                }
+
+                // MediaInfo.trackName
+                if (isChanged('trackName', playerState, state)) {
+                    playerState.trackName = state.trackName;
+                    changes.push({ localId: playerId, service: 'MediaInfo', member: 'trackName', value: state.trackName });
+                }
+
+                playerStates.set(playerId, playerState);
+            });
 
             if (changes.length > 0)
                 this.onPropertiesChanged(changes);
@@ -192,6 +246,18 @@ class SonosPlugin extends droplit.DroplitPlugin {
     
     discover() { }
     dropDevice(localId) { }
+
+    getCoordinator(uuid) {
+        let player = this.discovery.getPlayerByUUID(uuid);
+        if (!player)
+            return;
+        
+        // Player is its own coordinator
+        if (player.coordinator.uuid === player.uuid)
+            return player;
+
+        return this.discovery.getPlayerByUUID(player.coordinator.uuid);
+    }
 
     // AudioOutput implementation
     getMute(localId, callback) {
@@ -314,28 +380,28 @@ class SonosPlugin extends droplit.DroplitPlugin {
     }
 
     next(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        let player = this.getCoordinator(localId);
         if (!player)
             return;
         player.nextTrack();
     }   
 
     pause(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        let player = this.getCoordinator(localId);
         if (!player)
             return;
         player.pause();
     } 
 
     play(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        let player = this.getCoordinator(localId);
         if (!player)
             return;
         player.play();
     }
 
     previous(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        let player = this.getCoordinator(localId);
         if (!player)
             return;
         player.previousTrack();
