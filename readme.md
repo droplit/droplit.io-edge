@@ -63,6 +63,13 @@ sudo cp-R * /usr/local/
 https://blog.wia.io/installing-node-js-v4-0-0-on-a-raspberry-pi
 
 
+Fixing access denied
+```
+sudo chown -R `whoami` ~/.npm
+sudo chown -R `whoami` /usr/local/lib/node_modules
+sudo chown -R `whoami` /usr/local
+```
+
 Nodejs compiled arm binaries provided by NodeSource https://github.com/nodesource/distributions
 ``` 
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
