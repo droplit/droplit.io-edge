@@ -131,7 +131,12 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
             this.devices[localId].getCool(callback);
         }
     }
-    setCoolTemperature(localId: string, value: number) {
+    setCoolTemperature(localId: string, value: any) {
+        // if (typeof value === 'number') {
+        //     console.log('is a Number');
+        // } else if (typeof value === 'string') {
+        //     console.log('is a String');
+        // }
         if (this.devices[localId]) {
             this.devices[localId].setCool(value);
         }

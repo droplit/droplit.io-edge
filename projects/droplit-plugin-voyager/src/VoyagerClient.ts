@@ -150,7 +150,6 @@ export class VoyagerClient extends events.EventEmitter {
             away = Away['home'];
         }
         this.setting('away', away).then((result) => {
-            console.log(result);
         });
     }
     // getAirFilter(callback: any) {
