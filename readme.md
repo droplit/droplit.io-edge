@@ -57,7 +57,7 @@ For Node v4.0.0
 wget https://nodejs.org/dist/v4.0.0/node-v4.0.0-linux-armv6l.tar.gz 
 tar -xvf node-v4.0.0-linux-armv6l.tar.gz 
 cd node-v4.0.0-linux-armv6l
-sudo cp-R * /usr/local/
+sudo cp -R * /usr/local/
 ```
 
 https://blog.wia.io/installing-node-js-v4-0-0-on-a-raspberry-pi
