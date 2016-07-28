@@ -250,7 +250,10 @@ The service responds with the current device info including the system assigned 
 }[]
 ```
 
-`event raised`
+### `event raised` - send updated device info
+Device raises an event
+
+#### message:
 ```
 {
     pluginName: string;
