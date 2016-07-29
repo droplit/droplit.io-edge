@@ -84,7 +84,6 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @param {(response: any) => void} [callback] Response callback (undefined if no response is expected)
      */
     public deviceMessage(localId: string, data: any, callback?: (response: any) => void): { supported: boolean } {
-        console.log(`DEVICE MESSAGE!!!!!!!!!!!!`);
         return { supported: true };
     }
 
@@ -301,7 +300,6 @@ export abstract class DroplitPlugin extends EventEmitter {
      */
     protected onEvents(events: DeviceServiceMember[]) {
         this.emit('event raised', events);
-        console.log('event raised');
     }
 
     /**

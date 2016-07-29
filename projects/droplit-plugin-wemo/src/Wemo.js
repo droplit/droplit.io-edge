@@ -25,17 +25,17 @@ class WemoPlugin extends droplit.DroplitPlugin {
             CoffeeMaker: {
                 brew: this.brew,
                 get_state: this.getState
-            }
+            },
+            MotionSensor: {}
         }
         
         function onDiscovered(device) {
             if (this.devices.has(device.identifier))
                 return;
-            
+
             let client = Clients.WemoClient.create(device);
-            client.on('prop-change', data => {
-                this.onPropertiesChanged([data]);
-            });
+            client.on('event-raise', data => this.onEvents([data]));
+            client.on('prop-change', data => this.onPropertiesChanged([data]));
             this.devices.set(device.identifier, client);
             this.onDeviceInfo(client.discoverObject());
         }

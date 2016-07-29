@@ -68,9 +68,7 @@ transport.once('connected', () => {
 
 transport.on('disconnected', () => { });
 
-transport.on('#discover', (data: any) => {
-    console.log('did we discover something?', data);
-});
+transport.on('#discover', (data: any) => { });
 
 transport.on('#drop', (data: any) => {
     if (data)
@@ -134,17 +132,10 @@ transport.on('#plugin setting', (data: PluginSetting[], cb: (response: any) => v
     if (cb)
         cb(results);
 });
+
 transport.on('#plugin data', (data: PluginData[], cb: (response: any) => void) => {
 
 });
-
-// transport.on('#plugin message', (data: any, cb: (response: any) => void) => {
-
-// });
-
-// transport.on('#plugin setting', (data: any, cb: (response: any) => void) => {
-
-// });
 
 export function setPluginSetting(settings: PluginSetting[]): PluginSettingResponse {
     // plugin.instance(data.plugin).
@@ -162,6 +153,7 @@ export function setPluginSetting(settings: PluginSetting[]): PluginSettingRespon
     return results;
 
 }
+
 export function setPluginData(settings: PluginData[]): PluginDataResponse {
     // plugin.instance(data.plugin).
     let results: PluginDataResponse = {
@@ -401,9 +393,6 @@ function loadPlugin(pluginName: string) {
             }
             return p.concat([c]);
         }, []);
-        // properties.forEach(p => {
-        //     log(` pr ${p.localId}/${p.service}.${p.member} ${p.value}`);
-        // });
         transport.send('property changed', properties, err => { });
     });
 
@@ -412,6 +401,12 @@ function loadPlugin(pluginName: string) {
     });
 
     p.on('event raised', (events: EventRaised[]) => {
+        events.reduce((p, c) => {
+            let d = cache.getDeviceByLocalId(c.localId);
+            if (d.pluginName)
+                c.pluginName = d.pluginName;
+            return p.concat([c]);
+        }, []);
         transport.send('event raised', events, err => { });
     });
 

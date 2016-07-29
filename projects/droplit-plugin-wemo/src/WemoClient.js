@@ -114,6 +114,8 @@ class WemoClient extends EventEmitter {
     static create(init) {
         if (init.info.device.modelName === 'CoffeeMaker')
             return new WemoCoffeeMaker(init);
+        if (init.info.device.modelName === 'Sensor')
+            return new WemoSensor(init);
         return new WemoSwitch(init);
     }
     
@@ -153,7 +155,15 @@ class WemoClient extends EventEmitter {
             promotedMembers: this.promotedMembers
         };
     }
-    
+
+    eventRaised(service, member) {
+        this.emit('event-raise', {
+            localId: this.identifier,
+            service,
+            member
+        });
+    }   
+
     propertyChange(service, member, value) {
         this.emit('prop-change', {
             localId: this.identifier,
@@ -352,6 +362,27 @@ class WemoSwitch extends WemoClient {
             uri: `http://${this.address}/upnp/control/basicevent1`
         };
         request(opts, callback);
+    }
+}
+
+class WemoSensor extends WemoClient {
+    constructor(init) {
+        super(init);
+
+        this.state;
+        this.services = ['MotionSensor'];
+    }
+
+    notified(notification) {
+        let property = notification['e:property'];
+        if (property.hasOwnProperty('BinaryState')) {
+            let state = +property.BinaryState ? 'on' : 'off';
+            if (state !== this.state) {
+                this.state = state;
+                if (this.state === 'on')
+                    this.eventRaised('MotionSensor', 'motion');
+            }
+        }
     }
 }
 
