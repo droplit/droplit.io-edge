@@ -29,7 +29,7 @@ class Discoverer extends EventEmitter {
                 
             request('http://www.meethue.com/api/nupnp', (e, r, b) => {
                 if (e)
-                    console.log('broker error', e);
+                    return;
                 if (b) {
                     let bridgeData = JSON.parse(b);
                     bridgeData.forEach(data => {
