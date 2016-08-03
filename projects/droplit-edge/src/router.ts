@@ -32,7 +32,6 @@ const AutoDiscoverDelay = 2 * 60 * 1000;
 const AutoDiscoverCadence = 60000;
 
 const GetPropertyTimeout = 3000;
-const DiscoverAllStagger = 2000;
 
 const localSettings = require('../localsettings.json');
 const plugins = new Map();
