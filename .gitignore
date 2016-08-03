@@ -5,6 +5,7 @@ node_modules
 projects/*/lib
 npm-debug.log
 *.heapsnapshot
+/dist
 
 #project specific
 /projects/droplit-edge/cache

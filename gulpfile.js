@@ -250,6 +250,22 @@ gulp.task('size', 'Get size of code', function(project) {
         }
 });
 
+// Deploying
+
+function getPackageName(packagePath) {
+    var packageFile = require(path.join(path.resolve(packagePath), 'package.json'));
+    return packageFile.name + '_' + packageFile.version;
+}
+
+gulp.task('package', 'Package the Droplit Edge for embedding', function(callback) {
+    var packageFileName = getPackageName(settings.edgeDir) + '.tar';
+    gulp.src(settings.packageFiles)
+        .pipe(G$.debug({title: 'package:'}))
+        .pipe(G$.tar(packageFileName))
+        .pipe(G$.gzip())
+        .pipe(gulp.dest('dist'));
+});
+
 // .pipe(G$.plumber()) // exit gracefully if something fails after this
 
 
