@@ -41,23 +41,25 @@ class HuePlugin extends droplit.DroplitPlugin {
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
             },
+            ColorTemperature: {
+                get_temperature: this.getTemperature,
+                get_tempLowerLimit: this.getTempLowerLimit,
+                get_tempUpperLimit: this.getTempUpperLimit,
+                set_temperature: this.setTemperature
+            },
             DimmableSwitch: {
                 get_brightness: this.getDSBrightness,
                 set_brightness: this.setDSBrightness,
                 stepDown: this.stepDown,
                 stepUp: this.stepUp
             },
-            MulticolorLight: {
+            LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
-                get_saturation: this.getSaturation,
-                get_temperature: this.getTemperature,
-                get_tempLowerLimit: this.getTempLowerLimit,
-                get_tempUpperLimit: this.getTempUpperLimit,
+                get_saturation: this.getSaturation,                
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
-                set_saturation: this.setSaturation,
-                set_temperature: this.setTemperature
+                set_saturation: this.setSaturation
             }
         }
      
@@ -111,19 +113,21 @@ class HuePlugin extends droplit.DroplitPlugin {
                 if (data.light.services.some(s => s === 'DimmableSwitch') && (c.state === 'bri'))
                     p.push(data.light.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
                     
-                if (data.light.services.some(s => s === 'MulticolorLight')) {
-                    if (c.state === 'bri')
-                        p.push(data.light.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
-                    if (c.state === 'hue')
-                        p.push(data.light.propertyObject('MulticolorLight', 'hue', output.hue));
-                    if (c.state === 'sat')
-                        p.push(data.light.propertyObject('MulticolorLight', 'saturation', output.sat));
+                if (data.light.services.some(s => s === 'ColorTemperature')) {
                     if (c.state === 'ct')
-                        p.push(data.light.propertyObject('MulticolorLight', 'temperature', output.ct));
+                        p.push(data.light.propertyObject('ColorTemperature', 'temperature', output.ct));
                     if (c.state === 'temp_low')
-                        p.push(data.light.propertyObject('MulticolorLight', 'tempLowerLimit', c.value));
+                        p.push(data.light.propertyObject('ColorTemperature', 'tempLowerLimit', c.value));
                     if (c.state === 'temp_high')
-                        p.push(data.light.propertyObject('MulticolorLight', 'tempUpperLimit', c.value));    
+                        p.push(data.light.propertyObject('ColorTemperature', 'tempUpperLimit', c.value));  
+                }
+                if (data.light.services.some(s => s === 'LightColor')) {
+                    if (c.state === 'bri')
+                        p.push(data.light.propertyObject('LightColor', 'brightness', output.mcl_brightness));
+                    if (c.state === 'hue')
+                        p.push(data.light.propertyObject('LightColor', 'hue', output.hue));
+                    if (c.state === 'sat')
+                        p.push(data.light.propertyObject('LightColor', 'saturation', output.sat));  
                 }
                     
                 return p;
@@ -218,7 +222,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         if (!bridge)
             return;
             
-        let brightness = Math.min(Math.max(normalize(value, 0, 99, 255), 0), 255);
+        let brightness = Math.min(Math.max(normalize(value, 0, 100, 255), 0), 255);
         bridge.setState(localId, { bri: brightness });
     }
     
@@ -234,7 +238,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         this.getDSBrightness(localId, value => {
             if (value === undefined)
                 return;
-            this.setDSBrightness(localId, Math.min(value + StepSize, 99));
+            this.setDSBrightness(localId, Math.min(value + StepSize, 100));
         });
     }
     
@@ -556,7 +560,7 @@ class Light {
         switch (this.type) {
             case 'Extended color light':
             case 'Color light':
-                return [ 'BinarySwitch', 'DimmableSwitch', 'MulticolorLight' ];
+                return [ 'BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature' ];
             case 'Dimmable light':
             case 'Dimmable plug-in unit':
                 return [ 'BinarySwitch', 'DimmableSwitch' ];

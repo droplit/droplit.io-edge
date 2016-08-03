@@ -51,23 +51,25 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
             },
+            ColorTemperature: {
+                get_temperature: this.getTemperature,
+                get_tempLowerLimit: this.getTempLowerLimit,
+                get_tempUpperLimit: this.getTempUpperLimit,
+                set_temperature: this.setTemperature
+            },
             DimmableSwitch: {
                 get_brightness: this.getDSBrightness,
                 set_brightness: this.setDSBrightness,
                 stepDown: this.stepDown,
                 stepUp: this.stepUp
             },
-            MulticolorLight: {
+            LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
                 get_saturation: this.getSaturation,
-                get_temperature: this.getTemperature,
-                get_tempLowerLimit: this.getTempLowerLimit,
-                get_tempUpperLimit: this.getTempUpperLimit,
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
-                set_saturation: this.setSaturation,
-                set_temperature: this.setTemperature
+                set_saturation: this.setSaturation                
             }
         }
         
@@ -83,13 +85,15 @@ class LifxPlugin extends droplit.DroplitPlugin {
             
             propChanges.push(bulb.propertyObject('BinarySwitch', 'switch', output.on));
             propChanges.push(bulb.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
-            if (bulb.services.some(s => s === 'MulticolorLight')) {
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'hue', output.hue));
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'saturation', output.sat));
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'temperature', output.temp));
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'tempLowerLimit', output.tempLowerLimit));
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'tempUpperLimit', output.tempUpperLimit));
+            if (bulb.services.some(s => s === 'ColorTemperature')) {
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'temperature', output.temp));
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'tempLowerLimit', output.tempLowerLimit));
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'tempUpperLimit', output.tempUpperLimit));
+            }
+            if (bulb.services.some(s => s === 'LightColor')) {
+                propChanges.push(bulb.propertyObject('LightColor', 'brightness', output.mcl_brightness));
+                propChanges.push(bulb.propertyObject('LightColor', 'hue', output.hue));
+                propChanges.push(bulb.propertyObject('LightColor', 'saturation', output.sat));
             }
             
             if (propChanges.length > 0)
@@ -107,18 +111,18 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 
             if (!state.hasOwnProperty('brightness') || state.brightness !== newState.brightness) {
                 propChanges.push(bulb.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
-                if (bulb.services.some(s => s === 'MulticolorLight'))
-                    propChanges.push(bulb.propertyObject('MulticolorLight', 'brightness', output.mcl_brightness));
+                if (bulb.services.some(s => s === 'LightColor'))
+                    propChanges.push(bulb.propertyObject('LightColor', 'brightness', output.mcl_brightness));
             }
             
             if (!state.hasOwnProperty('hue') || state.hue !== newState.hue)
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'hue', output.hue));
+                propChanges.push(bulb.propertyObject('LightColor', 'hue', output.hue));
                 
             if (!state.hasOwnProperty('saturation') || state.saturation !== newState.saturation)
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'saturation', output.sat));
+                propChanges.push(bulb.propertyObject('LightColor', 'saturation', output.sat));
                 
             if (!state.hasOwnProperty('kelvin') || state.kelvin !== newState.kelvin)
-                propChanges.push(bulb.propertyObject('MulticolorLight', 'temperature', output.temp));
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'temperature', output.temp));
             
             if (propChanges.length > 0)
                 this.onPropertiesChanged(propChanges);
@@ -576,8 +580,8 @@ class LifxBulb extends EventEmitter {
         let isWhite = (version.product === 167772160);
         this.product.modelName = isWhite ? 'LIFX White' : 'LIFX';
         this.services = isWhite ?
-            ['BinarySwitch', 'DimmableSwitch'] :
-            ['BinarySwitch', 'DimmableSwitch', 'MulticolorLight'];
+            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature'] :
+            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature'];
         
         if (this[_state] && !this[_ready]) {
             this[_ready] = true;
