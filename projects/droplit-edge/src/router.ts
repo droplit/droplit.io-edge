@@ -181,10 +181,14 @@ function discoverOne(pluginName: string) {
 }
 
 function dropDevice(commands: DeviceCommand[]) {
+    log(`drop > ${JSON.stringify(commands)}`);
     let map = groupByPlugin(commands);
     
     Object.keys(map).forEach(pluginName => {
-        map[pluginName].forEach(device => plugin.instance(pluginName).dropDevice(device.localId));
+        map[pluginName].forEach(device => {
+            plugin.instance(pluginName).dropDevice(device.localId);
+            cache.removeByLocalId(device.localId);
+        });
     });
 }
 
@@ -301,6 +305,7 @@ function loadPlugin(pluginName: string) {
                 log(`loadPlugin: device info: no device information returned in packet:`, err);
                 return;
             }
+            log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
             cache.setDeviceInfo(refreshedInfo);
         });
     });
@@ -308,6 +313,7 @@ function loadPlugin(pluginName: string) {
     p.on('event raised', (events: EventRaised[]) => {
         events.reduce((p, c) => {
             let d = cache.getDeviceByLocalId(c.localId);
+            log(`event < ${d.pluginName}:${d.localId}`);
             if (d.pluginName)
                 c.pluginName = d.pluginName;
             return p.concat([c]);

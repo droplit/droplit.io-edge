@@ -1,43 +1,48 @@
 import * as DP from 'droplit-plugin';
 import {DeviceInfo} from './types/types';
 
-let deviceCache_local: { [localId: string]: DP.DeviceInfo } = {};
-let deviceCache_global: { [deviceId: string]: DeviceInfo } = {};
-let pluginCache_data: { [pluginKey: string]: string } = {};
-let pluginCache_settings: { [pluginKey: string]: string } = {};
+const deviceCache_local: { [localId: string]: DP.DeviceInfo } = {};
+const deviceCache_global: { [deviceId: string]: DeviceInfo } = {};
+const pluginCache_data: { [pluginKey: string]: string } = {};
+const pluginCache_settings: { [pluginKey: string]: string } = {};
 
-export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
-    if ((<Object>deviceInfo).hasOwnProperty('deviceId')) {
-        let deviceId: string = (<any>deviceInfo).deviceId;
-        deviceCache_global[deviceId] = <DeviceInfo>deviceInfo;
-        // let localCachedDevice = deviceCache_local[deviceInfo.localId];
-        // console.log(`[G] cached ${deviceId} with ${deviceInfo.localId} >>`, deviceInfo);
-        // if (localCachedDevice) {
-            // console.log(`[GL] cached ${deviceInfo.localId} >>`, deviceInfo);
-            // deviceCache_local[deviceInfo.localId] = <DeviceInfo>deviceInfo;
-        // };
-
-    } else {
-        // console.log(`[L] cached ${deviceInfo.localId} >>`, deviceInfo);
-        deviceCache_local[deviceInfo.localId] = deviceInfo;
-    }
+// ID Management
+export function getDeviceByDeviceId(deviceId: string): DeviceInfo {
+    return deviceCache_global[deviceId];
 }
 
 export function getDeviceByLocalId(localId: string): DP.DeviceInfo {
-    // console.log('local object:', deviceCache_local);
-    // if (deviceCache_local[localId] !== undefined)
-    //     console.log(`[BL] >> (${localId}) >> ${deviceCache_local[localId].localId}`);
-    // else
-    //     console.log(`[BL] >> (${localId}) >> XX`);
     return deviceCache_local[localId];
 }
 
-export function getDeviceByDeviceId(deviceId: string): DeviceInfo {
-    // if (deviceCache_global[deviceId] !== undefined)
-    //     console.log(`[BG] >> (${deviceId}) >> ${deviceCache_global[deviceId].localId}`);
-    // else
-    //     console.log(`[BG] >> (${deviceId}) >> XX`);
-    return deviceCache_global[deviceId];
+export function removeByLocalId(localId: string): void {
+    // Remove from global
+    Object.keys(deviceCache_global)
+        .map(key => deviceCache_global[key])
+        .filter(device => device.localId === localId)
+        .forEach(device => delete deviceCache_global[device.deviceId]);
+    // Remove from local
+    delete deviceCache_local[localId];
+}
+
+export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
+    if (deviceInfo.hasOwnProperty('deviceId')) {
+        let deviceId: string = (deviceInfo as any).deviceId;
+        deviceCache_global[deviceId] = deviceInfo as DeviceInfo;
+    }
+    else
+        deviceCache_local[deviceInfo.localId] = deviceInfo;
+}
+
+// Plugin Management
+export function getPluginData(pluginName: string, key: string): string {
+    let pluginKey = `${pluginName};${key}`;
+    return pluginCache_data[pluginKey];
+}
+
+export function getPluginSetting(pluginName: string, key: string): string {
+    let pluginKey = `${pluginName};${key}`;
+    return pluginCache_settings[pluginKey];
 }
 
 export function setPluginData(pluginName: string, key: string, value: string): void {
@@ -48,14 +53,4 @@ export function setPluginData(pluginName: string, key: string, value: string): v
 export function setPluginSetting(pluginName: string, key: string, value: string): void {
     let pluginKey = `${pluginName};${key}`;
     pluginCache_settings[pluginKey] = value;
-}
-
-export function getPluginData(pluginName: string, key: string): string {
-    let pluginKey = `${pluginName};${key}`;
-    return pluginCache_data[pluginKey];
-}
-
-export function getPluginSetting(pluginName: string, key: string): string {
-    let pluginKey = `${pluginName};${key}`;
-    return pluginCache_settings[pluginKey];
 }

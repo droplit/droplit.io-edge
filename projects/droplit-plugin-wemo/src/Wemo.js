@@ -28,14 +28,17 @@ class WemoPlugin extends droplit.DroplitPlugin {
             },
             MotionSensor: {}
         }
+
+        this.eventsHandler = data => this.onEvents([data]);
+        this.propertiesChangedHandler = data => this.onPropertiesChanged([data]);
         
         function onDiscovered(device) {
             if (this.devices.has(device.identifier))
                 return;
 
             let client = Clients.WemoClient.create(device);
-            client.on('event-raise', data => this.onEvents([data]));
-            client.on('prop-change', data => this.onPropertiesChanged([data]));
+            client.on('event-raise', this.eventsHandler);
+            client.on('prop-change', this.propertiesChangedHandler);
             this.devices.set(device.identifier, client);
             this.onDeviceInfo(client.discoverObject());
         }
@@ -61,7 +64,8 @@ class WemoPlugin extends droplit.DroplitPlugin {
             return false;
         
         let identifier = device.identifier;
-        device.removeAllListeners('prop-change');
+        device.removeListener('event-raise', this.eventsHandler);
+        device.removeListener('prop-change', this.propertiesChangedHandler);
         this.devices.delete(identifier);
         this.discoverer.undiscover(identifier);
     }
