@@ -295,7 +295,6 @@ class WemoSwitch extends WemoClient {
     }
     
     notified(notification) {
-        console.log('notification', notification);
         let property = notification['e:property'];
         if (property.hasOwnProperty('BinaryState')) {
             let insightMatch = /(\d+)[|].+/.exec(property.BinaryState);
