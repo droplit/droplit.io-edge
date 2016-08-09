@@ -295,9 +295,12 @@ class WemoSwitch extends WemoClient {
     }
     
     notified(notification) {
+        console.log('notification', notification);
         let property = notification['e:property'];
         if (property.hasOwnProperty('BinaryState')) {
-            let state = +property.BinaryState ? 'on' : 'off';
+            let insightMatch = /(\d+)[|].+/.exec(property.BinaryState);
+            let binState = (insightMatch !== null) ? +insightMatch[1] : +property.BinaryState;   
+            let state = binState ? 'on' : 'off';
             if (state !== this.state) {
                 this.state = state;
                 this.propertyChange('BinarySwitch', 'switch', this.state);
