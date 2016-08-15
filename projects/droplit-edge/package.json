@@ -37,8 +37,5 @@
     "retry": "^0.9.0",
     "strong-service-install": "^2.0.2",
     "ws": "^1.1.0"
-  },
-  "devDependencies": {
-    "heapdump": "^0.3.7"
   }
 }
