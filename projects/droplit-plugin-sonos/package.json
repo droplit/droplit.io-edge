@@ -11,6 +11,12 @@
     }
   ],
   "main": "index.js",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    }
+  },
   "dependencies": {
     "sonos-discovery": "git+https://github.com/droplit/node-sonos-discovery.git#master"
   }

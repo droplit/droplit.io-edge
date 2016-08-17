@@ -1,5 +1,3 @@
 'use strict';
 
-let index = require('./src/Wemo');
-
-module.exports = index;
+module.exports = require('./src/Wemo');

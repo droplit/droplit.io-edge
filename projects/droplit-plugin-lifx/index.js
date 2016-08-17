@@ -1,5 +1,3 @@
 'use strict';
 
-let index = require('./src/LifxPlugin');
-
-module.exports = index;
+module.exports = require('./src/LifxPlugin');

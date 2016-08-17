@@ -1,3 +1,3 @@
-var index = require("./src/ExamplePlugin");
+'use strict';
 
-module.exports = index;
+module.exports = require('./src/ExamplePlugin');

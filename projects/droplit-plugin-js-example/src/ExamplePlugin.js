@@ -6,84 +6,83 @@ class ExamplePlugin extends droplit.DroplitPlugin {
 
     constructor() {
         super();
-        
+
         // virtual device states
         this.devices = {
-            '1': {
+            1: {
                 'BinarySwitch.switch': 'off'
             },
-            '2': {
+            2: {
                 'BinarySwitch.switch': 'off'
             }
         };
-        
-        // virtual device tracking
-        let deviceConnected = {};
-        
+
+        /* eslint-disable camelcase */
         this.services = {
             BinarySwitch: {
                 get_switch: this.BinarySwitch_get_switch,
                 set_switch: this.BinarySwitch_set_switch
             }
-        }
-        
+        };
+        /* es-lint-enable camelcase */
+
         setImmediate(() => {
             this.onDeviceInfo({
                 localId: '1',
                 address: 'device.1',
-                deviceMeta: { name: 'first device'},
+                deviceMeta: { name: 'first device' },
                 location: 'main facility',
-                name:  'device1',
+                name: 'device1',
                 services: ['BinarySwitch'],
                 promotedMembers: {
-                    'switch': 'BinarySwitch.switch'
+                    switch: 'BinarySwitch.switch'
                 }
             });
         });
     }
-    
+
     /**
      * Example plugin will produce two devices when told to discover
      */
-    
+
     discover() {
         setImmediate(() => { // simulate async
             this.onDeviceInfo({
                 localId: '1',
                 address: 'device.1',
-                deviceMeta: { name: 'first device'},
+                deviceMeta: { name: 'first device' },
                 location: 'main facility',
-                name:  'device1',
+                name: 'device1',
                 services: ['BinarySwitch'],
                 promotedMembers: {
-                    'switch': 'BinarySwitch.switch'
+                    switch: 'BinarySwitch.switch'
                 }
             });
             this.onDeviceInfo({
                 localId: '2',
                 address: 'device.2',
-                deviceMeta: { name: 'second device'},
+                deviceMeta: { name: 'second device' },
                 location: 'main facility',
-                name:  'device2',
+                name: 'device2',
                 services: ['BinarySwitch'],
                 promotedMembers: {
-                    'switch': 'BinarySwitch.switch'
+                    switch: 'BinarySwitch.switch'
                 }
             });
             this.onDiscoverComplete();
         });
     }
-    
+
     connect(localId) {
         // track state changes on this device
         this.deviceConnected[localId] = true;
     }
-    
+
     disconnect(localId) {
         // stop tracking state changes on this device
         this.deviceConnected[localId] = false;
     }
-    
+
     BinarySwitch_get_switch(localId, index, callback) {
         if (index === undefined) {
             setImmediate(() => { // simulate async
@@ -94,7 +93,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         }
         return false;
     }
-    
+
     BinarySwitch_set_switch(localId, index, value) {
         if (index === undefined) {
             setImmediate(() => { // simulate async
@@ -108,16 +107,16 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                      * indicate the property changed
                      */
                     this.onPropertiesChanged([{
-                        localId: localId,
-                        index: index,
+                        localId,
+                        index,
                         member: 'switch',
                         service: 'BinarySwitch',
-                        value: value
+                        value
                     }]);
                 } else {
                     /**
-                     * send command to device, but state change doesn't 
-                     * report back because the state is not being tracked 
+                     * send command to device, but state change doesn't
+                     * report back because the state is not being tracked
                      */
                 }
             });

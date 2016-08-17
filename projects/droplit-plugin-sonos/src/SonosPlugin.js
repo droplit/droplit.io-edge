@@ -10,9 +10,10 @@ class SonosPlugin extends droplit.DroplitPlugin {
         super();
 
         this.discovery = new SonosDiscovery();
-        let coordinatorLookup = new Map();
-        let playerStates = new Map();
+        const coordinatorLookup = new Map();
+        const playerStates = new Map();
 
+        /* eslint-disable camelcase */
         this.services = {
             AudioOutput: {
                 get_mute: this.getMute,
@@ -51,9 +52,10 @@ class SonosPlugin extends droplit.DroplitPlugin {
                 get_trackName: this.getTrackName
             }
         };
+        /* es-lint-enable camelcase */
 
         this.discovery.on('group-mute', data => {
-            let playerState = playerStates.get(data.uuid) || {};
+            const playerState = playerStates.get(data.uuid) || {};
             if (!playerState.hasOwnProperty('mute') || playerState.mute !== data.newMute) {
                 playerState.mute = data.newMute;
                 this.onPropertiesChanged([{ localId: data.uuid, service: 'AudioOutput', member: 'mute', value: data.newMute }]);
@@ -64,21 +66,20 @@ class SonosPlugin extends droplit.DroplitPlugin {
             processStateChanges.bind(this)(player.toJSON());
         });
 
-        this.discovery.on('topology-change', topology => {
-            let groupChange = [];
-            for (let idx in this.discovery.players) {
-                let player = this.discovery.players[idx];
+        this.discovery.on('topology-change', () => {
+            const groupChange = [];
+            for (const idx in this.discovery.players) {
+                const player = this.discovery.players[idx];
 
                 // Update player grouping lookup
                 if (player.coordinator.uuid !== player.uuid) {
-                    let coordinator = coordinatorLookup.get(player.coordinator.uuid) || {};
+                    const coordinator = coordinatorLookup.get(player.coordinator.uuid) || {};
                     if (!coordinator.hasOwnProperty(player.uuid)) {
                         groupChange.push(player.uuid);
                         coordinator[player.uuid] = true;
                         coordinatorLookup.set(player.coordinator.uuid, coordinator);
                     }
-                }
-                else
+                } else
                     coordinatorLookup.forEach((coordinator, key) => {
                         if (coordinator.hasOwnProperty(player.uuid)) {
                             // Only queue as change for existing players
@@ -90,12 +91,12 @@ class SonosPlugin extends droplit.DroplitPlugin {
                         if (Object.keys(coordinator).length === 0)
                             coordinatorLookup.delete(key);
                     });
-                
-                let state = playerStates.get(player.uuid);
+
+                const state = playerStates.get(player.uuid);
                 // Do not emit discovered for pre-existing devices
                 if (state)
                     continue;
-                
+
                 playerStates.set(player.uuid, {});
 
                 this.onDeviceInfo({
@@ -104,24 +105,24 @@ class SonosPlugin extends droplit.DroplitPlugin {
                     localName: player.roomName,
                     services: [ 'AudioOutput', 'BinarySwitch', 'Indicator', 'MediaControl', 'MediaInfo' ],
                     promotedMembers: {
-                        'blink': 'Indicator.blink',
-                        'switch': 'BinarySwitch.switch',
-                        'play': 'MediaControl.play',
-                        'pause': 'MediaControl.pause',
-                        'next': 'MediaControl.next',
-                        'previous': 'MediaControl.previous',
-                        'mute': 'AudioOutput.mute',
-                        'unmute': 'AudioOutput.unmute',
-                        'volume': 'AudioOutput.volume'
+                        blink: 'Indicator.blink',
+                        switch: 'BinarySwitch.switch',
+                        play: 'MediaControl.play',
+                        pause: 'MediaControl.pause',
+                        next: 'MediaControl.next',
+                        previous: 'MediaControl.previous',
+                        mute: 'AudioOutput.mute',
+                        unmute: 'AudioOutput.unmute',
+                        volume: 'AudioOutput.volume'
                     }
                 });
 
-                let data = player.toJSON();
+                const data = player.toJSON();
                 processStateChanges.bind(this)(data);
             }
             groupChange.forEach(uuid => {
-                let player = this.discovery.getPlayerByUUID(uuid);
-                let data = player.toJSON();
+                const player = this.discovery.getPlayerByUUID(uuid);
+                const data = player.toJSON();
                 processStateChanges.bind(this)(data);
             });
         });
@@ -143,25 +144,25 @@ class SonosPlugin extends droplit.DroplitPlugin {
         }
 
         function processStateChanges(data) {
-            let changes = [];
-            let state = getOutputState(data);
+            const changes = [];
+            const state = getOutputState(data);
 
-            let playerIds = [];
+            const playerIds = [];
             if (playerStates.has(data.uuid))
                 playerIds.push(data.uuid);
-            
+
             // If this is the coordinator, other players in the group should have same properties
             if (coordinatorLookup.has(data.uuid))
                 Array.prototype.push.apply(playerIds, Object.keys(coordinatorLookup.get(data.uuid)).filter(value => playerStates.has(value)));
-            
+
             if (playerIds.length === 0)
                 return;
 
-            let isChanged = (propName, pState, cState) => !pState.hasOwnProperty(propName) || pState[propName] !== cState[propName];
+            const isChanged = (propName, pState, cState) => !pState.hasOwnProperty(propName) || pState[propName] !== cState[propName];
 
             // Properties independant of group
             (() => {
-                let playerState = playerStates.get(data.uuid) || {};
+                const playerState = playerStates.get(data.uuid) || {};
 
                 // AudioOutput.mute
                 if (isChanged('mute', playerState, state)) {
@@ -180,7 +181,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
             // Grouped properties
             playerIds.forEach(playerId => {
-                let playerState = playerStates.get(playerId) || {};
+                const playerState = playerStates.get(playerId) || {};
 
                 // BinarySwitch.switch
                 if (isChanged('on', playerState, state)) {
@@ -243,15 +244,15 @@ class SonosPlugin extends droplit.DroplitPlugin {
                 this.onPropertiesChanged(changes);
         }
     }
-    
+
     discover() { }
-    dropDevice(localId) { }
+    dropDevice() { }
 
     getCoordinator(uuid) {
-        let player = this.discovery.getPlayerByUUID(uuid);
+        const player = this.discovery.getPlayerByUUID(uuid);
         if (!player)
             return;
-        
+
         // Player is its own coordinator
         if (player.coordinator.uuid === player.uuid)
             return player;
@@ -261,21 +262,21 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
     // AudioOutput implementation
     getMute(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.toJSON().state.mute);
     }
 
     getVolume(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.toJSON().state.volume);
     }
 
     mute(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         player.mute();
@@ -289,7 +290,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
     }
 
     setVolume(localId, value) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         player.setVolume(value);
@@ -308,7 +309,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
     }
 
     unmute(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         player.unMute();
@@ -316,7 +317,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
     // BinarySwitch implementation
     getSwitch(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
 
@@ -331,14 +332,14 @@ class SonosPlugin extends droplit.DroplitPlugin {
     }
 
     switchOff(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         player.pause();
     }
 
     switchOn(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         player.play();
@@ -346,25 +347,25 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
     // Indicator implementation
     blink(localId) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
 
         let state;
-        let delay = (duration) => () => new Promise((resolve, reject) =>
+        const delay = duration => () => new Promise(resolve =>
             setTimeout(() => resolve(), duration));
-        let getState = () => () => new Promise((resolve, reject) =>
+        const getState = () => () => new Promise(resolve =>
             player.getLEDState().then(value => {
-                state = value.currentledstate === 'On' ? true : false;
-                resolve(); 
+                state = value.currentledstate === 'On';
+                resolve();
             }));
-        let toggle = () => () => new Promise((resolve, reject) =>
+        const toggle = () => () => new Promise(resolve =>
             player.setLEDState(!state).then(() => {
                 state = !state;
                 resolve();
             }));
 
-        let promises = [ getState(), toggle(), delay(1000), toggle(), delay(1000), toggle(), delay(1000), toggle(), ];
+        const promises = [ getState(), toggle(), delay(1000), toggle(), delay(1000), toggle(), delay(1000), toggle() ];
         promises.reduce((p, c) =>
             p.then(() => new Promise((resolve, reject) =>
                 c().then(resolve).catch(reject)
@@ -373,35 +374,35 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
     // MediaControl implementation
     getState(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
-        callback(data.state.playbackState === 'PLAYING' ? 'play' : 'stop');
+        callback(player.state.playbackState === 'PLAYING' ? 'play' : 'stop');
     }
 
     next(localId) {
-        let player = this.getCoordinator(localId);
+        const player = this.getCoordinator(localId);
         if (!player)
             return;
         player.nextTrack();
-    }   
+    }
 
     pause(localId) {
-        let player = this.getCoordinator(localId);
+        const player = this.getCoordinator(localId);
         if (!player)
             return;
         player.pause();
-    } 
+    }
 
     play(localId) {
-        let player = this.getCoordinator(localId);
+        const player = this.getCoordinator(localId);
         if (!player)
             return;
         player.play();
     }
 
     previous(localId) {
-        let player = this.getCoordinator(localId);
+        const player = this.getCoordinator(localId);
         if (!player)
             return;
         player.previousTrack();
@@ -416,49 +417,49 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
     // MediaInfo implementation
     getAlbumArt(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.currentTrack.albumArtUri);
     }
 
     getAlbumTitle(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.currentTrack.albumTitle);
     }
 
     getArtist(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.currentTrack.artist);
     }
 
     getNextAlbum(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.nextTrack.album);
     }
 
     getNextArtist(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.nextTrack.artist);
     }
 
     getNextTrackName(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.nextTrack.title);
     }
 
     getTrackName(localId, callback) {
-        let player = this.discovery.getPlayerByUUID(localId);
+        const player = this.discovery.getPlayerByUUID(localId);
         if (!player)
             return;
         callback(player.state.currentTrack.title);

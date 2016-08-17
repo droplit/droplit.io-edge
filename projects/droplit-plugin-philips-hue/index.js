@@ -1,5 +1,3 @@
 'use strict';
 
-let index = require('./src/HuePlugin');
-
-module.exports = index;
+module.exports = require('./src/HuePlugin');

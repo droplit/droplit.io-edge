@@ -14,23 +14,24 @@ const TempUpper = 6500; // in Kelvins
 class HuePlugin extends droplit.DroplitPlugin {
     constructor() {
         super();
-        
+
         this.bridges = new Map();
-        
+
         this.discoverer = new Discoverer();
         this.discoverer.on('discovered', onDiscovered.bind(this));
         this.discoverer.on('ipchange', onDiscoverIPChange.bind(this));
-        
+
         this._getBridgeByLight = function (identifier) {
-            for (let bridge of this.bridges.values()) {
+            for (const bridge of this.bridges.values()) {
                 if (!bridge.isInstalled)
                     continue;
                 if (bridge.lights.has(identifier))
                     return bridge;
             }
             return null;
-        }
-        
+        };
+
+        /* eslint-disable camelcase */
         this.services = {
             BasicAuthBridge: {
                 register: this.register
@@ -56,70 +57,71 @@ class HuePlugin extends droplit.DroplitPlugin {
             LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
-                get_saturation: this.getSaturation,                
+                get_saturation: this.getSaturation,
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
                 set_saturation: this.setSaturation
             }
-        }
-     
+        };
+        /* es-lint-enable camelcase */
+
         // TODO: Off/on with connect/disconnect
         setInterval(() => {
             if (this.bridges.size === 0)
                 return;
-                
-            for (let bridge of this.bridges.values())
+
+            for (const bridge of this.bridges.values())
                 bridge.getLights();
         }, PollInterval);
-        
+
         function onBridgeInstalled(bridge) {
             this.onDeviceInfo({ localId: bridge.identifier, isInstalled: true });
         }
-        
+
         function onDiscovered(data) {
-            let identifier = data.identifier;
+            const identifier = data.identifier;
             let bridge = this.bridges.get(identifier);
             if (bridge === undefined) {
                 bridge = new Bridge(data);
                 bridge.on('discovered', onLightDiscovered.bind(this));
                 bridge.on('installed', onBridgeInstalled.bind(this));
                 bridge.on('state-changes', onStateChanges.bind(this));
-                
+
                 this.bridges.set(identifier, bridge);
                 this.onDeviceInfo(bridge.discoverObject());
             }
         }
-        
+
         function onDiscoverIPChange(data) {
-            let identifier = data.identifier;
-            let address = data.ip.host;
-            let bridge = this.bridges.get(identifier);
+            const identifier = data.identifier;
+            const address = data.ip.host;
+            const bridge = this.bridges.get(identifier);
             if (!bridge)
                 return;
             bridge.address = address;
             this.onDeviceInfo({ address, identifier });
         }
-        
+
         function onLightDiscovered(light) {
             this.onDeviceInfo(light.discoverObject());
         }
-        
+
         function onStateChanges(data) {
-            let output = data.light.outputState;
-            let changes = data.changes.reduce((p, c) => {
+            const output = data.light.outputState;
+            const changes = data.changes.reduce((p, c) => {
                 if (data.light.services.some(s => s === 'BinarySwitch') && (c.state === 'on'))
                     p.push(data.light.propertyObject('BinarySwitch', 'switch', output.on));
-                    
+
                 if (data.light.services.some(s => s === 'DimmableSwitch') && (c.state === 'bri'))
                     p.push(data.light.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
-                    
+
                 if (data.light.services.some(s => s === 'ColorTemperature')) {
                     if (c.state === 'ct')
                         p.push(data.light.propertyObject('ColorTemperature', 'temperature', output.ct));
                     if (c.state === 'temp_low')
                         p.push(data.light.propertyObject('ColorTemperature', 'tempLowerLimit', c.value));
                     if (c.state === 'temp_high')
-                        p.push(data.light.propertyObject('ColorTemperature', 'tempUpperLimit', c.value));  
+                        p.push(data.light.propertyObject('ColorTemperature', 'tempUpperLimit', c.value));
                 }
                 if (data.light.services.some(s => s === 'LightColor')) {
                     if (c.state === 'bri')
@@ -127,25 +129,25 @@ class HuePlugin extends droplit.DroplitPlugin {
                     if (c.state === 'hue')
                         p.push(data.light.propertyObject('LightColor', 'hue', output.hue));
                     if (c.state === 'sat')
-                        p.push(data.light.propertyObject('LightColor', 'saturation', output.sat));  
+                        p.push(data.light.propertyObject('LightColor', 'saturation', output.sat));
                 }
-                    
+
                 return p;
             }, []);
-            
+
             if (changes.length > 0)
                 this.onPropertiesChanged(changes);
         }
     }
-    
+
     discover() {
         this.discoverer.discover();
     }
-    
+
     dropDevice(localId) {
         // Check if identifier is for bridge
         if (this.bridges.has(localId)) {
-            let bridge = this.bridges.get(localId);
+            const bridge = this.bridges.get(localId);
             bridge.removeAllListeners('discovered');
             bridge.removeAllListeners('installed');
             bridge.removeAllListeners('stateChanges');
@@ -153,79 +155,79 @@ class HuePlugin extends droplit.DroplitPlugin {
             this.discoverer.undiscover(localId);
             return;
         }
-        
+
         // Check if identifier is for light
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
+
         bridge.lights.delete(localId);
     }
-    
+
     getState(localId, state, callback) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return callback();
-            
+
         bridge.getLightState(localId, (err, success) => {
             if (err)
                 return callback();
-            
-            let output = Bridge.outputState(success);
+
+            const output = Bridge.outputState(success);
             callback(output[state]);
         });
     }
-    
+
     // BasicAuthBridge Implementation
     register(localId) {
-        let bridge = this.bridges.get(localId);
+        const bridge = this.bridges.get(localId);
         if (!bridge)
             return;
         bridge.register();
     }
-    
+
     // BinarySwitch Implementation
     getSwitch(localId, callback) {
         this.getState(localId, 'on', callback);
     }
-    
+
     setSwitch(localId, value) {
         if (value === 'off')
             this.switchOff(localId);
         else if (value === 'on')
             this.switchOn(localId);
     }
-    
+
     switchOff(localId) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
+
         bridge.setState(localId, { on: false });
     }
-    
+
     switchOn(localId) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
+
         bridge.setState(localId, { on: true });
     }
-        
+
     // DimmableSwitch Implementation
     getDSBrightness(localId, callback) {
         this.getState(localId, 'ds_brightness', callback);
     }
-    
+
     setDSBrightness(localId, value) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
-        let brightness = Math.min(Math.max(normalize(value, 0, 100, 255), 0), 255);
+
+        const brightness = Math.min(Math.max(normalize(value, 0, 100, 255), 0), 255);
         bridge.setState(localId, { bri: brightness });
     }
-    
+
     stepDown(localId) {
         this.getDSBrightness(localId, value => {
             if (value === undefined)
@@ -233,7 +235,7 @@ class HuePlugin extends droplit.DroplitPlugin {
             this.setDSBrightness(localId, Math.max(value - StepSize, 0));
         });
     }
-    
+
     stepUp(localId) {
         this.getDSBrightness(localId, value => {
             if (value === undefined)
@@ -241,75 +243,75 @@ class HuePlugin extends droplit.DroplitPlugin {
             this.setDSBrightness(localId, Math.min(value + StepSize, 100));
         });
     }
-    
+
     // MulticolorLight Implementation
     getMclBrightness(localId, callback) {
         this.getState(localId, 'mcl_brightness', callback);
     }
-    
+
     getHue(localId, callback) {
         this.getState(localId, 'hue', callback);
     }
-    
+
     getSaturation(localId, callback) {
         this.getState(localId, 'sat', callback);
     }
-    
+
     getTemperature(localId, callback) {
         this.getState(localId, 'ct', callback);
     }
-    
+
     getTempLowerLimit(localId, callback) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return callback();
-            
+
         callback(TempLower);
     }
-    
+
     getTempUpperLimit(localId, callback) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return callback();
-            
+
         callback(TempUpper);
     }
-    
+
     setHue(localId, value) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
+
         bridge.setState(localId, { hue: +value });
     }
-    
+
     setMclBrightness(localId, value) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
-        let brightness = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+
+        const brightness = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         bridge.setState(localId, { bri: brightness });
     }
-    
+
     setSaturation(localId, value) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
-        let saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+
+        const saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         bridge.setState(localId, { sat: saturation });
     }
-    
+
     setTemperature(localId, value) {
-        let bridge = this._getBridgeByLight(localId);
+        const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return;
-            
-        let temperature = microReciprocal(value);
+
+        const temperature = microReciprocal(value);
         bridge.setState(localId, { ct: temperature });
     }
-    
+
 }
 
 const AppName = 'droplit#edge';
@@ -317,7 +319,7 @@ const AppName = 'droplit#edge';
 class Bridge extends EventEmitter {
     constructor(config) {
         super();
-        
+
         this.address = config.location.host;
         this.bridge = {
             appName: AppName,
@@ -331,18 +333,18 @@ class Bridge extends EventEmitter {
             manufacturer: config.info.device.manufacturer,
             modelDescription: config.info.device.modelDescription,
             modelName: config.info.device.modelName,
-            modelNumber: config.info.device.modelNumber,
+            modelNumber: config.info.device.modelNumber
         };
         this.promotedMembers = {
             register: 'BasicAuthBridge.register'
         };
         this.services = [ 'BasicAuthBridge' ];
-        
+
         this.lights = new Map();
-        
+
         this.getLights();
     }
-    
+
     static outputState(state) {
         return {
             ct: microReciprocal(state.ct),
@@ -354,7 +356,7 @@ class Bridge extends EventEmitter {
             sat: normalize(state.sat, 0, 254, 0xffff)
         };
     }
-    
+
     discoverObject() {
         return {
             localId: this.identifier,
@@ -365,13 +367,13 @@ class Bridge extends EventEmitter {
             promotedMembers: this.promotedMembers
         };
     }
-    
+
     getLightState(identifier, callback) {
-        let light = this.lights.get(identifier);
+        const light = this.lights.get(identifier);
         if (!light)
             return;
-        
-        let opts = {
+
+        const opts = {
             json: true,
             method: 'GET',
             timeout: 3000,
@@ -383,13 +385,13 @@ class Bridge extends EventEmitter {
                     callback(e);
                 return;
             }
-            
+
             callback(null, b.state);
         });
     }
-    
+
     getLights(callback) {
-        let opts = {
+        const opts = {
             json: true,
             timeout: 3000,
             url: `http://${this.address}/api/${this.key}/lights`
@@ -400,7 +402,7 @@ class Bridge extends EventEmitter {
                     callback(e);
                 return;
             }
-            
+
             // See if response is an error
             if (Array.isArray(b) && b[0].hasOwnProperty('error')) {
                 // App is not registered
@@ -408,50 +410,50 @@ class Bridge extends EventEmitter {
                     setImmediate(() => this.register.bind(this)());
                 return;
             }
-            
+
             if (!this.isInstalled) {
                 this.isInstalled = true;
                 this.emit('installed', this);
             }
-            
-            let deviceChanges = [];
+
+            const deviceChanges = [];
             // New devices
             Object.keys(b).forEach(id => {
-                let lightData = b[id];
-                let identifier = Light.formatId(lightData.uniqueid);
+                const lightData = b[id];
+                const identifier = Light.formatId(lightData.uniqueid);
                 if (!this.lights.has(identifier)) {
-                    let light = new Light(lightData, id);
+                    const light = new Light(lightData, id);
                     this.lights.set(identifier, light);
                     this.emit('discovered', light);
                     deviceChanges.push({ light, changes: light.stateAsChanges() });
                     return;
                 }
 
-                let light = this.lights.get(identifier);
-                let changes = [];
+                const light = this.lights.get(identifier);
+                const changes = [];
                 [ 'on', 'bri', 'hue', 'sat', 'ct' ].forEach(state => {
                     if (lightData.state[state] !== light.state[state])
                         changes.push({ state, value: lightData.state[state] });
                 });
                 if (changes.length > 0)
                     deviceChanges.push({ light, changes });
-                    
+
                 light.state = lightData.state;
-                
+
                 // TODO: May need to handle id changes
             });
-            
+
             if (deviceChanges.length > 0)
                 deviceChanges.forEach(dc =>
                     this.emit('state-changes', { light: dc.light, changes: dc.changes }));
-            
+
             if (callback)
-                callback(e, b);
+                return callback(e, b);
         });
     }
-    
+
     register(callback) {
-        let opts = {
+        const opts = {
             json: {
                 devicetype: AppName,
                 username: this.key
@@ -466,7 +468,7 @@ class Bridge extends EventEmitter {
                     callback(e);
                 return;
             }
-            
+
             if (b[0].hasOwnProperty('error')) {
                 // Link button not pressed
                 if (b[0].error.type === 101) {
@@ -475,17 +477,17 @@ class Bridge extends EventEmitter {
                 }
                 return;
             }
-            
+
             setImmediate(() => this.getLights.bind(this));
         });
     }
-    
+
     setState(identifier, state, callback) {
-        let light = this.lights.get(identifier);
+        const light = this.lights.get(identifier);
         if (!light)
             return;
-            
-        let opts = {
+
+        const opts = {
             json: state,
             method: 'PUT',
             timeout: 3000,
@@ -497,20 +499,20 @@ class Bridge extends EventEmitter {
                     callback(e);
                 return;
             }
-            
-            let errors = [];
-            let success = {};
-            let changes = [];
-            
+
+            const errors = [];
+            const success = {};
+            const changes = [];
+
             b.forEach(response => {
                 if (response.error) {
                     errors.push(response.error);
                     return;
                 }
-                
-                let stateRegex = new RegExp(`\/lights\/${light.pathId}\/state\/(.+)`);
+
+                const stateRegex = new RegExp(`\/lights\/${light.pathId}\/state\/(.+)`);
                 Object.keys(response.success).forEach(key => {
-                    let stateName = stateRegex.exec(key)[1];
+                    const stateName = stateRegex.exec(key)[1];
                     success[stateName] = response.success[key];
                     if (light.state[stateName] !== response.success[key]) {
                         changes.push({ state: stateName, value: response.success[key] });
@@ -518,12 +520,12 @@ class Bridge extends EventEmitter {
                     }
                 });
             });
-            
+
             if (changes.length > 0)
                 this.emit('state-changes', { light, changes });
-            
+
             if (callback)
-                callback(errors, success);
+                return callback(errors, success);
         });
     }
 }
@@ -531,31 +533,31 @@ class Bridge extends EventEmitter {
 class Light {
     constructor(config, pathId) {
         this.pathId = pathId;
-        this.uniqueid = Light.formatId(config.uniqueid),
-        this.name = config.name,
-        this.type = config.type,
-        this.modelid = config.modelid,
-        this.manufacturername = config.manufacturername.trim(),
-        this.state = config.state            
+        this.uniqueid = Light.formatId(config.uniqueid);
+        this.name = config.name;
+        this.type = config.type;
+        this.modelid = config.modelid;
+        this.manufacturername = config.manufacturername.trim();
+        this.state = config.state;
     }
-    
+
     static formatId(id) {
         return id.replace(/[:-]/g, '');
     }
-    
+
     get outputState() {
         return Bridge.outputState(this.state);
     }
-    
+
     get promotedMembers() {
-        let members = {};
+        const members = {};
         if (this.services.some(s => s === 'BinarySwitch'))
-            members['switch'] = 'BinarySwitch.switch';
+            members.switch = 'BinarySwitch.switch';
         if (this.services.some(s => s === 'DimmableSwitch'))
-            members['brightness'] = 'DimmableSwitch.brightness';
+            members.brightness = 'DimmableSwitch.brightness';
         return members;
     }
-    
+
     get services() {
         switch (this.type) {
             case 'Extended color light':
@@ -568,7 +570,7 @@ class Light {
                 return [ 'BinarySwitch' ];
         }
     }
-    
+
     discoverObject() {
         return {
             localId: this.uniqueid,
@@ -577,16 +579,16 @@ class Light {
                 friendlyName: this.name,
                 manufacturer: this.manufacturername,
                 modelName: this.type,
-                modelNumber: this.modelid                
+                modelNumber: this.modelid
             },
             deviceMeta: { name: this.name },
             services: this.services,
             promotedMembers: this.promotedMembers
-        }
+        };
     }
-    
+
     stateAsChanges() {
-        let props = [];
+        const props = [];
         if (this.state.hasOwnProperty('on'))
             props.push({ state: 'on', value: this.state.on });
         if (this.state.hasOwnProperty('bri'))
@@ -600,10 +602,10 @@ class Light {
             props.push({ state: 'temp_low', value: TempLower });
             props.push({ state: 'temp_high', value: TempUpper });
         }
-            
+
         return props;
     }
-    
+
     propertyObject(service, member, value) {
         return {
             localId: this.uniqueid,

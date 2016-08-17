@@ -11,5 +11,11 @@
     }
   ],
   "main": "index.js",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    }
+  },
   "dependencies": { }
 }
