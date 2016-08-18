@@ -1,9 +1,12 @@
 {
     "transport": {
-        "host": "wss://ws.droplit.io/edge"
+        "host": "wss://edge-ws.droplit.io/edge"
     },
-    "ecosystemId": "",
+    "ecosystemId": "INSERT_YOUR_ECOSYSTEMID_HERE",
     "plugins": [
-        "droplit-plugin-ts-example"
+        "droplit-plugin-philips-hue",
+        "droplit-plugin-lifx",
+        "droplit-plugin-sonos",
+        "droplit-plugin-wemo"
     ]
 }
