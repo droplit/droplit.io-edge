@@ -52,6 +52,16 @@ If you need to change the project dependencies:
  - then change the projects.json file
  - then run `gulp setup`.
 
+## Configuring the Edge
+
+ > IMPORTANT! You must supply the EcosystemID in order for the edge to link to your ecosystem.
+
+Create a `localsettings.json` file by copying the `/projects/droplit-edge/localsettings.master.json` file.
+
+Use this file to enable plugins and to supply your EcosystemID.
+
+Go to the dev portal http://portal.droplit.io and copy your ecosystemId into the `ecosystemId` value in your `localsettings.json` file.
+
 #Raspberry Pi
 
 ## Installing Node and NPM
