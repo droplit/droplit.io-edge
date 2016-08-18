@@ -23,12 +23,6 @@ run: `gulp setup`
 
 You only need to do this once. (unless the project dependency structure change)
 
-To undo the linked modules, close VS code and...
-
-run: `gulp teardown`
-
-If you need to change the project dependencies run `gulp teardown` then change the projects.json file, then run `gulp setup`.
-
 ## Building
 
 You can run a build with linting any time by running:
@@ -39,13 +33,24 @@ If you want to build and continuously watch for changes, you can simply run:
 
 `gulp watch`
 
-## Debugging
+## Debugging/Running
 
 To observe debug output (Windows) `set DEBUG=droplit:*` prior to running.
 
 To run any single CLI application, run `node app_name` where app_name is the name of the CLI app.
 
 Ex: `node droplit-edge`
+
+## Cleanup or Reconfiguration
+
+To undo the linked modules, close VS code and...
+
+run: `gulp teardown`
+
+If you need to change the project dependencies:
+ - run `gulp teardown` 
+ - then change the projects.json file
+ - then run `gulp setup`.
 
 #Raspberry Pi
 

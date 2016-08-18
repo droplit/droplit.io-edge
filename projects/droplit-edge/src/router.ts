@@ -297,7 +297,7 @@ function loadPlugin(pluginName: string) {
         deviceInfo.pluginName = pluginName;
         cache.setDeviceInfo(deviceInfo);
         log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
-        transport.sendRequest('device info', deviceInfo, (response, err) => {
+        transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
             if (!response)
                 return;
             let refreshedInfo: DP.DeviceInfo = JSON.parse(response);

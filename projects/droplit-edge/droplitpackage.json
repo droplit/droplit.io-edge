@@ -1,0 +1,8 @@
+{
+    "packageFiles": [
+        "projects/droplit-edge/**/*.*",
+        "!projects/droplit-edge/**/*.ts",
+        "!projects/droplit-edge/**/*.map",
+        "!projects/droplit-edge/**/*.md"
+      ]
+}

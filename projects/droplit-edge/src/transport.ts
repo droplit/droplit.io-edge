@@ -59,6 +59,7 @@ export default class Transport extends EventEmitter {
 
     // request-response mapping
     private responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
+    private reliableResponseMap: { [id: string]: (response: string, err?: Error) => void } = {};
 
     constructor() {
         super();
@@ -151,11 +152,12 @@ export default class Transport extends EventEmitter {
         } else if (typeof (packet.r) === 'string') {
             // log(`onMessage: response to request`);
             // it's the reponse to a request
-            let cb = this.responseMap[packet.r];
+            let cb = this.responseMap[packet.r] || this.reliableResponseMap[packet.r];
             if (cb) {
                 // log(`onMessage: callback found`);
                 cb(JSON.stringify(packet.d));
                 delete this.responseMap[packet.r];
+                delete this.reliableResponseMap[packet.r];
             } else {
                 log(`onMessage: callback not found`);
                 // this shouldn't happen
@@ -222,6 +224,18 @@ export default class Transport extends EventEmitter {
                 cb(undefined, err);
                 delete this.responseMap[packet.i];
                 log('request send error', packet, err);
+            }
+        });
+    }
+
+    public sendRequestReliable(message: string, data: any, cb: (response: string, err: Error) => void) {
+        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        this.reliableResponseMap[packet.i] = cb;
+        this._send(JSON.stringify(packet), (err) => {
+            // only happens if there was an error, so presumably the callback won't be called from a valid response
+            if (err) {
+                this.queue(packet);
+                log('reliable request send error - will retry', packet, err);
             }
         });
     }

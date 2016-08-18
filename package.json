@@ -31,8 +31,10 @@
   },
   "devDependencies": {
     "async": "^1.5.2",
+    "babel-preset-es2015": "^6.13.2",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
     "gulp-debug": "^2.1.2",
     "gulp-gzip": "^1.4.0",
     "gulp-help": "^1.6.1",

@@ -11,8 +11,11 @@
         "typings/main.d.ts",
         "projects/{project}/src/**/*.ts"
     ],
+    "jsFiles": [
+        "projects/{project}/src/**/*.js"
+    ],
     "resources": [
-        "projects/{project}/src/**/*.!(ts)"
+        "projects/{project}/src/**/*.!(ts|js)"
     ],
     "dest": "projects/{project}/lib/",
     "resourceExtensions": [

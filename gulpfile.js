@@ -185,8 +185,12 @@ projectNames.forEach((project) => {
                 // .pipe(G$.sourcemaps.write()) // inline sourcemaps
                 .pipe(G$.sourcemaps.write('.')) // separate .js.map files
                 .pipe(gulp.dest(dest)),
-                // all other files
-                gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest))
+            // JS files
+            gulp.src(mapPaths(settings.jsFiles, project)).pipe(G$.babel({
+                    presets: ['es2015']
+                })).pipe(gulp.dest(dest)),
+            // all other files
+            gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest)),
         ]);
     });
 });
