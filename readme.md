@@ -168,7 +168,10 @@ To observe debug output, prior to running:
 (Windows)  `set DEBUG=droplit:*`
 
 
-To run the application:  `node droplit-edge`
+To run the application from the project root (`cd ~/droplit.io-edge`)
+
+
+run:  `node droplit-edge`
 
 
 ## Cleanup or Reconfiguration
