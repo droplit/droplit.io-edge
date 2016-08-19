@@ -66,6 +66,12 @@ Install Git to repo download source.
 
 For Rapsberry Pi:
 ```
+sudo raspi-config
+```
+Go down to boot options and change it to "B2 Console Autologin"
+This will make it so the user auto logins and then the edge server will start properly.
+
+```
 sudo apt-get install git
 ```
 
@@ -187,6 +193,3 @@ If you need to change the project dependencies:
  - run `gulp teardown` 
  - then change the projects.json file
  - then run `gulp setup`.
-
-
-
