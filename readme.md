@@ -18,9 +18,11 @@ In order to run the Droplit.io Edge software, you must:
 
 
 Currently we support these platforms:
+
 * Raspberry Pi 3 (Raspbian Lite 2016-05-27)
 
 Platforms with limited support:
+
 * Openwrt 
 * DDWRT
 * Windows 10 on desktop
@@ -28,6 +30,7 @@ Platforms with limited support:
 * Debian 8 on desktop
 
 Platforms with known issues:
+
 * Low memory/cpu power embedded devices 
 
 ## Plugins
@@ -57,7 +60,10 @@ The following documentation assumes you are using a Raspberry Pi 3 on Raspbian L
 
 Make sure your device is connected to the local network, we recommend a wired connection for best results.
 
+
 Install Git to repo download source. 
+
+
 For Rapsberry Pi:
 ```
 sudo apt-get install git
@@ -93,11 +99,15 @@ run: `npm install -g ntypescript gulp typings`
 ## Downloading Droplit.io Edge
 
 Using git:
+
+
 run: `git clone https://bitbucket.org/droplit/droplit.io-edge.git --depth 1`
 
 ## Installing project dependencies
 
 From the project root folder (`cd ~/droplit.io-edge`)
+
+
 run: `npm install`
 
 
@@ -150,7 +160,11 @@ If you want to build and continuously watch for changes, you can simply run:
 ## Debugging/Running
 
 To observe debug output, prior to running:
+
+
 (Unix / Linux) `export DEBUG=droplit:*`
+
+
 (Windows)  `set DEBUG=droplit:*`
 
 
