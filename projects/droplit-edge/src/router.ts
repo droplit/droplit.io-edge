@@ -287,61 +287,63 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
 
 function loadPlugin(pluginName: string) {
     return new Promise<any>((resolve, reject) => {
-        let p = plugin.instance(pluginName);
-        if (!p)
-            return resolve();
+        setImmediate(() => {
+            let p = plugin.instance(pluginName);
+            if (!p)
+                return resolve();
 
-        log(`${pluginName} loaded`);
+            log(`${pluginName} loaded`);
 
-        p.on('device info', (deviceInfo: DeviceInfo) => {
-            deviceInfo.pluginName = pluginName;
-            cache.setDeviceInfo(deviceInfo);
-            log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
-            transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
-                if (!response)
-                    return;
-                let refreshedInfo: DP.DeviceInfo = JSON.parse(response);
-                if (!response) {
-                    log(`loadPlugin: device info: no device information returned in packet:`, err);
-                    return;
-                }
-                log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
-                cache.setDeviceInfo(refreshedInfo);
+            p.on('device info', (deviceInfo: DeviceInfo) => {
+                deviceInfo.pluginName = pluginName;
+                cache.setDeviceInfo(deviceInfo);
+                log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
+                transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
+                    if (!response)
+                        return;
+                    let refreshedInfo: DP.DeviceInfo = JSON.parse(response);
+                    if (!response) {
+                        log(`loadPlugin: device info: no device information returned in packet:`, err);
+                        return;
+                    }
+                    log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
+                    cache.setDeviceInfo(refreshedInfo);
+                });
             });
+
+            p.on('event raised', (events: EventRaised[]) => {
+                events.reduce((p, c) => {
+                    let d = cache.getDeviceByLocalId(c.localId);
+                    log(`event < ${d.pluginName}:${d.localId}`);
+                    if (d.pluginName)
+                        c.pluginName = d.pluginName;
+                    return p.concat([c]);
+                }, []);
+                transport.send('event raised', events, err => { });
+            });
+
+            p.on('property changed', (properties: any[]) => {
+                properties.reduce((p, c) => {
+                    let d = cache.getDeviceByLocalId(c.localId);
+                    if (d.pluginName)
+                        c.pluginName = d.pluginName;
+                    return p.concat([c]);
+                }, []);
+                transport.send('property changed', properties, err => { });
+            });
+
+            let basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
+
+            p.on('discover complete', basicSend('discover complete'));
+            p.on('log info', basicSend('event raised'));
+            p.on('log error', basicSend('event raised'));
+            p.on('plugin data', basicSend('plugin data'));
+            p.on('plugin setting', basicSend('plugin setting'));
+
+            plugins.set(pluginName, p);
+
+            resolve();
         });
-
-        p.on('event raised', (events: EventRaised[]) => {
-            events.reduce((p, c) => {
-                let d = cache.getDeviceByLocalId(c.localId);
-                log(`event < ${d.pluginName}:${d.localId}`);
-                if (d.pluginName)
-                    c.pluginName = d.pluginName;
-                return p.concat([c]);
-            }, []);
-            transport.send('event raised', events, err => { });
-        });
-
-        p.on('property changed', (properties: any[]) => {
-            properties.reduce((p, c) => {
-                let d = cache.getDeviceByLocalId(c.localId);
-                if (d.pluginName)
-                    c.pluginName = d.pluginName;
-                return p.concat([c]);
-            }, []);
-            transport.send('property changed', properties, err => { });
-        });
-
-        let basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
-
-        p.on('discover complete', basicSend('discover complete'));
-        p.on('log info', basicSend('event raised'));
-        p.on('log error', basicSend('event raised'));
-        p.on('plugin data', basicSend('plugin data'));
-        p.on('plugin setting', basicSend('plugin setting'));
-
-        plugins.set(pluginName, p);
-
-        resolve();
     });
 }
 

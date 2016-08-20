@@ -31,7 +31,7 @@ let log = debug('droplit:transport-edge');
 
 /**
  * Provides communication with droplit.io
- * 
+ *
  * @export
  * @class Transport
  * @extends {EventEmitter}
@@ -90,8 +90,8 @@ export default class Transport extends EventEmitter {
         this.connectOperation.attempt((currentAttempt: any) => {
             log('reconnecting...');
             if (this.settings.hasOwnProperty('transportId')) {
-            console.log("retry!: ", this.transportId, currentAttempt);
-                
+            console.log('retry!: ', this.transportId, currentAttempt);
+
                 this.emit(`#retry:${this.transportId}`, currentAttempt, this.transportId);
             }
             let success = this.restart();
@@ -310,13 +310,13 @@ export default class Transport extends EventEmitter {
             if (this.prevMessageId < this.messageIdSeed) {
                 /**
                  * message ids have NOT recycled
-                 * 
+                 *
                  *   [] = full range: 0..Number.MAX_SAFE_INTEGER
                  *   <  = prevMessageId
                  *   >  = messageIdSeed (next messageId)
                  *   -  = active messageId (not yet responded to or digested)
                  *   o  = id
-                 * 
+                 *
                  *   [      -o-<--->      ]
                  *   [o<--->            --]
                  */
@@ -328,13 +328,13 @@ export default class Transport extends EventEmitter {
             } else {
                 /**
                  * message ids HAVE recycled
-                 * 
+                 *
                  *   [] = full range: 0..Number.MAX_SAFE_INTEGER
                  *   <  = prevMessageId
                  *   >  = messageIdSeed (next messageId)
                  *   -  = active messageId
                  *   o  = id
-                 * 
+                 *
                  *   [--->      -o-<    --]
                  */
                 if (id <= this.prevMessageId && id > this.messageIdSeed) {
@@ -387,7 +387,6 @@ export default class Transport extends EventEmitter {
     }
 
 }
-
 
 /** references
  * http://websockets.github.io/ws/
