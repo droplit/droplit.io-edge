@@ -1,7 +1,5 @@
 import * as events from 'events';
-import * as http from 'http';
 import * as request from 'request';
-import * as url from 'url';
 
 export interface Response {
     status: number;

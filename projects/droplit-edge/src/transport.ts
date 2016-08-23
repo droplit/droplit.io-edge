@@ -258,10 +258,11 @@ export default class Transport extends EventEmitter {
         return this.sendBuffer.length > 0;
     }
 
-    private queueAndPeek(packet: any): any {
-        this.queue(packet);
-        return this.sendBuffer[0];
-    }
+    // TODO: Unimplemented. delete?
+    // private queueAndPeek(packet: any): any {
+    //     this.queue(packet);
+    //     return this.sendBuffer[0];
+    // }
 
     private dequeue(): any {
         return this.sendBuffer.shift();
@@ -396,3 +397,5 @@ export default class Transport extends EventEmitter {
  * https://tomasz.janczuk.org/2012/11/how-to-use-websockets-with-nodejs-apps.html
  * https://azure.microsoft.com/en-us/blog/introduction-to-websockets-on-windows-azure-web-sites/
  */
+
+// TODO: Unimplemented. Delete?

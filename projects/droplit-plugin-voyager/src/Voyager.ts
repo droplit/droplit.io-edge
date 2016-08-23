@@ -53,12 +53,12 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
                 return;
             }
             // this.devices.address = device.location.href;
-            
+
             let client = new VoyagerClient(device);
             client.on('propertiesChanged', (data: any) => {
                 this.onPropertiesChanged(data);
             });
-            
+
             this.devices[device.identifier] = client;
             device.product = {};
             let onInfo = (data: any) => {
@@ -88,7 +88,7 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
             this.devices[identifier].device.address = 'http://' + address + '/';
             this.onDeviceInfo({ address, identifier });
         }
-        
+
     }
 
     public discover() {

@@ -9,10 +9,14 @@
             true,
             "spaces"
         ],
-        "no-duplicate-variable": true,
+        "no-conditional-assignment": true,
+        "no-consecutive-blank-lines": true,
         "no-eval": true,
+        "no-inferrable-types": [true, "ignore-params"],
         "no-internal-module": true,
-        "no-trailing-whitespace": false,
+        "no-trailing-whitespace": true,
+        "no-unreachable": true,
+        "no-unused-variable": true,
         "no-var-keyword": true,
         "one-line": [
             true,
@@ -20,8 +24,9 @@
             "check-whitespace"
         ],
         "quotemark": [
-            false,
-            "double"
+            true,
+            "single",
+            "avoid-escape"
         ],
         "semicolon": [
             true,

@@ -13,7 +13,6 @@ import {
     EventRaised,
     GetPropertiesResponse,
     PluginData,
-    PluginDataResponse,
     PluginSetting,
     PluginSettingResponse,
     SetPropertiesResponse
@@ -157,11 +156,12 @@ function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     return results;
 }
 
-function discover(pluginName?: string) {
-    if (pluginName)
-        return discoverOne(pluginName);
-    discoverAll();
-}
+// TODO: Unimplemented. delete?
+// function discover(pluginName?: string) {
+//     if (pluginName)
+//         return discoverOne(pluginName);
+//     discoverAll();
+// }
 
 function discoverAll() {
     let timeout = 0;
@@ -173,11 +173,12 @@ function discoverAll() {
     });
 }
 
-function discoverOne(pluginName: string) {
-    if (!plugins.has(pluginName))
-        return;
-    plugins.get(pluginName).discover();
-}
+// TODO: Unimplemented. delete?
+// function discoverOne(pluginName: string) {
+//     if (!plugins.has(pluginName))
+//         return;
+//     plugins.get(pluginName).discover();
+// }
 
 function dropDevice(commands: DeviceCommand[]) {
     log(`drop > ${JSON.stringify(commands)}`);
@@ -381,20 +382,21 @@ function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
     return { supported: false };
 }
 
-function setPluginData(settings: PluginData[]): PluginDataResponse {
-    let results: PluginDataResponse = {
-        supported: Array.apply(null, Array(settings.length))
-    };
-    results.supported = settings.reduce(function (p, c) {
-        if (c && c.key && c.plugin && c.value) {
-            cache.setPluginData(c.plugin, c.key, c.value);
-            plugin.instance(c.plugin).emit('plugin data', c);
-            return p.concat([true]);
-        }
-        return p.concat([false]);
-    }, []);
-    return results;
-}
+// TODO: Unimplemented. delete?
+// function setPluginData(settings: PluginData[]): PluginDataResponse {
+//     let results: PluginDataResponse = {
+//         supported: Array.apply(null, Array(settings.length))
+//     };
+//     results.supported = settings.reduce(function (p, c) {
+//         if (c && c.key && c.plugin && c.value) {
+//             cache.setPluginData(c.plugin, c.key, c.value);
+//             plugin.instance(c.plugin).emit('plugin data', c);
+//             return p.concat([true]);
+//         }
+//         return p.concat([false]);
+//     }, []);
+//     return results;
+// }
 
 function setPluginSetting(settings: PluginSetting[]): PluginSettingResponse {
     let results: PluginSettingResponse = {

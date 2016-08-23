@@ -1,6 +1,5 @@
 import {EventEmitter} from 'events';
 import * as DP from 'droplit-plugin';
-import {DeviceMessage} from './types/types';
 import {DeviceMessageResponse} from './types/types';
 
 let pluginMap: { [name: string]: Controller } = {};
@@ -16,8 +15,8 @@ export function instance(pluginName: string): Controller {
 }
 
 /**
- * This class mostly just wraps the DroplitPlugin class to create a layer of abstraction 
- * that allows us to later implement plugins as a separate process or in a sandbox 
+ * This class mostly just wraps the DroplitPlugin class to create a layer of abstraction
+ * that allows us to later implement plugins as a separate process or in a sandbox
  * or accomodate for changes to the plugin design in the future
  */
 

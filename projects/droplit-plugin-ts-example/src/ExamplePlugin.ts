@@ -3,12 +3,12 @@ import * as droplit from 'droplit-plugin';
 console.log('example');
 
 export class ExamplePlugin extends droplit.DroplitPlugin {
-    
+
     constructor() {
         super();
         console.log('example construct');
     }
-    
+
     // virtual device states
     private devices: any = {
         '1': {
@@ -18,14 +18,14 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
             'BinarySwitch.switch': 'off'
         }
     };
-    
+
     // virtual device tracking
     private deviceConnected: { [localId: string]: boolean } = {};
-    
+
     /**
      * Example plugin will produce two devices when told to discover
      */
-    
+
     public discover() {
         setImmediate(() => { // simulate async
             this.onDeviceInfo({
@@ -51,24 +51,24 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
             this.onDiscoverComplete();
         });
     }
-    
+
     public connect(localId: string): boolean {
         // track state changes on this device
         this.deviceConnected[localId] = true;
         return true;
     }
-    
+
     public disconnect(localId: string): boolean {
         // stop tracking state changes on this device
         this.deviceConnected[localId] = false;
         return true;
     }
-    
+
     public dropDevice(localId: string): boolean {
         this.disconnect(localId);
         return true;
     }
-    
+
     protected BinarySwitch_get_switch(localId: string, index: string, callback: (value: any) => void): boolean {
         if (index === undefined) {
             setImmediate(() => { // simulate async
@@ -79,7 +79,7 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
         }
         return false;
     }
-    
+
     protected BinarySwitch_set_switch(localId: string, index: string, value: any): boolean {
         if (index === undefined) {
             setImmediate(() => { // simulate async
@@ -101,8 +101,8 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
                     }]);
                 } else {
                     /**
-                     * send command to device, but state change doesn't 
-                     * report back because the state is not being tracked 
+                     * send command to device, but state change doesn't
+                     * report back because the state is not being tracked
                      */
                 }
             });

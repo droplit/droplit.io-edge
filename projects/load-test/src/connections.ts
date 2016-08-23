@@ -1,6 +1,5 @@
 import * as router from '../../droplit-edge';
 import * as debug from 'debug';
-import * as chalk from 'chalk';
 
 let localSettings = require('../localsettings.json');
 
@@ -10,18 +9,17 @@ let config: any = require('../test-config.json');
 
 let connections: Array<any> = [];
 
-
 function start() {
     getEdgeId((edgeId) => {
         // let connections = 0;
         // TODO: Count maximum supported connections
-        let totalConnections = config.loadTest.numConnections;
-        let count = 0;
-        let undefinedCount = 0;
-        let retryCount = -1;
-        let failCount = 0;
+        // let totalConnections = config.loadTest.numConnections;
+        // let count = 0;
+        // let undefinedCount = 0;
+        // let retryCount = -1;
+        // let failCount = 0;
 
-        let delay: number ; // ms
+        // let delay: number ; // ms
         // delay = Math.floor((Math.random() * 1000) + 100); // randomizing delay time
         // console.log(`${chalk.cyan(delay.toString())}`); // printing delay time
         // setTimeout(() => {
@@ -60,8 +58,8 @@ function startConnection(edgeId: string, iteration: number, callback: (connected
     });
 
     transport.on(`#retry:${iteration}`, (currentAttempt: any, transportId: number) => {
-        console.log("on retry", iteration, currentAttempt);
-        
+        console.log('on retry', iteration, currentAttempt);
+
         for (let index = 0; index < connections.length; index++) {
             // console.log(connections[index], index, connections.length);
             if (connections[index].id === transportId) {
@@ -74,14 +72,14 @@ function startConnection(edgeId: string, iteration: number, callback: (connected
 
     config.transport.transportId = iteration;
     transport.start(config.transport, {
-        "x-edge-id": edgeId,
-        "x-ecosystem-id": localSettings.ecosystemId
+        'x-edge-id': edgeId,
+        'x-ecosystem-id': localSettings.ecosystemId
     }, (connected) => {
         callback(connected, iteration);
     });
 
 };
-let _edgeId: string = "kduhdkhdkjhd";
+let _edgeId = 'kduhdkhdkjhd';
 
 function getEdgeId(callback: (edgeId: string) => void) {
     // if (_edgeId) {

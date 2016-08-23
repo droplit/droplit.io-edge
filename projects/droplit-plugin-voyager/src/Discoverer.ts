@@ -17,14 +17,10 @@ export class Discoverer extends events.EventEmitter {
 
         this.client.on('response', udpResponse.bind(this));
 
-        function getDescription (identifier: any) {
-            this.emit('discovered', this.found.identifier);
-        }
-
         function udpResponse(headers: any, statusCode: number, rinfo: any) {
             if (!headers.LOCATION) {
                 return;
-            } 
+            }
             if (!headers.ST || !headers.USN) {
                 return;
             }
@@ -33,7 +29,7 @@ export class Discoverer extends events.EventEmitter {
             let idRegEx = /^voyager:ecp:((?:(?:[A-F0-9.]){3}){5}(?:[A-F0-9.]{2})):name:(.*):type:(.+)/;
 
             let idMatch = headers.USN.match(idRegEx);
-            
+
             if (!idMatch) {
                 return;
             }
@@ -70,7 +66,7 @@ export class Discoverer extends events.EventEmitter {
     discover() {
         this.client.search(upnpSearch);
     }
-    
+
     undiscover(identifier: string) {
         delete this.found.identifier;
     }
