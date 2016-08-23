@@ -397,5 +397,3 @@ export default class Transport extends EventEmitter {
  * https://tomasz.janczuk.org/2012/11/how-to-use-websockets-with-nodejs-apps.html
  * https://azure.microsoft.com/en-us/blog/introduction-to-websockets-on-windows-azure-web-sites/
  */
-
-// TODO: Unimplemented. Delete?
