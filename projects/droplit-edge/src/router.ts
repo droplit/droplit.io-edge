@@ -74,11 +74,9 @@ loadPlugins().then(() => {
 
 // Transport event handlers
 transport.once('connected', () => {
-    // loadPlugins().then(() => {
-        discoverAll();
-        if (settings.router.autodiscover)
-            setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
-    // });
+    discoverAll();
+    if (settings.router.autodiscover)
+        setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
 });
 
 transport.on('disconnected', () => { });
