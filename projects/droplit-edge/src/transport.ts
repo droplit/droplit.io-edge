@@ -84,7 +84,6 @@ export default class Transport extends EventEmitter {
         log('disconnected');
         this.emit('disconnected');
     }
-    // reconnect
 
     private retryConnect(callback?: (success: boolean) => void) {
         this.connectOperation.attempt((currentAttempt: any) => {
@@ -231,6 +230,14 @@ export default class Transport extends EventEmitter {
     public sendRequestReliable(message: string, data: any, cb: (response: string, err: Error) => void) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.reliableResponseMap[packet.i] = cb;
+
+        // If the connection is known to be closed, queue rather than fail
+        if (!this.isOpen) {
+            this.queue(packet);
+            log('no socket connection - queuing reliable message');
+            return;
+        }
+
         this._send(JSON.stringify(packet), (err) => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
             if (err) {
@@ -269,11 +276,14 @@ export default class Transport extends EventEmitter {
     }
 
     private _send(packet: any, cb?: (err: Error) => void) {
+        if (typeof packet === 'object')
+            packet = JSON.stringify(packet);
+
         if (this.ws) {
             try {
                 this.ws.send(packet, cb);
             } catch (err) {
-                log('send error', err.stack, this.ws);
+                log('send error', err.stack);
                 if (cb) {
                     cb(err);
                 }
