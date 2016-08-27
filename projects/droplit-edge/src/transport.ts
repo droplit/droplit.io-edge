@@ -119,8 +119,8 @@ export default class Transport extends EventEmitter {
     private onOpen() {
         this.isOpen = true;
         this.startHeartbeat();
-        this.sendBacklog();
         log('connected');
+        this.sendBacklog();
         this.emit('connected');
         if (this.connectedCallback) {
             this.connectedCallback(true);
@@ -207,10 +207,17 @@ export default class Transport extends EventEmitter {
 
     public sendReliable(message: string, data?: any) {
         let packet: any = { m: message, d: data, i: this.getNextMessageId() };
+
+        // If the connection is known to be closed, queue rather than fail
+        if (!this.isOpen) {
+            this.queue(packet);
+            log('no socket connection - queuing reliable message');
+            return;
+        }
+
         this._send(JSON.stringify(packet), (err) => {
-            if (err) {
+            if (err)
                 this.queue(packet);
-            }
         });
     }
 
@@ -301,6 +308,7 @@ export default class Transport extends EventEmitter {
             if (!nextPacket)
                 return;
 
+            log(`backlog < ${JSON.stringify(nextPacket)}`);
             this._send(nextPacket, err => {
                 if (!err)
                     this.dequeue();

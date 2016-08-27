@@ -36,6 +36,7 @@ const settings = require('../settings.json');
 const transport = new Transport();
 
 let autodiscoverTimer: number;
+let hasConnected = false;
 
 // overwrite settings with local settings
 Object.keys(localSettings).forEach((key) => settings[key] = localSettings[key]);
@@ -74,6 +75,7 @@ loadPlugins().then(() => {
 
 // Transport event handlers
 transport.once('connected', () => {
+    hasConnected = true;
     discoverAll();
     if (settings.router.autodiscover)
         setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
@@ -332,7 +334,12 @@ function loadPlugin(pluginName: string) {
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
                 }, []);
-                transport.send('property changed', properties, err => { });
+
+                // Only guarentee if send before first connect
+                if (!hasConnected)
+                    transport.sendReliable('property changed', properties);
+                else
+                    transport.send('property changed', properties, err => { });
             });
 
             let basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
