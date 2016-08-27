@@ -145,6 +145,7 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 });
 
 function callMethods(commands: DeviceCommand[]): CallMethodResponse {
+    log(`call > ${JSON.stringify(commands)}`);
     let map = groupByPlugin(commands);
     let results: CallMethodResponse = {
         supported: Array.apply(null, Array(commands.length)) // init all values to undefined
@@ -326,6 +327,7 @@ function loadPlugin(pluginName: string) {
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
                     let d = cache.getDeviceByLocalId(c.localId);
+                    log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
                     if (d.pluginName)
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
@@ -370,6 +372,7 @@ function loadPlugins() {
 }
 
 function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
+    log(`msg > ${JSON.stringify(message)}`);
     let device: any = cache.getDeviceByDeviceId(message.deviceId);
     let deviceId = message.deviceId;
     let data = message.message;
