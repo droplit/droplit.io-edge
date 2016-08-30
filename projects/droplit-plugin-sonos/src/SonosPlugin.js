@@ -62,6 +62,22 @@ class SonosPlugin extends droplit.DroplitPlugin {
             }
         });
 
+        this.discovery.on('mute-change', data => {
+            const playerState = playerStates.get(data.uuid) || {};
+            if (!playerState.hasOwnProperty('mute') || playerState.mute !== data.newMute) {
+                playerState.mute = data.newMute;
+                this.onPropertiesChanged([{ localId: data.uuid, service: 'AudioOutput', member: 'mute', value: data.newMute }]);
+            }
+        });
+
+        this.discovery.on('volume-change', data => {
+            const playerState = playerStates.get(data.uuid) || {};
+            if (!playerState.hasOwnProperty('volume') || playerState.volume !== data.newVolume) {
+                playerState.volume = data.newVolume;
+                this.onPropertiesChanged([{ localId: data.uuid, service: 'AudioOutput', member: 'volume', value: data.newVolume }]);
+            }
+        });
+
         this.discovery.on('transport-state', player => {
             processStateChanges.bind(this)(player.toJSON());
         });
@@ -209,7 +225,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
 
                 // MediaInfo.artist
                 if (isChanged('artist', playerState, state)) {
-                    playerState.albumTitle = state.artist;
+                    playerState.artist = state.artist;
                     changes.push({ localId: playerId, service: 'MediaInfo', member: 'artist', value: state.artist });
                 }
 
