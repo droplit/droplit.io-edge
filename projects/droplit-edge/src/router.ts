@@ -62,14 +62,10 @@ if (settings.debug.generateHeapDump) {
 
 loadPlugins().then(() => {
     // Initialize the transport
-    let mac = require('getmac');
-    mac.getMac((err: Error, macAddress: string) => {
-        if (err)
-            throw err;
-        transport.start(settings.transport, {
-            'x-edge-id': macAddress,
-            'x-ecosystem-id': settings.ecosystemId // requires ecosystemId to be set in localsettings.json
-        });
+    let macAddress = require('node-getmac').trim();
+    transport.start(settings.transport, {
+        'x-edge-id': macAddress,
+        'x-ecosystem-id': settings.ecosystemId // requires ecosystemId to be set in localsettings.json
     });
 });
 
