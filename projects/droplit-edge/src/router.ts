@@ -18,7 +18,7 @@ import {
     SetPropertiesResponse
 } from './types/types';
 
-let log = debug('droplit:router');
+const log = debug('droplit:router');
 export {Transport};
 
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
@@ -62,7 +62,7 @@ if (settings.debug.generateHeapDump) {
 
 loadPlugins().then(() => {
     // Initialize the transport
-    let macAddress = require('node-getmac').trim();
+    const macAddress = require('node-getmac').trim();
     transport.start(settings.transport, {
         'x-edge-id': macAddress,
         'x-ecosystem-id': settings.ecosystemId // requires ecosystemId to be set in localsettings.json
@@ -144,8 +144,8 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
 
 function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     log(`call > ${JSON.stringify(commands)}`);
-    let map = groupByPlugin(commands);
-    let results: CallMethodResponse = {
+    const map = groupByPlugin(commands);
+    const results: CallMethodResponse = {
         supported: Array.apply(null, Array(commands.length)) // init all values to undefined
     };
     Object.keys(map).forEach(pluginName => {
@@ -181,7 +181,7 @@ function discoverAll() {
 
 function dropDevice(commands: DeviceCommand[]) {
     log(`drop > ${JSON.stringify(commands)}`);
-    let map = groupByPlugin(commands);
+    const map = groupByPlugin(commands);
 
     Object.keys(map).forEach(pluginName => {
         map[pluginName].forEach(device => {
@@ -193,11 +193,11 @@ function dropDevice(commands: DeviceCommand[]) {
 
 function getPluginName(command: DeviceCommand) {
     // HACK: Allows easier testing via wscat
-    let local = cache.getDeviceByLocalId(command.localId);
+    const local = cache.getDeviceByLocalId(command.localId);
     if (local)
         return local.pluginName;
 
-    let device = cache.getDeviceByDeviceId(command.deviceId);
+    const device = cache.getDeviceByDeviceId(command.deviceId);
     if (device)
         return device.pluginName;
 
@@ -206,8 +206,8 @@ function getPluginName(command: DeviceCommand) {
 
 function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse> {
     log(`get > ${JSON.stringify(commands)}`);
-    let map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
-    let results: GetPropertiesResponse = {
+    const map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
+    const results: GetPropertiesResponse = {
         supported: Array.apply(null, Array(commands.length)), // init all values to undefined
         values: Array.apply(null, Array(commands.length)) // init all values to undefined
     };
@@ -216,20 +216,20 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
     return new Promise<GetPropertiesResponse>((resolve, reject) => {
 
         // If the device information does not return in the alloted time, return what we have with an error
-        let failedMessageError: Error = {
+        const failedMessageError: Error = {
             message: `The request could not be fufilled or fully fufilled. Command information: ${JSON.stringify(map)} Current results: ${JSON.stringify(results)}`,
             name: `Device Property Get`,
         };
-        let timer = setTimeout(() => sendResponse(failedMessageError), GetPropertyTimeout);
+        const timer = setTimeout(() => sendResponse(failedMessageError), GetPropertyTimeout);
 
         // Go through each mapped command and get the results
         async.each(Object.keys(map), (pluginName: string, cb: () => void) => {
             let sectionValues: DP.DeviceServiceMember[];
-            let sectionSupported = plugin.instance(pluginName).getProperties(map[pluginName], values => {
+            const sectionSupported = plugin.instance(pluginName).getProperties(map[pluginName], values => {
                 sectionValues = values;
                 if (sectionValues) {
                     sectionValues.forEach((result, index) => {
-                        let resultIndex = (<any>map)._sequence || 0;
+                        const resultIndex = (<any>map)._sequence || 0;
                         results.values[resultIndex] = result;
                     });
                 }
@@ -237,7 +237,7 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
             });
             if (sectionSupported) {
                 sectionSupported.forEach((result, index) => {
-                    let resultIndex = (<any>map)._sequence || 0;
+                    const resultIndex = (<any>map)._sequence || 0;
                     results.supported[resultIndex] = result;
                 });
             }
@@ -256,10 +256,10 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     // log(`getServiceMember: command`, command);
-    let deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
+    const deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
     // log(`getServiceMember: deviceInfo`, deviceInfo);
     // HACK: Allows easier testing via wscat
-    let localId = command.localId || deviceInfo.localId;
+    const localId = command.localId || deviceInfo.localId;
     // log(`getServiceMember: localinfo`, localId);
     return {
         localId,
@@ -272,10 +272,10 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
 }
 
 function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.DeviceServiceMember[] } {
-    let map: { [pluginName: string]: DP.DeviceServiceMember[] } = {};
+    const map: { [pluginName: string]: DP.DeviceServiceMember[] } = {};
     commands.forEach((command, index) => {
         (<any>command)._sequence = index; // preserve the original sequence number
-        let pluginName = getPluginName(command);
+        const pluginName = getPluginName(command);
         if (pluginName) {
             map[pluginName] = map[pluginName] || [];
             map[pluginName].push(getServiceMember(command));
@@ -288,7 +288,7 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
 function loadPlugin(pluginName: string) {
     return new Promise<any>((resolve, reject) => {
         setImmediate(() => {
-            let p = plugin.instance(pluginName);
+            const p = plugin.instance(pluginName);
             if (!p)
                 return resolve();
 
@@ -301,7 +301,7 @@ function loadPlugin(pluginName: string) {
                 transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
                     if (!response)
                         return;
-                    let refreshedInfo: DP.DeviceInfo = JSON.parse(response);
+                    const refreshedInfo: DP.DeviceInfo = JSON.parse(response);
                     if (!response) {
                         log(`loadPlugin: device info: no device information returned in packet:`, err);
                         return;
@@ -313,7 +313,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('event raised', (events: EventRaised[]) => {
                 events.reduce((p, c) => {
-                    let d = cache.getDeviceByLocalId(c.localId);
+                    const d = cache.getDeviceByLocalId(c.localId);
                     log(`event < ${d.pluginName}:${d.localId}`);
                     if (d.pluginName)
                         c.pluginName = d.pluginName;
@@ -324,7 +324,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
-                    let d = cache.getDeviceByLocalId(c.localId);
+                    const d = cache.getDeviceByLocalId(c.localId);
                     log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
                     if (d.pluginName)
                         c.pluginName = d.pluginName;
@@ -338,7 +338,7 @@ function loadPlugin(pluginName: string) {
                     transport.send('property changed', properties, err => { });
             });
 
-            let basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
+            const basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
 
             p.on('discover complete', basicSend('discover complete'));
             p.on('log info', basicSend('event raised'));
@@ -360,10 +360,10 @@ function loadPlugins() {
             return resolve();
 
         // TODO: Should be able typeguard to strings with a .filter so as to be elegant; however, TS is all wonky about inferring it correctly
-        let plugins = settings.plugins as [string];
-        let promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
+        const plugins = settings.plugins as [string];
+        const promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
 
-        let all = promises.reduce((p, c) =>
+        const all = promises.reduce((p, c) =>
             p.then(() =>
                 new Promise((res, rej) =>
                     c().then(res).catch(rej)
@@ -376,9 +376,9 @@ function loadPlugins() {
 
 function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
     log(`msg > ${JSON.stringify(message)}`);
-    let device: any = cache.getDeviceByDeviceId(message.deviceId);
-    let deviceId = message.deviceId;
-    let data = message.message;
+    const device: any = cache.getDeviceByDeviceId(message.deviceId);
+    const deviceId = message.deviceId;
+    const data = message.message;
 
     if (device && device.pluginName)
         return plugin.instance(device).deviceMessage(deviceId, data, () => {
@@ -405,10 +405,10 @@ function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
 // }
 
 function setPluginSetting(settings: PluginSetting[]): PluginSettingResponse {
-    let results: PluginSettingResponse = {
+    const results: PluginSettingResponse = {
         supported: Array.apply(null, Array(settings.length)) // init all values to undefined
     };
-    results.supported = settings.reduce(function (p, c) {
+    results.supported = settings.reduce((p, c) => {
         if (c && c.key && c.plugin && c.value) {
             cache.setPluginSetting(c.plugin, c.key, c.value);
             plugin.instance(c.plugin).emit('plugin setting', c);
@@ -422,21 +422,21 @@ function setPluginSetting(settings: PluginSetting[]): PluginSettingResponse {
 
 function setProperties(commands: DeviceCommand[]): SetPropertiesResponse {
     log(`set > ${JSON.stringify(commands)}`);
-    let map = groupByPlugin(commands);
-    let results: SetPropertiesResponse = {
+    const map = groupByPlugin(commands);
+    const results: SetPropertiesResponse = {
         supported: Array.apply(null, Array(commands.length))
     };
 
     // log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
-        let sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
+        const sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
         // log(`plugin:`, pluginName, map[pluginName]);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
             sectionResults.forEach(result => {
-                let resultIndex = (<any>map)._sequence || 0;
+                const resultIndex = (<any>map)._sequence || 0;
                 results.supported[resultIndex] = result;
             });
         }
