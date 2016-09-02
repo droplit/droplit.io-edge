@@ -225,20 +225,19 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
         // Go through each mapped command and get the results
         async.each(Object.keys(map), (pluginName: string, cb: () => void) => {
             let sectionValues: DP.DeviceServiceMember[];
+            const pluginIndexes = map[pluginName].map(member => (member as any)._sequence);
             const sectionSupported = plugin.instance(pluginName).getProperties(map[pluginName], values => {
                 sectionValues = values;
                 if (sectionValues) {
                     sectionValues.forEach((result, index) => {
-                        const resultIndex = (<any>map)._sequence || 0;
-                        results.values[resultIndex] = result;
+                        results.values[pluginIndexes[index]] = result;
                     });
                 }
                 cb();
             });
             if (sectionSupported) {
                 sectionSupported.forEach((result, index) => {
-                    const resultIndex = (<any>map)._sequence || 0;
-                    results.supported[resultIndex] = result;
+                    results.supported[pluginIndexes[index]] = result;
                 });
             }
         }, sendResponse);
@@ -261,7 +260,7 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     // HACK: Allows easier testing via wscat
     const localId = command.localId || deviceInfo.localId;
     // log(`getServiceMember: localinfo`, localId);
-    return {
+    const results = {
         localId,
         address: deviceInfo ? deviceInfo.address : null,
         service: command.service,
@@ -269,12 +268,15 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
         member: command.member,
         value: command.value
     };
+    if (command.hasOwnProperty('_sequence'))
+        (results as any)._sequence = (command as any)._sequence;
+    return results;
 }
 
 function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.DeviceServiceMember[] } {
     const map: { [pluginName: string]: DP.DeviceServiceMember[] } = {};
     commands.forEach((command, index) => {
-        (<any>command)._sequence = index; // preserve the original sequence number
+        (<any>command)._sequence = command.commandIndex; // preserve the original sequence number
         const pluginName = getPluginName(command);
         if (pluginName) {
             map[pluginName] = map[pluginName] || [];

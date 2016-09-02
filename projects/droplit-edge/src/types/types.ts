@@ -12,6 +12,7 @@ export interface DeviceCommand {
     index: string;
     member: string;
     value?: any;
+    commandIndex?: number;
 }
 
 export interface DeviceMessage {
@@ -26,21 +27,26 @@ export interface EventRaised {
     index: string;
     member: string;
     value: any;
-};
+}
+
 export interface PropertyChanged extends EventRaised { }
 export interface LogInfo extends EventRaised { }
 export interface LogError extends EventRaised { }
 export interface DiscoverComplete extends EventRaised { }
+
 export interface PluginData {
     plugin: string;
     key: string;
     value: any;
 }
+
 export interface PluginSetting extends PluginData { }
+
 export interface PluginMessage {
     plugin: string;
     message: any;
 }
+
 export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface SetPropertiesResponse { supported: boolean[]; }
 export interface CallMethodResponse { supported: boolean[]; }
