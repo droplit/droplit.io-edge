@@ -433,13 +433,13 @@ function setProperties(commands: DeviceCommand[]): SetPropertiesResponse {
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         const sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
+        const pluginIndexes = map[pluginName].map(member => (member as any)._sequence);
         // log(`plugin:`, pluginName, map[pluginName]);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
-            sectionResults.forEach(result => {
-                const resultIndex = (<any>map)._sequence || 0;
-                results.supported[resultIndex] = result;
+            sectionResults.forEach((result, index) => {
+                results.supported[pluginIndexes[index]] = result;
             });
         }
     });
