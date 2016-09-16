@@ -340,7 +340,7 @@ function loadPlugin(pluginName: string) {
                     transport.send('property changed', properties, err => { });
             });
 
-            const basicSend = (event: string) => (data: any) => transport.send(event, data, err => {});
+            const basicSend = (event: string) => (data: any) => transport.send(event, data, err => { });
 
             p.on('discover complete', basicSend('discover complete'));
             p.on('log info', basicSend('event raised'));

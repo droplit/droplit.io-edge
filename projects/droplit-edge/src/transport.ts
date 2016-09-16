@@ -89,7 +89,7 @@ export default class Transport extends EventEmitter {
         this.connectOperation.attempt((currentAttempt: any) => {
             log('reconnecting...');
             if (this.settings.hasOwnProperty('transportId')) {
-            console.log('retry!: ', this.transportId, currentAttempt);
+                console.log('retry!: ', this.transportId, currentAttempt);
 
                 this.emit(`#retry:${this.transportId}`, currentAttempt, this.transportId);
             }
@@ -124,7 +124,6 @@ export default class Transport extends EventEmitter {
         this.emit('connected');
         if (this.connectedCallback) {
             this.connectedCallback(true);
-
             this.connectedCallback = undefined;
         }
     }
