@@ -1,5 +1,8 @@
 'use strict';
 
+/* eslint-disable prefer-arrow-callback */
+/* TODO: Use arrow-functions for tasks once gulp-param fixes bug that causes them not to work */
+
 const gulp = require('gulp-help')(require('gulp-param')(require('gulp'), process.argv));
 const async = require('async');
 const del = require('del');
