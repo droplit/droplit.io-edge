@@ -22,7 +22,10 @@ class ExamplePlugin extends droplit.DroplitPlugin {
             BinarySwitch: {
                 get_switch: this.BinarySwitch_get_switch,
                 set_switch: this.BinarySwitch_set_switch
-            }
+            },
+            Connectivity: {
+                get_status: this.getStatus,
+            },
         };
         /* es-lint-enable camelcase */
 
@@ -81,6 +84,10 @@ class ExamplePlugin extends droplit.DroplitPlugin {
     disconnect(localId) {
         // stop tracking state changes on this device
         this.deviceConnected[localId] = false;
+    }
+
+    getStatus(localId, callback) {
+        callback(this.devices[localId]['Connectivity.status']);
     }
 
     BinarySwitch_get_switch(localId, index, callback) {
