@@ -21,6 +21,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
         this.bulbs = new Map();
         this.gateways = new Map();
+        this._deviceCache = new Map();
 
         // Start at 1; 0 is for non-sequenced packets
         this.sequencer = 1;
@@ -63,6 +64,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 stepDown: this.stepDown,
                 stepUp: this.stepUp
             },
+            Connectivity: {
+                get_status: this.getStatus,
+            },
             LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
@@ -70,9 +74,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
                 set_saturation: this.setSaturation
-            }
+            },
         };
-        /* es-lint-enable camelcase */
+        /* es-lint-enable camelcase jake was here*/
 
         // Listen to UDP multicast on the network for the designated LIFX port
         this.udpClient.bind(MulticastPort, '0.0.0.0', () =>
@@ -155,6 +159,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
             const sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             const address = packet.preamble.target.toString('hex');
 
+            // store last seen time to local cache
+
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
                     if (packet.payload.service === 1 && packet.payload.port > 0) {
@@ -173,6 +179,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 this.send(lifxPacket.getVersion(), packet.preamble.target);
                         }
                     }
+                    this.cache(address);
                     break;
                 }
                 case 'stateVersion': {
@@ -187,6 +194,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     if (bulb.state === undefined)
                         this.send(lifxPacket.getLight(), packet.preamble.target);
 
+                    this.cache(address);
                     break;
                 }
                 case 'lightState': {
@@ -222,6 +230,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     if (bulb.version === undefined)
                         this.send(lifxPacket.getVersion(), packet.preamble.target);
 
+                    this.cache(address);
                     break;
                 }
                 case 'statePower': {
@@ -240,12 +249,13 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     }
 
                     if (bulb.ready && (packet.payload.level !== bulb.state.power))
-                        this.onPropertiesChanged([ bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState({ power: packet.payload.level }).on) ]);
+                        this.onPropertiesChanged([bulb.propertyObject('BinarySwitch', 'switch', bulb.outputState({ power: packet.payload.level }).on)]);
 
                     const state = bulb.state;
                     state.power = packet.payload.level;
                     bulb.state = state;
 
+                    this.cache(address);
                     break;
                 }
                 case 'acknowledgement': {
@@ -255,6 +265,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         setTimeout(() => this.send(lifxPacket[data.get](), packet.preamble.target), 250);
                         delete this.sequence[packet.preamble.sequence];
                     }
+                    this.cache(address);
                     break;
                 }
             }
@@ -273,6 +284,10 @@ class LifxPlugin extends droplit.DroplitPlugin {
         }
     }
 
+    cache(address) {
+        this._deviceCache.set(address, new Date(Date.now()));
+    }
+
     discover() {
         if (this.sequencer === 0xFF)
             this.sequencer = 0;
@@ -282,6 +297,19 @@ class LifxPlugin extends droplit.DroplitPlugin {
         });
         // Discovery is done through UDP broadcast to port 56700
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', () => { });
+    }
+
+    getStatus(localId, callback) {
+        console.log('getStatus', callback ? "callback" : 'no callback', connectedRecently(this._deviceCache.get(localId)))
+        if (callback)
+            callback(connectedRecently(this._deviceCache.get(localId)) ? "online" : "offline");
+
+        // Last seen tolerance: 5s
+        function connectedRecently(lastSeen) {
+            if (!lastSeen) { return false; }
+            const LAST_SEEN_TOLERANCE = 5000;
+            return (new Date(Date.now()).getTime() - lastSeen.getTime() < LAST_SEEN_TOLERANCE) ? true : false;
+        }
     }
 
     dropDevice(localId) {
@@ -580,8 +608,8 @@ class LifxBulb extends EventEmitter {
         const isWhite = (version.product === 167772160);
         this.product.modelName = isWhite ? 'LIFX White' : 'LIFX';
         this.services = isWhite ?
-            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature'] :
-            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature'];
+            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature', 'Connectivity'] :
+            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'Connectivity', 'ColorTemperature'];
 
         if (this[_state] && !this[_ready]) {
             this[_ready] = true;
