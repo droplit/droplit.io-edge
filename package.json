@@ -24,6 +24,12 @@
   ],
   "license": "ISC",
   "private": true,
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    }
+  },
   "dependencies": {
     "commander": "^2.9.0",
     "source-map-support": "^0.4.0",
