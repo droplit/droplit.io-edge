@@ -256,7 +256,7 @@ function getPackageName(packagePath) {
 
 gulp.task('package', 'Package the Droplit Edge for embedding', function () {
     const packageFileName = `${getPackageName(settings.edgeDir)}.tar`;
-    gulp.src(settings.packageFiles)
+    gulp.src(settings.packageFiles, { follow: true })
         .pipe(G$.debug({ title: 'package:' }))
         .pipe(G$.tar(packageFileName))
         .pipe(G$.gzip())
