@@ -76,7 +76,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 set_saturation: this.setSaturation
             },
         };
-        /* es-lint-enable camelcase jake was here*/
+        /* es-lint-enable camelcase */
 
         // Listen to UDP multicast on the network for the designated LIFX port
         this.udpClient.bind(MulticastPort, '0.0.0.0', () =>
@@ -158,8 +158,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
             // Packet is in response to one we sent
             const sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             const address = packet.preamble.target.toString('hex');
-
-            // store last seen time to local cache
 
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
