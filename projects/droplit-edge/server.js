@@ -1,4 +1,3 @@
-require('source-map-support').install();
-var index = require("./lib/router");
+'use strict';
 
-module.exports = index;
+module.exports = require('./lib/router');
