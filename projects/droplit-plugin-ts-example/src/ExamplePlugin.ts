@@ -4,9 +4,20 @@ console.log('example');
 
 export class ExamplePlugin extends droplit.DroplitPlugin {
 
+    services: any;
+
     constructor() {
         super();
         // console.log('example construct');
+        this.services = {
+            BinarySwitch: {
+                get_switch: this.BinarySwitch_get_switch,
+                set_switch: this.BinarySwitch_set_switch,
+            },
+            Connectivity: {
+                get_status: this.getStatus,
+            }
+        };
     }
 
     // virtual device states
@@ -19,16 +30,6 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
             'BinarySwitch.switch': 'off',
             'Connectivity.status': 'online'
         }
-    };
-
-    private services = {
-        BinarySwitch: {
-            get_switch: this.BinarySwitch_get_switch,
-            set_switch: this.BinarySwitch_set_switch,
-        },
-        Connectivity: {
-            get_status: this.getStatus,
-        },
     };
 
     // virtual device tracking
