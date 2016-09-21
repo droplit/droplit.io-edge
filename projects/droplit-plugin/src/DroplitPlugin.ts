@@ -268,8 +268,8 @@ export abstract class DroplitPlugin extends EventEmitter {
      * @protected
      * @param {DeviceInfo} deviceInfo (description)
      */
-    protected onDeviceInfo(deviceInfo: DeviceInfo) {
-        this.emit('device info', deviceInfo);
+    protected onDeviceInfo(deviceInfo: DeviceInfo, callback?: (deviceInfo: DeviceInfo) => {}) {
+        this.emit('device info', deviceInfo, callback);
     }
 
     /**

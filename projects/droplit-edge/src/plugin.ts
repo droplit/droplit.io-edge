@@ -44,8 +44,8 @@ export class Controller extends EventEmitter {
 
     // event handlers
 
-    private deviceInfoHandler(deviceInfo: DP.DeviceInfo) {
-        this.emit('device info', deviceInfo);
+    private deviceInfoHandler(deviceInfo: DP.DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) {
+        this.emit('device info', deviceInfo, callback);
     }
 
     private deviceUpdateHandler(deviceInfo: DP.DeviceInfo) {

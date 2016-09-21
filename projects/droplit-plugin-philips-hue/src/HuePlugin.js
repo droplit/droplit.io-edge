@@ -86,9 +86,14 @@ class HuePlugin extends droplit.DroplitPlugin {
                 bridge.on('discovered', onLightDiscovered.bind(this));
                 bridge.on('installed', onBridgeInstalled.bind(this));
                 bridge.on('state-changes', onStateChanges.bind(this));
+                bridge.on('username', onUsername.bind(this));
 
                 this.bridges.set(identifier, bridge);
-                this.onDeviceInfo(bridge.discoverObject());
+                this.onDeviceInfo(bridge.discoverObject(), info => {
+                    if (info.localData && info.localData.hasOwnProperty('username'))
+                        bridge.key = info.localData.username;
+                    bridge.getLights();
+                });
             }
         }
 
@@ -100,6 +105,10 @@ class HuePlugin extends droplit.DroplitPlugin {
                 return;
             bridge.address = address;
             this.onDeviceInfo({ address, identifier });
+        }
+
+        function onUsername(bridge) {
+            this.onDeviceInfo({ localId: bridge.identifier, localData: { username: bridge.key } });
         }
 
         function onLightDiscovered(light) {
@@ -341,8 +350,6 @@ class Bridge extends EventEmitter {
         this.services = [ 'BasicAuthBridge' ];
 
         this.lights = new Map();
-
-        this.getLights();
     }
 
     static outputState(state) {
@@ -382,7 +389,7 @@ class Bridge extends EventEmitter {
         request(opts, (e, r, b) => {
             if (e) {
                 if (callback)
-                    callback(e);
+                    callback(e); // eslint-disable-line callback-return
                 return;
             }
 
@@ -399,7 +406,7 @@ class Bridge extends EventEmitter {
         request(opts, (e, r, b) => {
             if (e) {
                 if (callback)
-                    callback(e);
+                    callback(e); // eslint-disable-line callback-return
                 return;
             }
 
@@ -455,8 +462,7 @@ class Bridge extends EventEmitter {
     register(callback) {
         const opts = {
             json: {
-                devicetype: AppName,
-                username: this.key
+                devicetype: AppName
             },
             method: 'POST',
             timeout: 3000,
@@ -465,7 +471,7 @@ class Bridge extends EventEmitter {
         request(opts, (e, r, b) => {
             if (e) {
                 if (callback)
-                    callback(e);
+                    callback(e); // eslint-disable-line callback-return
                 return;
             }
 
@@ -476,6 +482,13 @@ class Bridge extends EventEmitter {
                     // console.log('User not authorized, press link button');
                 }
                 return;
+            }
+
+            if (b[0].hasOwnProperty('success')) {
+                if (b[0].success.hasOwnProperty('username')) {
+                    this.key = b[0].success.username;
+                    this.emit('username', this);
+                }
             }
 
             setImmediate(() => this.getLights.bind(this));
@@ -496,7 +509,7 @@ class Bridge extends EventEmitter {
         request(opts, (e, r, b) => {
             if (e) {
                 if (callback)
-                    callback(e);
+                    callback(e); // eslint-disable-line callback-return
                 return;
             }
 

@@ -296,7 +296,7 @@ function loadPlugin(pluginName: string) {
 
             log(`${pluginName} loaded`);
 
-            p.on('device info', (deviceInfo: DeviceInfo) => {
+            p.on('device info', (deviceInfo: DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) => {
                 deviceInfo.pluginName = pluginName;
                 cache.setDeviceInfo(deviceInfo);
                 log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
@@ -310,6 +310,8 @@ function loadPlugin(pluginName: string) {
                     }
                     log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
                     cache.setDeviceInfo(refreshedInfo);
+                    if (callback)
+                        callback(refreshedInfo);
                 });
             });
 
