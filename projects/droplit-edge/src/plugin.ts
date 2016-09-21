@@ -2,7 +2,7 @@ import {EventEmitter} from 'events';
 import * as DP from 'droplit-plugin';
 import {DeviceMessageResponse} from './types/types';
 
-let pluginMap: { [name: string]: Controller } = {};
+const pluginMap: { [name: string]: Controller } = {};
 
 export function instance(pluginName: string): Controller {
     try {
@@ -21,20 +21,20 @@ export function instance(pluginName: string): Controller {
  */
 
 export class Controller extends EventEmitter {
-    private pluginInstance: DP.DroplitPlugin = undefined;
+    private pluginInstance: DP.DroplitPlugin;
 
     constructor(pluginName: string, settings?: any) {
         super();
         this.pluginInstance = this.loadPlugin(pluginName, settings);
-        this.InitPlugin();
+        this.initPlugin();
     }
 
     private loadPlugin(pluginName: string, settings?: any): DP.DroplitPlugin {
-        let p = require(pluginName);
+        const p = require(pluginName);
         return new p(settings);
     }
 
-    private InitPlugin() {
+    private initPlugin() {
         this.pluginInstance.on('device info', this.deviceInfoHandler.bind(this));
         this.pluginInstance.on('device update', this.deviceUpdateHandler.bind(this));
         this.pluginInstance.on('discover complete', this.discoverCompleteHandler.bind(this));

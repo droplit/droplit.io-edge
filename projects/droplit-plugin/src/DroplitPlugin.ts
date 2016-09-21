@@ -99,12 +99,12 @@ export abstract class DroplitPlugin extends EventEmitter {
          */
         // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array');
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
-        let params = method.value ? Array.isArray(method.value) ? method.value : [method.value] : [];
+        const params = method.value ? Array.isArray(method.value) ? method.value : [method.value] : [];
         // console.log(`method`, method, `mval`, method.value, `params`, params);
         params.unshift(method.localId);
-        let methodImplementation = this.getServiceMember(method.service, method.member);
+        const methodImplementation = this.getServiceMember(method.service, method.member);
         if (methodImplementation) {
-            let isSupported = methodImplementation.apply(this, params);
+            const isSupported = methodImplementation.apply(this, params);
             // console.log('method is supported', isSupported, params);
             return this.getMethodStatus(isSupported);
         } else {
@@ -138,10 +138,10 @@ export abstract class DroplitPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`get ${this.getServiceSelector(property)}`);
-        let params = [property.localId, callback];
-        let methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
+        const params = [property.localId, callback];
+        const methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
         if (methodImplementation) {
-            let isSupported = methodImplementation.apply(this, params);
+            const isSupported = methodImplementation.apply(this, params);
             return this.getMethodStatus(isSupported);
         } else {
             // method not implemented
@@ -162,10 +162,10 @@ export abstract class DroplitPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
-        let params = [property.localId, property.value];
-        let methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
+        const params = [property.localId, property.value];
+        const methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
         if (methodImplementation) {
-            let isSupported = methodImplementation.apply(this, params);
+            const isSupported = methodImplementation.apply(this, params);
             return this.getMethodStatus(isSupported);
         } else {
             // method not implemented
@@ -183,14 +183,14 @@ export abstract class DroplitPlugin extends EventEmitter {
      */
     public getProperties(properties: DeviceServiceMember[], callback: (values: DeviceServiceMember[]) => void): boolean[] {
         // could use `async` library, but didn't want external dependency
-        let values: DeviceServiceMember[] = Array.apply(null, Array(properties.length)); // init all values to undefined
-        let expiryTimeout = setTimeout(() => {
+        const values: DeviceServiceMember[] = Array.apply(null, Array(properties.length)); // init all values to undefined
+        const expiryTimeout = setTimeout(() => {
             if (callback) {
                 callback(values);
             }
         }, 10000);
         return properties.map((property, index) => {
-            let cb = (value: any) => {
+            const cb = (value: any) => {
                 values[index] = value;
                 if (values.every(value => value !== undefined)) {
                     if (callback) {
@@ -311,8 +311,7 @@ export abstract class DroplitPlugin extends EventEmitter {
     }
 
     protected getServiceMember(service: string, member: string): () => void {
-        let methodFunc = this.getFunction(this, `services.${service}.${member}`);
-        return methodFunc;
+        return this.getFunction(this, `services.${service}.${member}`);
     }
 
     protected getFunction(obj: any, path: string): () => void {
