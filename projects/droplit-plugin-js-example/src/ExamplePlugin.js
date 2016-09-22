@@ -24,8 +24,8 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                 set_switch: this.BinarySwitch_set_switch
             },
             Connectivity: {
-                get_status: this.getStatus,
-            },
+                get_status: this.getStatus
+            }
         };
         /* es-lint-enable camelcase */
 

@@ -1,3 +1,3 @@
-var index = require("./lib/connections");
+'use strict';
 
-module.exports = index;
+module.exports = require('./lib/connections');

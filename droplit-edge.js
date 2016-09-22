@@ -1,3 +1,3 @@
-var index = require("./projects/droplit-edge");
+'use strict';
 
-module.exports = index;
+module.exports = require('./projects/droplit-edge');

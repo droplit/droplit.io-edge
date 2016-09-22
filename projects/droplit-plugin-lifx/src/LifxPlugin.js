@@ -65,7 +65,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 stepUp: this.stepUp
             },
             Connectivity: {
-                get_status: this.getStatus,
+                get_status: this.getStatus
             },
             LightColor: {
                 get_brightness: this.getMclBrightness,
@@ -74,7 +74,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 set_brightness: this.setMclBrightness,
                 set_hue: this.setHue,
                 set_saturation: this.setSaturation
-            },
+            }
         };
         /* es-lint-enable camelcase */
 
@@ -298,16 +298,16 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 
     getStatus(localId, callback) {
-        console.log('getStatus', callback ? "callback" : 'no callback', connectedRecently(this._deviceCache.get(localId)))
-        if (callback)
-            callback(connectedRecently(this._deviceCache.get(localId)) ? "online" : "offline");
-
+        console.log('getStatus', callback ? 'callback' : 'no callback', connectedRecently(this._deviceCache.get(localId)));
         // Last seen tolerance: 5s
-        function connectedRecently(lastSeen) {
+        const connectedRecently = lastSeen => {
             if (!lastSeen) { return false; }
             const LAST_SEEN_TOLERANCE = 5000;
-            return (new Date(Date.now()).getTime() - lastSeen.getTime() < LAST_SEEN_TOLERANCE) ? true : false;
-        }
+            return new Date(Date.now()).getTime() - lastSeen.getTime() < LAST_SEEN_TOLERANCE;
+        };
+
+        if (callback)
+            callback(connectedRecently(this._deviceCache.get(localId)) ? 'online' : 'offline'); // eslint-disable-line callback-return
     }
 
     dropDevice(localId) {
