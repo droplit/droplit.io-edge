@@ -21,6 +21,9 @@
     "droplit-plugin-voyager": {
         "dependencies": [ "droplit-plugin" ]
     },
+    "droplit-edge-connectivity": {
+        "dependencies": [ "droplit-plugin" ]
+    },
     "droplit-edge": {
         "dependencies": [
             "droplit-plugin",
@@ -30,7 +33,8 @@
             "droplit-plugin-wemo",
             "droplit-plugin-js-example",
             "droplit-plugin-ts-example",
-            "droplit-plugin-voyager"
+            "droplit-plugin-voyager",
+            "droplit-edge-connectivity"
         ]
     },
     "load-test": {
