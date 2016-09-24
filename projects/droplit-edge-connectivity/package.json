@@ -1,0 +1,16 @@
+{
+  "name": "droplit-edge-connectivity",
+  "description": "Droplit Edge connectivity server plugin",
+  "author": "Droplit, Inc.",
+  "version": "0.1.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Jake Ferrante",
+      "email": "jake@droplit.io"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {}
+}
