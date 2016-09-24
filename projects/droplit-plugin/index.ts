@@ -1,1 +1,2 @@
-export * from './src/DroplitPlugins';
+import * as library from './src/DroplitPlugins';
+export = library;

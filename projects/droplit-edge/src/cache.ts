@@ -31,29 +31,9 @@ export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
         let deviceId: string = (deviceInfo as any).deviceId;
         deviceCache_global[deviceId] = deviceInfo as DeviceInfo;
     } else {
-        deviceCache_local[deviceInfo.localId] = deviceInfo; // (deviceInfo.localId === '.') ? hubServiceBuilder(deviceInfo) : deviceInfo;
+        deviceCache_local[deviceInfo.localId] = deviceInfo;
     }
 }
-
-// // This takes the current information stored at the local hub address and build onto it,
-// // building an array of DP.DeviceInfo[]
-// // Note this returns an array of DP.DeviceInfo[]
-// function hubServiceBuilder(deviceInfo: DP.DeviceInfo | DeviceInfo): any {
-//     // returns the current or an empty map
-//     let current: { [key: string]: DeviceInfo } = deviceCache_local[deviceInfo.localId] as any === undefined ? {} : deviceCache_local[deviceInfo.localId] as any;
-
-//     // initalize values if empty
-//     if (current[deviceInfo.pluginName].services === undefined) current[deviceInfo.pluginName].services = [];
-//     if (current[deviceInfo.pluginName].promotedMembers === undefined) current[deviceInfo.pluginName].promotedMembers = {};
-
-//     // <DP.DeviceInfo>(Array.isArray(current) ? (<any>current).concat([deviceInfo]) : [current].concat(deviceInfo));
-//     console.log('UPDATED HUB');
-//     console.log('deviceInfo');
-//     console.log(deviceInfo);
-//     console.log('current');
-//     console.log(current);
-//     return current;
-// }
 
 // Plugin Management
 export function getPluginData(pluginName: string, key: string): string {

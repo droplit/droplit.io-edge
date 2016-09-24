@@ -67,19 +67,23 @@ export class Controller extends EventEmitter {
     // management
 
     public discover(): void {
-        this.pluginInstance.discover();
+        if (this.pluginInstance.discover)
+            this.pluginInstance.discover();
     }
 
     public connect(localId: string): void {
-        this.pluginInstance.connect(localId);
+        if (this.pluginInstance.connect)
+            this.pluginInstance.connect(localId);
     }
 
     public disconnect(localId: string): void {
-        this.pluginInstance.disconnect(localId);
+        if (this.pluginInstance.disconnect)
+            this.pluginInstance.disconnect(localId);
     }
 
     public dropDevice(localId: string): void {
-        this.pluginInstance.dropDevice(localId);
+        if (this.pluginInstance.dropDevice)
+            this.pluginInstance.dropDevice(localId);
     }
 
     // services

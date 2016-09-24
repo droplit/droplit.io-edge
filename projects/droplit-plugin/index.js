@@ -1,3 +1,2 @@
 'use strict';
-
-module.exports = require('./lib/DroplitPlugin');
+module.exports = require('./lib/DroplitPlugins');

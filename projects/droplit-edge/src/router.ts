@@ -20,6 +20,7 @@ import {
 
 const log = debug('droplit:router');
 export {Transport};
+const macAddress = require('node-getmac').trim();
 
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
 
@@ -62,7 +63,6 @@ if (settings.debug.generateHeapDump) {
 
 loadPlugins().then(() => {
     // Initialize the transport
-    const macAddress = require('node-getmac').trim();
     transport.start(settings.transport, {
         'x-edge-id': macAddress,
         'x-ecosystem-id': settings.ecosystemId // requires ecosystemId to be set in localsettings.json
@@ -192,7 +192,9 @@ function dropDevice(commands: DeviceCommand[]) {
 }
 
 function getPluginName(command: DeviceCommand) {
-    // HACK: Allows easier testing via wscat
+    if (command.deviceId === '.')
+        return cache.getServicePlugin(command.service);
+
     const local = cache.getDeviceByLocalId(command.localId);
     if (local)
         return local.pluginName;
@@ -298,7 +300,11 @@ function loadPlugin(pluginName: string) {
 
             p.on('device info', (deviceInfo: DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) => {
                 deviceInfo.pluginName = pluginName;
+                // after we store the information in the cache, we swap '.'
+                // for the hub MACaddress if necessary
+                // if (deviceInfo.localId === '.') deviceInfo.localId = macAddress;
                 cache.setDeviceInfo(deviceInfo);
+
                 log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
                 transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
                     if (!response)
@@ -328,6 +334,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
+                    // if (c.localId === '.') c.localId = macAddress;                          // update to MAC address
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
                     if (d.pluginName)
@@ -360,13 +367,37 @@ function loadPlugin(pluginName: string) {
 function loadPlugins() {
     return new Promise((resolve, reject) => {
         log('load plugins');
-        if (!settings.plugins || !Array.isArray(settings.plugins))
+        if (!settings.plugins || Array.isArray(settings.plugins) || typeof settings.plugins !== 'object') {
+            log('no plugins found');
             return resolve();
+        }
 
-        // TODO: Should be able typeguard to strings with a .filter so as to be elegant; however, TS is all wonky about inferring it correctly
-        const plugins = settings.plugins as [string];
+        let plugins: string[] = [];
+        // Old format: string array of plugins
+        if (Array.isArray(settings.plugins)) {
+            plugins = settings.plugins as [string];
+        }
+        // New format: object with plugin keys
+        else if (typeof settings.plugins === 'object') {
+            let localDeviceInfo: DP.DeviceInfo = {
+                localId: '.',
+                services: [],
+            };
+            for (let k in (<Object>settings.plugins)) {
+                if (settings.plugins[k].enabled !== false)
+                    plugins.push(k);
+                if (Array.isArray(settings.plugins[k].localServices)) {
+                    (settings.plugins[k].localServices as [any]).forEach((ls) => {
+                        cache.setServicePlugin(ls, k);
+                        localDeviceInfo.services.push(ls);
+                    });
+                }
+            }
+            log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
+            transport.sendRequestReliable('device info', localDeviceInfo, undefined);
+        }
+
         const promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
-
         const all = promises.reduce((p, c) =>
             p.then(() =>
                 new Promise((res, rej) =>

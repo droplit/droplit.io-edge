@@ -16,7 +16,6 @@ export class DroplitConnectivity extends droplit.DroplitLocalPlugin {
         };
     }
 
-
     public getStatus(localId: string, callback: (result: any) => void) {
         callback('online');
     }
