@@ -3,10 +3,17 @@
         "host": "wss://edge-ws.droplit.io/edge"
     },
     "ecosystemId": "INSERT_YOUR_ECOSYSTEMID_HERE",
-    "plugins": [
-        "droplit-plugin-philips-hue",
-        "droplit-plugin-lifx",
-        "droplit-plugin-sonos",
-        "droplit-plugin-wemo"
-    ]
+    "plugins": { 
+        "droplit-plugin-philips-hue": {
+            "enabled": true
+        },
+        "droplit-plugin-lifx": {},
+        "droplit-plugin-sonos": {},
+        "droplit-plugin-wemo": {},
+        "droplit-edge-connectivity": {
+            "localServices": [
+                "Connectivity"
+            ]
+        }
+    }
 }
