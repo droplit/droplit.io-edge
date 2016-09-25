@@ -256,6 +256,7 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
 }
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
+    if (command.deviceId === '.') command.localId = command.deviceId;
     // log(`getServiceMember: command`, command);
     const deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
     // log(`getServiceMember: deviceInfo`, deviceInfo);
@@ -306,19 +307,7 @@ function loadPlugin(pluginName: string) {
                 cache.setDeviceInfo(deviceInfo);
 
                 log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
-                transport.sendRequestReliable('device info', deviceInfo, (response, err) => {
-                    if (!response)
-                        return;
-                    const refreshedInfo: DP.DeviceInfo = JSON.parse(response);
-                    if (!response) {
-                        log(`loadPlugin: device info: no device information returned in packet:`, err);
-                        return;
-                    }
-                    log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
-                    cache.setDeviceInfo(refreshedInfo);
-                    if (callback)
-                        callback(refreshedInfo);
-                });
+                transport.sendRequestReliable('device info', deviceInfo, (response, err) => deviceInfoResponseHandler(response, err, deviceInfo, callback));
             });
 
             p.on('event raised', (events: EventRaised[]) => {
@@ -364,6 +353,20 @@ function loadPlugin(pluginName: string) {
     });
 }
 
+function deviceInfoResponseHandler(response: any, err: any, deviceInfo: any, callback?: (deviceInfo: DP.DeviceInfo) => {}) {
+    if (!response)
+        return;
+    const refreshedInfo: DP.DeviceInfo = JSON.parse(response);
+    if (!response) {
+        log(`loadPlugin: device info: no device information returned in packet:`, err);
+        return;
+    }
+    log(`id > ${deviceInfo.localId} -> ${(refreshedInfo as any).deviceId}`);
+    cache.setDeviceInfo(refreshedInfo);
+    if (callback)
+        callback(refreshedInfo);
+}
+
 function loadPlugins() {
     return new Promise((resolve, reject) => {
         log('load plugins');
@@ -393,8 +396,9 @@ function loadPlugins() {
                     });
                 }
             }
+            cache.setDeviceInfo(localDeviceInfo);
             log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
-            transport.sendRequestReliable('device info', localDeviceInfo, undefined);
+            transport.sendRequestReliable('device info', localDeviceInfo, (response, err) => deviceInfoResponseHandler(response, err, localDeviceInfo));
         }
 
         const promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
