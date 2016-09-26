@@ -390,4 +390,3 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
      *
      */
 }
-
