@@ -46,11 +46,7 @@ Object.keys(localSettings).forEach((key) => settings[key] = localSettings[key]);
 if (settings.debug.generateHeapDump) {
     const heapdump = require('heapdump');
     const heapInterval = 30 * 60 * 1000;
-
-    writeSnapshot.bind(this)();
-    setInterval(writeSnapshot.bind(this), heapInterval);
-
-    function writeSnapshot() {
+    const writeSnapshot = () => {
         heapdump.writeSnapshot(`droplit-${Date.now()}.heapsnapshot`, (err: any, filename: string) => {
             if (err) {
                 log('error writing heap snapshot:', err);
@@ -58,7 +54,10 @@ if (settings.debug.generateHeapDump) {
             }
             log(`wrote heap snaphot: ${filename}`);
         });
-    }
+    };
+
+    writeSnapshot.bind(this)();
+    setInterval(writeSnapshot.bind(this), heapInterval);
 }
 
 loadPlugins().then(() => {
@@ -370,32 +369,53 @@ function deviceInfoResponseHandler(response: any, err: any, deviceInfo: any, cal
 function loadPlugins() {
     return new Promise((resolve, reject) => {
         log('load plugins');
-        if (!settings.plugins || Array.isArray(settings.plugins) || typeof settings.plugins !== 'object') {
+        if (!settings.plugins || !(Array.isArray(settings.plugins) || typeof settings.plugins === 'object')) {
             log('no plugins found');
             return resolve();
         }
 
-        let plugins: string[] = [];
-        // Old format: string array of plugins
+        const plugins: string[] = [];
+        const localDeviceInfo: DP.DeviceInfo = {
+            localId: '.',
+            services: [],
+        };
+        // Array format
         if (Array.isArray(settings.plugins)) {
-            plugins = settings.plugins as [string];
+            settings.plugins.forEach((plugin: string | any) => {
+                if (typeof plugin === 'string')
+                    return plugins.push(plugin);
+
+                if (typeof plugin === 'object') {
+                    if (!plugin.name)
+                        return;
+                    if (plugin.enabled !== false) {
+                        plugins.push(plugin.name);
+                        if (plugin.localServices && Array.isArray(plugin.localServices)) {
+                            plugin.localServices.forEach((service: string) => {
+                                cache.setServicePlugin(service, plugin.name);
+                                localDeviceInfo.services.push(service);
+                            });
+                        }
+                    }
+                }
+            });
         }
-        // New format: object with plugin keys
+        // Object format
         else if (typeof settings.plugins === 'object') {
-            let localDeviceInfo: DP.DeviceInfo = {
-                localId: '.',
-                services: [],
-            };
-            for (let k in (<Object>settings.plugins)) {
-                if (settings.plugins[k].enabled !== false)
+            for (const k in (<Object>settings.plugins)) {
+                if (settings.plugins[k].enabled !== false) {
                     plugins.push(k);
-                if (Array.isArray(settings.plugins[k].localServices)) {
-                    (settings.plugins[k].localServices as [any]).forEach((ls) => {
-                        cache.setServicePlugin(ls, k);
-                        localDeviceInfo.services.push(ls);
-                    });
+                    if (Array.isArray(settings.plugins[k].localServices)) {
+                        (settings.plugins[k].localServices as [any]).forEach(ls => {
+                            cache.setServicePlugin(ls, k);
+                            localDeviceInfo.services.push(ls);
+                        });
+                    }
                 }
             }
+        }
+
+        if (localDeviceInfo.services.length > 0) {
             cache.setDeviceInfo(localDeviceInfo);
             log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
             transport.sendRequestReliable('device info', localDeviceInfo, (response, err) => deviceInfoResponseHandler(response, err, localDeviceInfo));
