@@ -13,7 +13,6 @@ export class DroplitConnectivity extends droplit.DroplitLocalPlugin {
             Connectivity: {
                 get_status: this.getStatus,
                 set_status: this.setStatus,
-                status: this.getStatus,
                 connect: this.connect,
             }
         };
