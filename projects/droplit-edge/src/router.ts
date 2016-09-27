@@ -311,6 +311,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('event raised', (events: EventRaised[]) => {
                 events.reduce((p, c) => {
+                    // console.log(`${p} raised an event`, c);
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`event < ${d.pluginName}:${d.localId}`);
                     if (d.pluginName)
@@ -322,6 +323,11 @@ function loadPlugin(pluginName: string) {
 
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
+                    // console.log(`${p} raised an event`, c,
+                    //     '\nlocal', cache.getDeviceByLocalId(c.localId),
+                    //     '\nmac', cache.getDeviceByLocalId(macAddress),
+                    //     '\nretrieved', cache.getDeviceByLocalId(c.localId),
+                    //     '\npluginNaMe', p.pluginName);
                     // if (c.localId === '.') c.localId = macAddress;                          // update to MAC address
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
@@ -492,10 +498,12 @@ function setProperties(commands: DeviceCommand[]): SetPropertiesResponse {
         const sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
         const pluginIndexes = map[pluginName].map(member => (member as any)._sequence);
         // log(`plugin:`, pluginName, map[pluginName]);
+        // log(`results:`, sectionResults);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
             sectionResults.forEach((result, index) => {
+                // log(`results [${index}]:`, result);
                 results.supported[pluginIndexes[index]] = result;
             });
         }
