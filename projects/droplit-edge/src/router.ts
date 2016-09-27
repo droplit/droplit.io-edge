@@ -19,7 +19,7 @@ import {
 } from './types/types';
 
 const log = debug('droplit:router');
-export {Transport};
+export { Transport };
 const macAddress = require('node-getmac').trim();
 
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
@@ -147,8 +147,10 @@ function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     const results: CallMethodResponse = {
         supported: Array.apply(null, Array(commands.length)) // init all values to undefined
     };
+    log(`call: generated some map:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
+        debug(`Calling methods for ${pluginName}`);
         results.supported = plugin.instance(pluginName).callMethods(map[pluginName]);
     });
     return results;
@@ -311,7 +313,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('event raised', (events: EventRaised[]) => {
                 events.reduce((p, c) => {
-                    // console.log(`${p} raised an event`, c);
+                    debug(`${p} raised an event ${JSON.stringify(c)}`);
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`event < ${d.pluginName}:${d.localId}`);
                     if (d.pluginName)
@@ -323,7 +325,7 @@ function loadPlugin(pluginName: string) {
 
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
-                    // console.log(`${p} raised an event`, c,
+                    // debug(`${p} raised an event`, c,
                     //     '\nlocal', cache.getDeviceByLocalId(c.localId),
                     //     '\nmac', cache.getDeviceByLocalId(macAddress),
                     //     '\nretrieved', cache.getDeviceByLocalId(c.localId),
@@ -384,6 +386,7 @@ function loadPlugins() {
         const localDeviceInfo: DP.DeviceInfo = {
             localId: '.',
             services: [],
+            promotedMembers: {}
         };
         // Array format
         if (Array.isArray(settings.plugins)) {
@@ -417,6 +420,11 @@ function loadPlugins() {
                             localDeviceInfo.services.push(ls);
                         });
                     }
+                    for (const pmk in settings.promotedMembers) {
+                        log(`checkpoint 3 ${pmk} => ${settings.promotedMembers[pmk]}`);
+                        localDeviceInfo.promotedMembers[pmk] = settings.promotedMembers[pmk];
+                    }
+
                 }
             }
         }
