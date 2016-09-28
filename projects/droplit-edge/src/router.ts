@@ -312,20 +312,23 @@ function loadPlugin(pluginName: string) {
             });
 
             p.on('event raised', (events: EventRaised[]) => {
+                // console.log(`event raised`);
+                debug(`events: ${JSON.stringify(events)}`);
                 events.reduce((p, c) => {
-                    debug(`${p} raised an event ${JSON.stringify(c)}`);
+                    // console.log(`${p} raised an event ${JSON.stringify(c)}`);
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`event < ${d.pluginName}:${d.localId}`);
                     if (d.pluginName)
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
                 }, []);
+                // console.log(`events: ${JSON.stringify(events)}`);
                 transport.send('event raised', events, err => { });
             });
 
             p.on('property changed', (properties: any[]) => {
                 properties.reduce((p, c) => {
-                    // debug(`${p} raised an event`, c,
+                    // console.log(`${p} raised an event`, c,
                     //     '\nlocal', cache.getDeviceByLocalId(c.localId),
                     //     '\nmac', cache.getDeviceByLocalId(macAddress),
                     //     '\nretrieved', cache.getDeviceByLocalId(c.localId),
@@ -339,6 +342,7 @@ function loadPlugin(pluginName: string) {
                 }, []);
 
                 // Only guarentee if send before first connect
+                // console.log(`changed props: ${JSON.stringify(properties)}`);
                 if (!hasConnected)
                     transport.sendReliable('property changed', properties);
                 else
@@ -348,8 +352,8 @@ function loadPlugin(pluginName: string) {
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => { });
 
             p.on('discover complete', basicSend('discover complete'));
-            p.on('log info', basicSend('event raised'));
-            p.on('log error', basicSend('event raised'));
+            p.on('log info', basicSend('log info'));
+            p.on('log error', basicSend('log error'));
             p.on('plugin data', basicSend('plugin data'));
             p.on('plugin setting', basicSend('plugin setting'));
 
