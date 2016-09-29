@@ -6,7 +6,11 @@ This specification addresses the contents of the messages once the envelope has 
 ## Cloud to Edge
 
 ### `ehlo` - respond with acknowledged
-data: ```"ack"```
+data:
+
+```
+"ack"
+```
 
 ### `discover` - run device discovery or enable auto-discovery
 data:
