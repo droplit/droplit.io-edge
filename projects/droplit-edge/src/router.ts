@@ -89,6 +89,8 @@ transport.on('#device message', (message: DeviceMessage, cb: (response: any) => 
 
 transport.on('#discover', (data: any) => { });
 
+transport.on('#ehlo', (data: any, cb: (response: any) => void) => { if (cb) cb('ack'); });
+
 transport.on('#drop', (data: any) => {
     if (data)
         dropDevice(data);
