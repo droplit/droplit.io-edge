@@ -89,7 +89,7 @@ transport.on('#device message', (message: DeviceMessage, cb: (response: any) => 
 
 transport.on('#discover', (data: any) => { });
 
-transport.on('#ehlo', (data: any, cb: (response: any) => void) => { if (cb) cb('ack'); });
+transport.on('#ehlo', (data: any, cb: (response: any) => void) => { if (cb) cb('ack'); debug('ack'); });
 
 transport.on('#drop', (data: any) => {
     if (data)
@@ -417,7 +417,7 @@ function loadPlugins() {
         }
         // Object format
         else if (typeof settings.plugins === 'object') {
-            Object.keys(settings.plugin).forEach(plugin => {
+            Object.keys(settings.plugins).forEach(plugin => {
                 if (settings.plugins[plugin].enabled === false)
                     return;
                 plugins.push(plugin);
