@@ -415,25 +415,24 @@ function loadPlugins() {
         }
         // Object format
         else if (typeof settings.plugins === 'object') {
-            for (const k in (<Object>settings.plugins)) {
-                if (settings.plugins[k].enabled !== false) {
-                    plugins.push(k);
-                    if (Array.isArray(settings.plugins[k].localServices)) {
-                        (settings.plugins[k].localServices as [any]).forEach(ls => {
-                            cache.setServicePlugin(ls, k);
-                            localDeviceInfo.services.push(ls);
-                        });
-                    }
-                    for (const pmk in settings.promotedMembers) {
-                        log(`checkpoint 3 ${pmk} => ${settings.promotedMembers[pmk]}`);
-                        localDeviceInfo.promotedMembers[pmk] = settings.promotedMembers[pmk];
-                    }
-
+            Object.keys(settings.plugin).forEach(plugin => {
+                if (settings.plugins[plugin].enabled === false)
+                    return;
+                plugins.push(plugin);
+                if (Array.isArray(settings.plugins[plugin].localServices)) {
+                    (settings.plugins[plugin].localServices as [any]).forEach(ls => {
+                        cache.setServicePlugin(ls, plugin);
+                        localDeviceInfo.services.push(ls);
+                    });
                 }
-            }
+            });
         }
 
+        // Only emit local info if it has any services
         if (localDeviceInfo.services.length > 0) {
+            Object.keys(settings.promotedMembers).forEach(member =>
+                localDeviceInfo.promotedMembers[member] = settings.promotedMembers[member]);
+
             cache.setDeviceInfo(localDeviceInfo);
             log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
             transport.sendRequestReliable('device info', localDeviceInfo, (response, err) => deviceInfoResponseHandler(response, err, localDeviceInfo));

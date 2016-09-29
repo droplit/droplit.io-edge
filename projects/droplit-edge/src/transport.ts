@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 const retry = require('retry');
 import * as debug from 'debug';
 import * as async from 'async';
-let log = debug('droplit:transport-edge');
+const log = debug('droplit:transport-edge');
 
 /**
  * Connected event
@@ -38,9 +38,9 @@ let log = debug('droplit:transport-edge');
  */
 export default class Transport extends EventEmitter {
     // Connection
-    private ws: WebSocket = undefined;
-    private settings: any = undefined;
-    private transportId: number = undefined;
+    private ws: WebSocket;
+    private settings: any;
+    private transportId: number;
     private connectOperation = retry.operation({
         // retries: Infinity,
         factor: 1.5,
@@ -50,12 +50,12 @@ export default class Transport extends EventEmitter {
         forever: true
     });
     private isOpen = false;
-    private headers: { [key: string]: string } = undefined;
-    private connectedCallback: (connected: boolean) => void = undefined;
+    private headers: { [key: string]: string };
+    private connectedCallback: (connected: boolean) => void;
 
     // timeout
     private messageTimeout = 5000;
-    private messageTimer: NodeJS.Timer = undefined;
+    private messageTimer: NodeJS.Timer;
 
     // request-response mapping
     private responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
@@ -93,7 +93,7 @@ export default class Transport extends EventEmitter {
 
                 this.emit(`#retry:${this.transportId}`, currentAttempt, this.transportId);
             }
-            let success = this.restart();
+            const success = this.restart();
             if (callback) callback(success);
         });
     }
@@ -143,14 +143,14 @@ export default class Transport extends EventEmitter {
             // log(`onMessage: request expecting a result`);
             // it's a request expecting a response
             this.emit('#' + packet.m, packet.d, (response: any): void => {
-                let responseMessageId = packet.i;
-                let responsePacket: any = { d: response, r: responseMessageId };
+                const responseMessageId = packet.i;
+                const responsePacket: any = { d: response, r: responseMessageId };
                 this._send(JSON.stringify(responsePacket));
             });
         } else if (typeof (packet.r) === 'string') {
             // log(`onMessage: response to request`);
             // it's the reponse to a request
-            let cb = this.responseMap[packet.r] || this.reliableResponseMap[packet.r];
+            const cb = this.responseMap[packet.r] || this.reliableResponseMap[packet.r];
             if (cb) {
                 // log(`onMessage: callback found`);
                 cb(JSON.stringify(packet.d));
@@ -200,12 +200,12 @@ export default class Transport extends EventEmitter {
     }
 
     public send(message: string, data?: any, cb?: (err: Error) => void) {
-        let packet: any = { m: message, d: data, i: this.getNextMessageId() };
+        const packet: any = { m: message, d: data, i: this.getNextMessageId() };
         this._send(JSON.stringify(packet), cb);
     }
 
     public sendReliable(message: string, data?: any) {
-        let packet: any = { m: message, d: data, i: this.getNextMessageId() };
+        const packet: any = { m: message, d: data, i: this.getNextMessageId() };
 
         // If the connection is known to be closed, queue rather than fail
         if (!this.isOpen) {
@@ -221,7 +221,7 @@ export default class Transport extends EventEmitter {
     }
 
     public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
-        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        const packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.responseMap[packet.i] = cb;
         this._send(JSON.stringify(packet), (err) => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
@@ -234,7 +234,7 @@ export default class Transport extends EventEmitter {
     }
 
     public sendRequestReliable(message: string, data: any, cb: (response: string, err: Error) => void) {
-        let packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        const packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.reliableResponseMap[packet.i] = cb;
 
         // If the connection is known to be closed, queue rather than fail
@@ -303,7 +303,7 @@ export default class Transport extends EventEmitter {
 
     private sendBacklog() {
         async.whilst(this.canPeek.bind(this), (cb: (err: Error) => void) => {
-            let nextPacket = this.peek();
+            const nextPacket = this.peek();
             if (!nextPacket)
                 return;
 
@@ -318,13 +318,13 @@ export default class Transport extends EventEmitter {
 
     // message callback expiration handler
 
-    private prevMessageId: number = undefined;
+    private prevMessageId: number;
 
     private digestCycle() {
         // cleanup the second-to-last cycle
-        let messageIds = Object.keys(this.responseMap);
+        const messageIds = Object.keys(this.responseMap);
         messageIds.forEach((messageId) => {
-            let id = parseInt(messageId);
+            const id = parseInt(messageId);
             if (this.prevMessageId < this.messageIdSeed) {
                 /**
                  * message ids have NOT recycled
@@ -339,7 +339,7 @@ export default class Transport extends EventEmitter {
                  *   [o<--->            --]
                  */
                 if (id <= this.prevMessageId || id > this.messageIdSeed) {
-                    let cb = this.responseMap[messageId];
+                    const cb = this.responseMap[messageId];
                     cb(undefined, new Error('timeout expired'));
                     delete this.responseMap[messageId];
                 }
@@ -356,7 +356,7 @@ export default class Transport extends EventEmitter {
                  *   [--->      -o-<    --]
                  */
                 if (id <= this.prevMessageId && id > this.messageIdSeed) {
-                    let cb = this.responseMap[messageId];
+                    const cb = this.responseMap[messageId];
                     cb(undefined, new Error('timeout expired'));
                     delete this.responseMap[messageId];
                 }
@@ -383,7 +383,7 @@ export default class Transport extends EventEmitter {
     // Heartbeat
 
     private heartbeatInterval = 2000;
-    private heartbeatTimer: NodeJS.Timer = undefined;
+    private heartbeatTimer: NodeJS.Timer;
 
     private startHeartbeat() {
         this.stopHeartbeat();

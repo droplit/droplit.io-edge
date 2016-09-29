@@ -28,7 +28,7 @@ export function removeByLocalId(localId: string): void {
 
 export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
     if (deviceInfo.hasOwnProperty('deviceId')) {
-        let deviceId: string = (deviceInfo as any).deviceId;
+        const deviceId: string = (deviceInfo as any).deviceId;
         deviceCache_global[deviceId] = deviceInfo as DeviceInfo;
     } else {
         deviceCache_local[deviceInfo.localId] = deviceInfo;
@@ -37,22 +37,22 @@ export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
 
 // Plugin Management
 export function getPluginData(pluginName: string, key: string): string {
-    let pluginKey = `${pluginName};${key}`;
+    const pluginKey = `${pluginName};${key}`;
     return pluginCache_data[pluginKey];
 }
 
 export function getPluginSetting(pluginName: string, key: string): string {
-    let pluginKey = `${pluginName};${key}`;
+    const pluginKey = `${pluginName};${key}`;
     return pluginCache_settings[pluginKey];
 }
 
 export function setPluginData(pluginName: string, key: string, value: string): void {
-    let pluginKey = `${pluginName};${key}`;
+    const pluginKey = `${pluginName};${key}`;
     pluginCache_data[pluginKey] = value;
 }
 
 export function setPluginSetting(pluginName: string, key: string, value: string): void {
-    let pluginKey = `${pluginName};${key}`;
+    const pluginKey = `${pluginName};${key}`;
     pluginCache_settings[pluginKey] = value;
 }
 
