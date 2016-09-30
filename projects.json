@@ -21,7 +21,7 @@
     "droplit-plugin-voyager": {
         "dependencies": [ "droplit-plugin" ]
     },
-    "droplit-edge-connectivity": {
+    "droplit-plugin-local-ts-example": {
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-edge": {
@@ -34,7 +34,7 @@
             "droplit-plugin-js-example",
             "droplit-plugin-ts-example",
             "droplit-plugin-voyager",
-            "droplit-edge-connectivity"
+            "droplit-plugin-local-ts-example"
         ]
     },
     "load-test": {

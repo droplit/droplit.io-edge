@@ -14,21 +14,16 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
                 get_switch: this.BinarySwitch_get_switch,
                 set_switch: this.BinarySwitch_set_switch,
             },
-            Connectivity: {
-                get_status: this.getStatus,
-            }
         };
     }
 
     // virtual device states
     private devices: any = {
-        '1': {
+         '1': {
             'BinarySwitch.switch': 'off',
-            'Connectivity.status': 'online'
         },
         '2': {
-            'BinarySwitch.switch': 'off',
-            'Connectivity.status': 'online'
+            'BinarySwitch.switch': 'on',
         }
     };
 
@@ -46,22 +41,16 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
                 address: 'device.1',
                 localName: 'first device',
                 localData: { location: 'main facility' },
-                services: ['BinarySwitch', 'Connectivity'],
-                promotedMembers: {
-                    'switch': 'BinarySwitch.switch',
-                    'status': 'Connectivity.status'
-                }
+                services: ['BinarySwitch'],
+                promotedMembers: {}
             });
             this.onDeviceInfo({
                 localId: '2',
                 address: 'device.2',
                 localName: 'second device',
                 localData: { location: 'main facility' },
-                services: ['BinarySwitch', 'Connectivity'],
-                promotedMembers: {
-                    'switch': 'BinarySwitch.switch',
-                    'status': 'Connectivity.status'
-                }
+                services: ['BinarySwitch'],
+                promotedMembers: {}
             });
             this.onDiscoverComplete();
         });
@@ -82,10 +71,6 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     public dropDevice(localId: string): boolean {
         this.disconnect(localId);
         return true;
-    }
-
-    public getStatus(localId: string, callback: (result: any) => void) {
-        callback(this.devices[localId]['Connectivity.status']);
     }
 
     protected BinarySwitch_get_switch(localId: string, index: string, callback: (value: any) => void): boolean {

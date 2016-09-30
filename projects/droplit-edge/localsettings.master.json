@@ -10,15 +10,15 @@
         "droplit-plugin-lifx": {},
         "droplit-plugin-sonos": {},
         "droplit-plugin-wemo": {},
-        "droplit-edge-connectivity": {
+        "droplit-plugin-local-ts-example": {
             "enabled": true,
             "localServices": [
-                "Connectivity"
+                "Host"
             ]
         }
     },
        "promotedMembers": {
-            "status" : "Connectivity.status",
-            "connect" : "Connectivity.connect"
+            "motd" : "Host.motd",
+            "announce": "Host.announce"
     }
 }

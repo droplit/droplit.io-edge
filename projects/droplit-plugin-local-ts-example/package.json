@@ -1,6 +1,6 @@
 {
-  "name": "droplit-edge-connectivity",
-  "description": "Droplit Edge connectivity server plugin",
+  "name": "droplit-plugin-local-ts-example",
+  "description": "Droplit Edge local plugin typescript example",
   "author": "Droplit, Inc.",
   "version": "0.1.0",
   "private": false,
