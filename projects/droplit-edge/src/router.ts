@@ -149,10 +149,8 @@ function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     const results: CallMethodResponse = {
         supported: Array.apply(null, Array(commands.length)) // init all values to undefined
     };
-    log(`call: generated some map:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
-        debug(`Calling methods for ${pluginName}`);
         results.supported = plugin.instance(pluginName).callMethods(map[pluginName]);
     });
     return results;
@@ -260,12 +258,9 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
 
 function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     if (command.deviceId === '.') command.localId = command.deviceId;
-    // log(`getServiceMember: command`, command);
     const deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
-    // log(`getServiceMember: deviceInfo`, deviceInfo);
     // HACK: Allows easier testing via wscat
     const localId = command.localId || deviceInfo.localId;
-    // log(`getServiceMember: localinfo`, localId);
     const results = {
         localId,
         address: deviceInfo ? deviceInfo.address : null,
@@ -288,7 +283,6 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
             map[pluginName] = map[pluginName] || [];
             map[pluginName].push(getServiceMember(command));
         }
-        // log(`groupByPlugin:`, pluginName, `for command`, command);
     });
     return map;
 }
@@ -304,38 +298,26 @@ function loadPlugin(pluginName: string) {
 
             p.on('device info', (deviceInfo: DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) => {
                 deviceInfo.pluginName = pluginName;
-                // after we store the information in the cache, we swap '.'
-                // for the hub MACaddress if necessary
-                // if (deviceInfo.localId === '.') deviceInfo.localId = macAddress;
                 cache.setDeviceInfo(deviceInfo);
-
                 log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
                 transport.sendRequestReliable('device info', deviceInfo, (response, err) => deviceInfoResponseHandler(response, err, deviceInfo, callback));
             });
 
             p.on('event raised', (events: EventRaised[]) => {
-                // console.log(`event raised`);
-                debug(`events: ${JSON.stringify(events)}`);
+                events = Array.isArray(events) ? events : [events];
                 events.reduce((p, c) => {
-                    // console.log(`${p} raised an event ${JSON.stringify(c)}`);
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`event < ${d.pluginName}:${d.localId}`);
                     if (d.pluginName)
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
                 }, []);
-                // console.log(`events: ${JSON.stringify(events)}`);
                 transport.send('event raised', events, err => { });
             });
 
             p.on('property changed', (properties: any[]) => {
+                properties = Array.isArray(properties) ? properties : [properties];
                 properties.reduce((p, c) => {
-                    // console.log(`${p} raised an event`, c,
-                    //     '\nlocal', cache.getDeviceByLocalId(c.localId),
-                    //     '\nmac', cache.getDeviceByLocalId(macAddress),
-                    //     '\nretrieved', cache.getDeviceByLocalId(c.localId),
-                    //     '\npluginNaMe', p.pluginName);
-                    // if (c.localId === '.') c.localId = macAddress;                          // update to MAC address
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
                     if (d.pluginName)
@@ -344,7 +326,6 @@ function loadPlugin(pluginName: string) {
                 }, []);
 
                 // Only guarentee if send before first connect
-                // console.log(`changed props: ${JSON.stringify(properties)}`);
                 if (!hasConnected)
                     transport.sendReliable('property changed', properties);
                 else
@@ -505,18 +486,14 @@ function setProperties(commands: DeviceCommand[]): SetPropertiesResponse {
         supported: Array.apply(null, Array(commands.length))
     };
 
-    // log(`setProperties: mapped:`, map);
     Object.keys(map).forEach(pluginName => {
         // send commands to plugin
         const sectionResults = plugin.instance(pluginName).setProperties(map[pluginName]);
         const pluginIndexes = map[pluginName].map(member => (member as any)._sequence);
-        // log(`plugin:`, pluginName, map[pluginName]);
-        // log(`results:`, sectionResults);
 
         if (sectionResults) {
             // reorganize the results to the original sequence
             sectionResults.forEach((result, index) => {
-                // log(`results [${index}]:`, result);
                 results.supported[pluginIndexes[index]] = result;
             });
         }
