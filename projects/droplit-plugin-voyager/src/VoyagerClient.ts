@@ -58,13 +58,13 @@ export class VoyagerClient extends events.EventEmitter {
         }).then(() => {
             this.device.interval = setInterval(() => {
                 if (!this.device.deferred) {
-                    this.findChanges().then((result) => {
-                        this.device.changes = result;
-                    }).then(() => {
-                        if (this.device.changes.stateChanged) {
-                            this.emit('propertiesChanged', this.device.changes.properties);
-                        }
-                    });
+                    this.findChanges()
+                        .then(result => this.device.changes = result)
+                        .then(() => {
+                            if (this.device.changes.stateChanged)
+                                this.emit('propertiesChanged', this.device.changes.properties);
+                        })
+                        .catch(() => {}); // Do not want to actually do anything on reject; however, need to handle to avoid 6.6.0 warning
                 }
                 this.device.deferred = false;
             }, 5000);
