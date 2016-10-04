@@ -23,13 +23,13 @@ export class DroplitLocalPluginExample extends droplit.DroplitLocalPlugin {
     }
 
     // Set: Set MOTD value
-    public setMotd(localId: any, value: any, index: string) {
+    public setMotd(localId: any, value: any) {
         this.motd = value;
         const propChanges: droplit.DeviceServiceMember = {
             localId,
             member: 'service',
             service: 'Host',
-            index: index,
+            index: undefined,
             value: this.motd
         };
         this.onPropertiesChanged([propChanges]);
