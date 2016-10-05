@@ -317,7 +317,8 @@ export class VoyagerClient extends events.EventEmitter {
                 } else {
                     reject(changes);
                 }
-            });
+            })
+            .catch(() => {}); // Do not want to actually do anything on reject; however, need to handle to avoid 6.6.0 warning
         });
     }
 
