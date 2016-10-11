@@ -96,7 +96,10 @@ class WemoClient extends EventEmitter {
             };
             request(opts, (e, r) => {
                 if (e) {
-                    console.log('error subscribing', e);
+                    if (e.code && (e.code === 'ECONNABORTED' || e.code === 'EHOSTUNREACH'))
+                        console.log(`Unable to subscribe to ${e.address}:${e.port}`);
+                    else
+                        console.log('error subscribing', e);
                     return;
                 }
 
