@@ -22,6 +22,12 @@ const log = debug('droplit:router');
 export { Transport };
 const macAddress = require('node-getmac').trim();
 
+// Uncomment to detect/debug unhandled rejection warning
+// const process = require('process');
+// process.on('unhandledRejection', (reason: any, p: any) => {
+//     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+// });
+
 declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
 
 // Amount of time (ms) to wait before turning on auto discover
@@ -382,18 +388,28 @@ function loadPlugins() {
                     return plugins.push(plugin);
 
                 if (typeof plugin === 'object') {
-                    if (!plugin.name)
+                    if (!plugin.name) {
+                        log('cannot load nameless plugin', plugin);
                         return;
+                    }
                     if (plugin.enabled !== false) {
                         plugins.push(plugin.name);
                         if (plugin.localServices && Array.isArray(plugin.localServices)) {
-                            plugin.localServices.forEach((service: string) => {
+                            plugin.localServices.forEach((service: any) => {
+                                if (typeof service !== 'string') {
+                                    log('localService name is malformatted', service);
+                                    return;
+                                }
                                 cache.setServicePlugin(service, plugin.name);
                                 localDeviceInfo.services.push(service);
                             });
                         }
+                        return;
                     }
+                    log(`plugin ${plugin.name} is not enabled — skipping`);
+                    return;
                 }
+                log('plugin syntax is neither a string nor an object');
             });
         }
         // Object format
