@@ -429,7 +429,7 @@ function loadPlugins() {
 
         // Only emit local info if it has any services
         if (localDeviceInfo.services.length > 0) {
-            Object.keys(settings.promotedMembers).forEach(member =>
+            Object.keys(settings.promotedMembers || {}).forEach(member =>
                 localDeviceInfo.promotedMembers[member] = settings.promotedMembers[member]);
 
             cache.setDeviceInfo(localDeviceInfo);
