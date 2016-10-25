@@ -60,7 +60,7 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          */
         // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array');
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
-        const params = method.value ? Array.isArray(method.value) ? method.value : [method.value] : [];
+        const params = method.value ? !Array.isArray(method.value) ? method.value : [method.value] : [];
         // console.log(`method`, method, `mval`, method.value, `params`, params);
         params.unshift(method.localId);
         const methodImplementation = this.getServiceMember(method.service, method.member);
