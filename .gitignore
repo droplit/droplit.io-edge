@@ -12,3 +12,4 @@ npm-debug.log
 /projects/droplit-edge/plugins
 /projects/droplit-edge/localsettings.json
 .vscode
+**/yarn.lock
