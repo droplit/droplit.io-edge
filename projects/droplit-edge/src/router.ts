@@ -313,9 +313,12 @@ function loadPlugin(pluginName: string) {
                 events = Array.isArray(events) ? events : [events];
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
-                    log(`event < ${d.pluginName}:${d.localId}`);
-                    if (d.pluginName)
+                    if (d && d.pluginName) {
+                        log(`event < ${d.pluginName}:${d.localId}`);
                         c.pluginName = d.pluginName;
+                    }
+                    else
+                        log(`event < unknown:${d.localId}`);
                     return p.concat([c]);
                 }, []);
                 transport.send('event raised', events, err => { });
@@ -326,7 +329,7 @@ function loadPlugin(pluginName: string) {
                 properties.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
                     log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
-                    if (d.pluginName)
+                    if (d && d.pluginName)
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
                 }, []);
