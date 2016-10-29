@@ -96,6 +96,10 @@ export class Controller extends EventEmitter {
         return this.pluginInstance.getProperties(properties, callback);
     }
 
+    public requestMethods(methods: DP.DeviceServiceMember[], callback: (values: DP.DeviceServiceMember[]) => void): boolean[] {
+        return this.pluginInstance.requestMethods(methods, callback);
+    }
+
     public setProperties(properties: DP.DeviceServiceMember[]): boolean[] {
         return this.pluginInstance.setProperties(properties);
     }

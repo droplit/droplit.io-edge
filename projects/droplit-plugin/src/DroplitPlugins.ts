@@ -87,55 +87,6 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
     }
 
     /**
-     * getProperty - Get a service property value
-     *
-     * @param {DeviceServiceMember} property - property to get
-     * @param {(value: any) => void} callback - callback for result
-     * @returns {boolean} boolean indicating if property is supported
-     */
-    public getProperty(property: DeviceServiceMember, callback: (value: any) => void): boolean {
-        /**
-         * The edge server will never call the signular version of this method,
-         * it is just here as an abstraction layer and can be disregarded
-         * if overriding the plural version.
-         */
-        this.log(`get ${this.getServiceSelector(property)}`);
-        const params = [property.localId, callback];
-        const methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
-        if (methodImplementation) {
-            const isSupported = methodImplementation.apply(this, params);
-            return this.getMethodStatus(isSupported);
-        } else {
-            // method not implemented
-            return false;
-        }
-    }
-
-    /**
-     * setProperty - Set a service propery value
-     *
-     * @param {DeviceServiceMember} property - property to set
-     * @returns {boolean} - boolean indicating if property is supported
-     */
-    public setProperty(property: DeviceServiceMember): boolean {
-        /**
-         * The edge server will never call the signular version of this method,
-         * it is just here as an abstraction layer and can be disregarded
-         * if overriding the plural version.
-         */
-        this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
-        const params = [property.localId, property.value];
-        const methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
-        if (methodImplementation) {
-            const isSupported = methodImplementation.apply(this, params);
-            return this.getMethodStatus(isSupported);
-        } else {
-            // method not implemented
-            return false;
-        }
-    }
-
-    /**
      * getProperties - Gets multiple service property values
      * Override this method if you need to handle multiple properties in a single callback
      *
@@ -167,6 +118,79 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
     }
 
     /**
+     * getProperty - Get a service property value
+     *
+     * @param {DeviceServiceMember} property - property to get
+     * @param {(value: any) => void} callback - callback for result
+     * @returns {boolean} boolean indicating if property is supported
+     */
+    public getProperty(property: DeviceServiceMember, callback: (value: any) => void): boolean {
+        /**
+         * The edge server will never call the signular version of this method,
+         * it is just here as an abstraction layer and can be disregarded
+         * if overriding the plural version.
+         */
+        this.log(`get ${this.getServiceSelector(property)}`);
+        const params = [property.localId, callback];
+        const methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
+        if (methodImplementation) {
+            const isSupported = methodImplementation.apply(this, params);
+            return this.getMethodStatus(isSupported);
+        } else {
+            // method not implemented
+            return false;
+        }
+    }
+
+    /**
+     * requestMethod - Call a service method and get response value
+     *
+     * @param {DeviceServiceMember} method - method to call
+     * @param {(value: any) => void} callback - callback for result
+     * @returns {boolean} boolean indicating if property is supported
+     */
+    public requestMethod(method: DeviceServiceMember, callback: (value: any) => void): boolean {
+        this.log(`request ${this.getServiceSelector(method)} with ${method.value}`);
+        const params = [method.localId, method.value, callback];
+        const methodImplementation = this.getServiceMember(method.service, method.member);
+        if (methodImplementation) {
+            const isSupported = methodImplementation.apply(this, params);
+            return this.getMethodStatus(isSupported);
+        }
+        else
+            return false; // method not implemented
+    }
+
+    /**
+     * requestMethods - Calls multiple service methods and gets response values
+     *
+     * @param {DeviceServiceMember[]} methods - methods to call
+     * @param {(values: DeviceServiceMember[]) => void} callback - callback for results
+     * @returns {boolean[]} array of booleans indicating if each property is supported
+     */
+    public requestMethods(methods: DeviceServiceMember[], callback: (values: DeviceServiceMember[]) => void): boolean[] {
+        // could use `async` library, but didn't want external dependency
+        const values: DeviceServiceMember[] = Array.apply(null, Array(methods.length)); // init all values to undefined
+        const expiryTimeout = setTimeout(() => {
+            if (callback)
+                callback(values);
+        }, 10000);
+        return methods.map((method, index) => {
+            const cb = (value: any) => {
+                values[index] = value;
+                if (values.every(value => value !== undefined)) {
+                    if (callback) {
+                        clearTimeout(expiryTimeout);
+                        callback(values);
+                        callback = undefined;
+                    }
+                }
+            };
+            return this.requestMethod(method, cb);
+        });
+    }
+
+    /**
      * setProperties - Sets multiple service property values
      *
      * @param {DeviceServiceMember[]} properties - properties to set
@@ -174,6 +198,30 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
      */
     public setProperties(properties: DeviceServiceMember[]): boolean[] {
         return properties.map(property => this.setProperty(property));
+    }
+
+    /**
+     * setProperty - Set a service propery value
+     *
+     * @param {DeviceServiceMember} property - property to set
+     * @returns {boolean} - boolean indicating if property is supported
+     */
+    public setProperty(property: DeviceServiceMember): boolean {
+        /**
+         * The edge server will never call the signular version of this method,
+         * it is just here as an abstraction layer and can be disregarded
+         * if overriding the plural version.
+         */
+        this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
+        const params = [property.localId, property.value];
+        const methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
+        if (methodImplementation) {
+            const isSupported = methodImplementation.apply(this, params);
+            return this.getMethodStatus(isSupported);
+        } else {
+            // method not implemented
+            return false;
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import {
     PluginData,
     PluginSetting,
     PluginSettingResponse,
+    RequestMethodResponse,
     SetPropertiesResponse
 } from './types/types';
 
@@ -113,6 +114,14 @@ transport.on('#method call', (data: any, cb: (response: any) => void) => {
 
     if (cb)
         cb(results);
+});
+
+transport.on('#method request', (data: any, cb: (response: any) => void) => {
+    // Wrap single property in an array
+    if (!Array.isArray(data) && typeof data === 'object')
+        data = [data];
+    if (data && cb)
+        requestMethods(data).then(results => cb(results));
 });
 
 transport.on('#plugin setting', (data: PluginSetting[], cb: (response: any) => void) => {
@@ -449,6 +458,53 @@ function loadPlugins() {
             ), Promise.resolve<any>(undefined));
 
         all.then(() => resolve());
+    });
+}
+
+function requestMethods(commands: DeviceCommand[]): Promise<RequestMethodResponse> {
+    log(`request > ${JSON.stringify(commands)}`);
+
+    const map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
+    const results: GetPropertiesResponse = {
+        supported: Array.apply(null, Array(commands.length)), // init all values to undefined
+        values: Array.apply(null, Array(commands.length)) // init all values to undefined
+    };
+
+    return new Promise<RequestMethodResponse>((resolve, reject) => {
+        // If the device information does not return in the alloted time, return what we have with an error
+        const failedMessageError: Error = {
+            message: `The request could not be fufilled or fully fufilled. Command information: ${JSON.stringify(map)} Current results: ${JSON.stringify(results)}`,
+            name: `Device Method Request`,
+        };
+        const timer = setTimeout(() => sendResponse(failedMessageError), GetPropertyTimeout);
+
+        // Go through each mapped command and get the results
+        async.each(Object.keys(map), (pluginName: string, cb: () => void) => {
+            let sectionValues: DP.DeviceServiceMember[];
+            const pluginIndexes = map[pluginName].map(member => (member as any)._sequence);
+            const sectionSupported = plugin.instance(pluginName).requestMethods(map[pluginName], values => {
+                sectionValues = values;
+                if (sectionValues) {
+                    sectionValues.forEach((result, index) => {
+                        results.values[pluginIndexes[index]] = result;
+                    });
+                }
+                cb();
+            });
+            if (sectionSupported) {
+                sectionSupported.forEach((result, index) => {
+                    results.supported[pluginIndexes[index]] = result;
+                });
+            }
+        }, sendResponse);
+
+        function sendResponse(err: Error) {
+            clearTimeout(timer);
+            if (err)
+                log(err);
+            log(`request < ${JSON.stringify(results)}`);
+            resolve(results);
+        }
     });
 }
 
