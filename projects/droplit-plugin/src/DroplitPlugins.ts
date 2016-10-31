@@ -100,6 +100,7 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
         const expiryTimeout = setTimeout(() => {
             if (callback) {
                 callback(values);
+                callback = undefined;
             }
         }, 10000);
         return properties.map((property, index) => {
@@ -172,8 +173,10 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
         // could use `async` library, but didn't want external dependency
         const values: DeviceServiceMember[] = Array.apply(null, Array(methods.length)); // init all values to undefined
         const expiryTimeout = setTimeout(() => {
-            if (callback)
+            if (callback) {
                 callback(values);
+                callback = undefined;
+            }
         }, 10000);
         return methods.map((method, index) => {
             const cb = (value: any) => {
