@@ -29,18 +29,17 @@ export interface EventRaised {
     value: any;
 }
 
-export interface PropertyChanged extends EventRaised { }
-export interface LogInfo extends EventRaised { }
-export interface LogError extends EventRaised { }
-export interface DiscoverComplete extends EventRaised { }
+export type DiscoverComplete = EventRaised;
+export type LogError = EventRaised;
+export type LogInfo = EventRaised;
+export type PropertyChanged = EventRaised;
 
 export interface PluginData {
     plugin: string;
     key: string;
     value: any;
 }
-
-export interface PluginSetting extends PluginData { }
+export type PluginSetting = PluginData;
 
 export interface PluginMessage {
     plugin: string;

@@ -1,13 +1,10 @@
 import * as router from '../../droplit-edge';
 import * as debug from 'debug';
 
-let localSettings = require('../localsettings.json');
-
-let log = debug('droplit:load-test-connections');
-
-let config: any = require('../test-config.json');
-
-let connections: Array<any> = [];
+const localSettings = require('../localsettings.json');
+const log = debug('droplit:load-test-connections');
+const config: any = require('../test-config.json');
+const connections: any[] = [];
 
 function start() {
     getEdgeId((edgeId) => {
@@ -43,7 +40,7 @@ function start() {
 }
 
 function startConnection(edgeId: string, iteration: number, callback: (connected: boolean, transportId: number) => void) {
-    let transport = new router.Transport();
+    const transport = new router.Transport();
 
     // for (let kk = 0; kk < eventualSuccess.length; kk++) {
     //     if (eventualSuccess[kk].id === iteration) {
@@ -78,8 +75,9 @@ function startConnection(edgeId: string, iteration: number, callback: (connected
         callback(connected, iteration);
     });
 
-};
-let _edgeId = 'kduhdkhdkjhd';
+}
+
+const _edgeId = 'kduhdkhdkjhd';
 
 function getEdgeId(callback: (edgeId: string) => void) {
     // if (_edgeId) {

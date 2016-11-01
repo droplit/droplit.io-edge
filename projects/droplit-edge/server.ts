@@ -1,3 +1,3 @@
-import * as index from "./src/router";
+import * as index from './src/router';
 
 export = index;

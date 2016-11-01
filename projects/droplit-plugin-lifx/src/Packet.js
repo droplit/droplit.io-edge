@@ -26,7 +26,7 @@ const type = {
         parse: (b, start) => b.slice(start, start + 8),
         unparse: (b, start, p) => p.copy(b, start, 0, 8)
     },
-    float_le: {
+    floatLE: {
         size: 4,
         parse: (b, start) => b.readFloatLE(start),
         unparse: (b, start, p) => b.writeFloatLE(p, start)
@@ -54,7 +54,7 @@ const type = {
         parse: (b, start) => b.readUInt16BE(start),
         unparse: (b, start, p) => b.writeUInt16BE(p, start)
     },
-    uint16_le: {
+    uint16LE: {
         size: 2,
         parse: (b, start) => b.readUInt16LE(start),
         unparse: (b, start, p) => b.writeUInt16LE(p, start)
@@ -64,7 +64,7 @@ const type = {
         parse: (b, start) => b.readUInt32BE(start),
         unparse: (b, start, p) => b.writeUInt32BE(p, start)
     },
-    uint32_le: {
+    uint32LE: {
         size: 4,
         parse: (b, start) => b.readUInt32LE(start),
         unparse: (b, start, p) => b.writeUInt32LE(p, start)
@@ -77,21 +77,21 @@ const type = {
 };
 
 const preambleFields = [
-    { name: 'size', type: type.uint16_le },                 // +0
-    { name: 'protocol', bits: 12, type: type.uint16_le },   // +2
+    { name: 'size', type: type.uint16LE },                 // +0
+    { name: 'protocol', bits: 12, type: type.uint16LE },   // +2
     { name: 'addressable', bits: 1, type: type.uint8 },
     { name: 'tagged', bits: 1, type: type.uint8 },
     { name: 'origin', bits: 2, type: type.uint8 },
     { name: 'source', type: type.byte4 },                   // +4
     { name: 'target', type: type.byte8 },                   // +8
     { name: 'site', type: type.byte6 },                     // +16
-    { name: 'frm_rsrv', bits: 6, type: type.uint8 },        // +22
-    { name: 'ack_required', bits: 1, type: type.uint8 },
-    { name: 'res_required', bits: 1, type: type.uint8 },
+    { name: 'frmRsrv', bits: 6, type: type.uint8 },        // +22
+    { name: 'ackRequired', bits: 1, type: type.uint8 },
+    { name: 'resRequired', bits: 1, type: type.uint8 },
     { name: 'sequence', type: type.uint8 },                 // +23
     { name: 'timestamp', type: type.uint64 },               // +24
-    { name: 'packetType', type: type.uint16_le },           // +32
-    { name: 'proto_rsrv', type: type.byte2 }                // +34
+    { name: 'packetType', type: type.uint16LE },           // +32
+    { name: 'protoRsrv', type: type.byte2 }                // +34
 ];
 
 const packets = {
@@ -108,7 +108,7 @@ const packets = {
         length: 5,
         fields: [
             { name: 'service', type: type.uint8 },
-            { name: 'port', type: type.uint32_le }
+            { name: 'port', type: type.uint32LE }
         ]
     },
     0x0D: {
@@ -116,9 +116,9 @@ const packets = {
         shortname: 'stateHostInfo',
         length: 14,
         fields: [
-            { name: 'signal', type: type.float_le },
-            { name: 'tx', type: type.uint32_le },
-            { name: 'rx', type: type.uint32_le },
+            { name: 'signal', type: type.floatLE },
+            { name: 'tx', type: type.uint32LE },
+            { name: 'rx', type: type.uint32LE },
             { name: 'mcuTemperature', type: type.uint16 }
         ]
     },
@@ -127,9 +127,9 @@ const packets = {
         shortname: 'stateWifiInfo',
         length: 14,
         fields: [
-            { name: 'signal', type: type.float_le },
-            { name: 'tx', type: type.uint32_le },
-            { name: 'rx', type: type.uint32_le },
+            { name: 'signal', type: type.floatLE },
+            { name: 'tx', type: type.uint32LE },
+            { name: 'rx', type: type.uint32LE },
             { name: 'reserved', type: type.uint16 }
         ]
     },
@@ -166,16 +166,16 @@ const packets = {
     0x66: {
         name: 'Set Light Color',
         shortname: 'setColor',
-        ack_required: true,
-        // res_required: true,
+        ackRequired: true,
+        // resRequired: true,
         length: 13,
         fields: [
             { name: 'reserved', type: type.uint8 },
-            { name: 'hue', type: type.uint16_le },
-            { name: 'saturation', type: type.uint16_le },
-            { name: 'brightness', type: type.uint16_le },
-            { name: 'kelvin', type: type.uint16_le },
-            { name: 'duration', type: type.uint32_le }
+            { name: 'hue', type: type.uint16LE },
+            { name: 'saturation', type: type.uint16LE },
+            { name: 'brightness', type: type.uint16LE },
+            { name: 'kelvin', type: type.uint16LE },
+            { name: 'duration', type: type.uint32LE }
         ]
     },
     0x6B: {
@@ -183,12 +183,12 @@ const packets = {
         shortname: 'lightState',
         length: 52,
         fields: [
-            { name: 'hue', type: type.uint16_le },
-            { name: 'saturation', type: type.uint16_le },
-            { name: 'brightness', type: type.uint16_le },
-            { name: 'kelvin', type: type.uint16_le },
-            { name: 'reserved', type: type.uint16_le },
-            { name: 'power', type: type.uint16_le },
+            { name: 'hue', type: type.uint16LE },
+            { name: 'saturation', type: type.uint16LE },
+            { name: 'brightness', type: type.uint16LE },
+            { name: 'kelvin', type: type.uint16LE },
+            { name: 'reserved', type: type.uint16LE },
+            { name: 'power', type: type.uint16LE },
             { name: 'label', type: type.string32 },
             { name: 'reserved2', type: type.uint64 }
         ]
@@ -198,7 +198,7 @@ const packets = {
         shortname: 'lightTemperature',
         length: 2,
         fields: [
-            { name: 'temperature', type: type.uint16_le }
+            { name: 'temperature', type: type.uint16LE }
         ]
     },
     0x74: {
@@ -210,7 +210,7 @@ const packets = {
     0x75: {
         name: 'Set Light Power',
         shortname: 'setLightPower',
-        ack_required: true,
+        ackRequired: true,
         length: 6,
         fields: [
             { name: 'level', type: type.uint16 },
@@ -342,12 +342,12 @@ packet.fromParams = p => {
                 else
                     datum = p[f.name];
                 break;
-            case 'frm_rsrv':
+            case 'frmRsrv':
                 if (typeof p[f.name] === 'undefined') {
                     datum = 0;
-                    if (parser.res_required)
+                    if (parser.resRequired)
                         datum += 0x01;
-                    if (parser.ack_required)
+                    if (parser.ackRequired)
                         datum += 0x02;
                 } else
                     datum = p[f.name];
@@ -364,7 +364,7 @@ packet.fromParams = p => {
                 else
                     datum = p[f.name];
                 break;
-            case 'proto_rsrv':
+            case 'protoRsrv':
             case 'timestamp':
                 datum = new Buffer(f.type.size);
                 datum.fill(0);

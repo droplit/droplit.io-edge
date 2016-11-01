@@ -1,3 +1,5 @@
+'use strict';
+
 var commander = require('commander');
 var exec = require('child_process').exec;
 var installer = require('strong-service-install');
@@ -52,12 +54,6 @@ commander
 
 commander.parse(process.argv);
 
-
-
-
-
-
-
 function runCommand(command, callback) {
     console.log('running command:', command);
     exec(command, function (error, stdout, stderr) {
@@ -66,7 +62,7 @@ function runCommand(command, callback) {
         if (error !== null) {
             console.log('exec error: ' + error);
         }
-        callback(error == null);
+        callback(error === null);
     });
 }
 
@@ -97,4 +93,3 @@ function shutdownSystem() {
         // nop
     });
 }
-

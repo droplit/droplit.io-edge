@@ -54,14 +54,14 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
             }
             // this.devices.address = device.location.href;
 
-            let client = new VoyagerClient(device);
+            const client = new VoyagerClient(device);
             client.on('propertiesChanged', (data: any) => {
                 this.onPropertiesChanged(data);
             });
 
             this.devices[device.identifier] = client;
             device.product = {};
-            let onInfo = (data: any) => {
+            const onInfo = (data: any) => {
                 device.product.model = data.body.model;
                 device.product.firmwareVersion = data.body.firmware;
                 device.product.manufacturer = 'Venstar';
@@ -79,8 +79,8 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
         }
 
         function onDiscoverIPChange(data: any) {
-            let identifier = data.identifier;
-            let address = data.ip.host;
+            const identifier = data.identifier;
+            const address = data.ip.host;
             if (!this.devices[identifier]) {
                 return;
             }
@@ -99,7 +99,7 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
         if (!(localId in this.devices)) {
             return false;
         }
-        let identifier = this.devices.identifier;
+        const identifier = this.devices.identifier;
         clearInterval(this.devices[identifier].device.interval);
         delete this.devices.identifier;
         this.discoverer.undiscover(identifier);

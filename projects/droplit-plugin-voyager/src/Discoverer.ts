@@ -1,7 +1,7 @@
 import * as events from 'events';
 import * as url from 'url';
 
-let ssdp = require('node-ssdp').Client;
+const ssdp = require('node-ssdp').Client;
 
 const upnpSearch = 'venstar:thermostat:ecp';
 
@@ -26,18 +26,18 @@ export class Discoverer extends events.EventEmitter {
             }
 
             // let ipRegEx = /^http(?:s)?:?\/\/((?:\d{1,3}\.){3}\d{1,3})/i;
-            let idRegEx = /^voyager:ecp:((?:(?:[A-F0-9.]){3}){5}(?:[A-F0-9.]{2})):name:(.*):type:(.+)/;
+            const idRegEx = /^voyager:ecp:((?:(?:[A-F0-9.]){3}){5}(?:[A-F0-9.]{2})):name:(.*):type:(.+)/;
 
-            let idMatch = headers.USN.match(idRegEx);
+            const idMatch = headers.USN.match(idRegEx);
 
             if (!idMatch) {
                 return;
             }
 
             // let ipMatch = 'http://' + headers.LOCATION.match(ipRegEx)[1] + '/';
-            let ipMatch = 'http://' + rinfo.address + '/';
+            const ipMatch = 'http://' + rinfo.address + '/';
 
-            let identifier = idMatch[1];
+            const identifier = idMatch[1];
             if (identifier in this.found) {
                 if (this.found[identifier].location.hostname === rinfo.address) {
                     return;
@@ -48,7 +48,7 @@ export class Discoverer extends events.EventEmitter {
                 return;
             }
 
-            let discoveryData = {
+            const discoveryData = {
                 address: rinfo.address,
                 identifier,
                 location: url.parse(ipMatch),
