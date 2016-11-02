@@ -1,62 +1,131 @@
 import * as droplit from 'droplit-plugin';
 
-console.log('example');
-
 export class ExamplePlugin extends droplit.DroplitPlugin {
 
-    services: any;
-
-    constructor() {
-        super();
-        // console.log('example construct');
-        this.services = {
-            BinarySwitch: {
-                get_switch: this.BinarySwitch_get_switch,
-                set_switch: this.BinarySwitch_set_switch,
-            },
-        };
-    }
+    // ensure connectivity ability is live
+    private connectActive = false;
 
     // virtual device states
-    private devices: any = {
-         '1': {
-            'BinarySwitch.switch': 'off',
-        },
-        '2': {
-            'BinarySwitch.switch': 'on',
-        }
-    };
+    private devices: any = {};
 
     // virtual device tracking
     private deviceConnected: { [localId: string]: boolean } = {};
 
+    private services: any;
+
+    constructor() {
+        super();
+
+        this.services = {
+            BinarySwitch: {
+                get_switch: this.getSwitch,
+                set_switch: this.setSwitch,
+                switchOff: this.switchOff,
+                switchOn: this.switchOn
+            },
+            Connectivity: {
+                connect: this.connect,
+                disconnect: this.disconnect,
+                get_status: this.getStatus
+            }
+        };
+    }
+
     /**
      * Example plugin will produce two devices when told to discover
      */
-
     public discover() {
         setImmediate(() => { // simulate async
-            this.onDeviceInfo({
-                localId: '1',
-                address: 'device.1',
-                localName: 'first device',
-                localData: { location: 'main facility' },
-                services: ['BinarySwitch'],
-                promotedMembers: {}
-            });
-            this.onDeviceInfo({
-                localId: '2',
-                address: 'device.2',
-                localName: 'second device',
-                localData: { location: 'main facility' },
-                services: ['BinarySwitch'],
-                promotedMembers: {}
-            });
+            if (!this.devices[1]) {
+                this.devices[1] = { 'BinarySwitch.switch': 'off' };
+                this.onDeviceInfo({
+                    localId: '1',
+                    address: 'device.1',
+                    localName: 'first device',
+                    localData: { location: 'main facility' },
+                    services: ['BinarySwitch', 'Connectivity'],
+                    promotedMembers: {
+                        switch: 'BinarySwitch.switch'
+                    }
+                });
+            }
+
+            if (!this.devices[2]) {
+                this.devices[2] = { 'BinarySwitch.switch': 'off' };
+                this.onDeviceInfo({
+                    localId: '2',
+                    address: 'device.2',
+                    localName: 'second device',
+                    localData: { location: 'main facility' },
+                    services: ['BinarySwitch', 'Connectivity'],
+                    promotedMembers: {
+                        switch: 'BinarySwitch.switch'
+                    }
+                });
+            }
+
             this.onDiscoverComplete();
         });
     }
 
+    public dropDevice(localId: string): boolean {
+        this.disconnect(localId);
+        delete this.devices[localId];
+        return true;
+    }
+
+    // BinarySwitch Implementation
+    protected getSwitch(localId: string, callback: (value: any) => void): boolean {
+        // device does not exist
+        if (!this.devices[localId])
+            return false;
+
+        setImmediate(() => { // simulate async
+            // send last set value
+            callback(this.devices[localId]['BinarySwitch.switch']);
+        });
+        return true;
+    }
+
+    protected setSwitch(localId: string, value: any): boolean {
+        // device does not exist
+        if (!this.devices[localId])
+            return false;
+
+        // check if values are valid
+        if (value !== 'on' && value !== 'off')
+            return false;
+
+        // simulate setting device property
+        this.devices[localId]['BinarySwitch.switch'] = value;
+
+        // check if we're supposed to be tracking the device state
+        if (!this.connectActive || this.deviceConnected[localId]) {
+            // send state change notification
+            setImmediate(() => // simulate async
+                this.onPropertiesChanged([{
+                    localId,
+                    index: '0',
+                    member: 'switch',
+                    service: 'BinarySwitch',
+                    value
+                }])
+            );
+        }
+        return true;
+    }
+
+    protected switchOff(localId: string): boolean {
+        return this.setSwitch(localId, 'off');
+    }
+
+    protected switchOn(localId: string): boolean {
+        return this.setSwitch(localId, 'off');
+    }
+
+    // Connectivity Implementation
     public connect(localId: string): boolean {
+        this.connectActive = true;
         // track state changes on this device
         this.deviceConnected[localId] = true;
         return true;
@@ -68,50 +137,8 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    public dropDevice(localId: string): boolean {
-        this.disconnect(localId);
+    public getStatus(localId: string, callback: (value: any) => void): boolean {
+        callback(this.devices[localId]['Connectivity.status']);
         return true;
-    }
-
-    protected BinarySwitch_get_switch(localId: string, index: string, callback: (value: any) => void): boolean {
-        if (index === undefined) {
-            setImmediate(() => { // simulate async
-                // send last set value
-                callback(this.devices[localId]['BinarySwitch.switch']);
-            });
-            return true;
-        }
-        return false;
-    }
-
-    protected BinarySwitch_set_switch(localId: string, index: string, value: any): boolean {
-        if (index === undefined) {
-            setImmediate(() => { // simulate async
-                // simulate setting device property
-                this.devices[localId]['BinarySwitch.switch'] = value;
-                // check if we're supposed to be tracking the device state
-                if (this.deviceConnected[localId]) {
-                    /**
-                     * we have a connection to the device,
-                     * so we would get a notification that the state changed
-                     * indicate the property changed
-                     */
-                    this.onPropertiesChanged([{
-                        localId: localId,
-                        index: index,
-                        member: 'switch',
-                        service: 'BinarySwitch',
-                        value: value
-                    }]);
-                } else {
-                    /**
-                     * send command to device, but state change doesn't
-                     * report back because the state is not being tracked
-                     */
-                }
-            });
-            return true;
-        }
-        return false;
     }
 }
