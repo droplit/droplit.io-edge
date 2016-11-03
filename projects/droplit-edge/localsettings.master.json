@@ -9,13 +9,7 @@
         },
         "droplit-plugin-lifx": {},
         "droplit-plugin-sonos": {},
-        "droplit-plugin-wemo": {},
-        "droplit-plugin-local-ts-example": {
-            "enabled": true,
-            "localServices": [
-                "Host"
-            ]
-        }
+        "droplit-plugin-wemo": {}
     },
        "promotedMembers": {
             "motd" : "Host.motd",
