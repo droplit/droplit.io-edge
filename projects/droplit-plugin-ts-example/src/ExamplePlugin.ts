@@ -77,8 +77,10 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     // BinarySwitch Implementation
     protected getSwitch(localId: string, callback: (value: any) => void): boolean {
         // device does not exist
-        if (!this.devices[localId])
-            return false;
+        if (!this.devices[localId]) {
+            callback(undefined);
+            return true;
+        }
 
         setImmediate(() => { // simulate async
             // send last set value
@@ -90,11 +92,11 @@ export class ExamplePlugin extends droplit.DroplitPlugin {
     protected setSwitch(localId: string, value: any): boolean {
         // device does not exist
         if (!this.devices[localId])
-            return false;
+            return true;
 
         // check if values are valid
         if (value !== 'on' && value !== 'off')
-            return false;
+            return true;
 
         // simulate setting device property
         this.devices[localId]['BinarySwitch.switch'] = value;

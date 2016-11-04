@@ -58,22 +58,19 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * it is just here as an abstraction layer and can be disregarded
          * if overriding the plural version.
          */
-        // if (method.value !== undefined && method.value !== null && !Array.isArray(method.value)) throw new Error('value must be an array');
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
-        const params: any[] = [ method.localId ];
-        if (method.value)
-            params.push(method.value);
-        // console.log(`method`, method, `mval`, method.value, `params`, params);
+
+        // call does not support callbacks, so pass undefined (callbacks are used by request overload)
+        const params = [ method.localId, method.value, undefined, method.index ];
         const methodImplementation = this.getServiceMember(method.service, method.member);
+
         if (methodImplementation) {
             const isSupported = methodImplementation.apply(this, params);
-            // console.log('method is supported', isSupported, params);
             return this.getMethodStatus(isSupported);
-        } else {
-            // console.log('method not implemented');
-            // method not implemented
-            return false;
         }
+
+        // method not implemented
+        return false;
     }
 
     /**
@@ -132,15 +129,17 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`get ${this.getServiceSelector(property)}`);
-        const params = [property.localId, callback];
+
+        const params = [property.localId, callback, property.index];
         const methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
+
         if (methodImplementation) {
             const isSupported = methodImplementation.apply(this, params);
             return this.getMethodStatus(isSupported);
-        } else {
-            // method not implemented
-            return false;
         }
+
+        // method not implemented
+        return false;
     }
 
     /**
@@ -152,14 +151,17 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
      */
     public requestMethod(method: DeviceServiceMember, callback: (value: any) => void): boolean {
         this.log(`request ${this.getServiceSelector(method)} with ${method.value}`);
-        const params = [method.localId, method.value, callback];
+
+        const params = [method.localId, method.value, callback, method.index];
         const methodImplementation = this.getServiceMember(method.service, method.member);
+
         if (methodImplementation) {
             const isSupported = methodImplementation.apply(this, params);
             return this.getMethodStatus(isSupported);
         }
-        else
-            return false; // method not implemented
+
+        // method not implemented
+        return false;
     }
 
     /**
