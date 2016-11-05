@@ -42,11 +42,12 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                     deviceMeta: { name: 'first device' },
                     location: 'main facility',
                     name: 'device1',
-                    services: ['BinarySwitch', 'Connectivity'],
+                    services: ['BinarySwitch'],
                     promotedMembers: {
                         switch: 'BinarySwitch.switch'
                     }
                 });
+                this.onPropertiesChanged([{ localId: '1', member: 'switch', service: 'BinarySwitch', value: 'off' }]);
             }
 
             if (!this.devices[2]) {
@@ -57,11 +58,34 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                     deviceMeta: { name: 'second device' },
                     location: 'main facility',
                     name: 'device2',
-                    services: ['BinarySwitch', 'Connectivity'],
+                    services: ['BinarySwitch'],
                     promotedMembers: {
                         switch: 'BinarySwitch.switch'
                     }
                 });
+                this.onPropertiesChanged([{ localId: '2', member: 'switch', service: 'BinarySwitch', value: 'off' }]);
+            }
+
+            if (!this.devices[3]) {
+                this.devices[3] = [
+                    { 'BinarySwitch.switch': 'off' },
+                    { 'BinarySwitch.switch': 'off' },
+                    { 'BinarySwitch.switch': 'off' }
+                ];
+                this.onDeviceInfo({
+                    localId: '3',
+                    address: 'device.3',
+                    deviceMeta: { name: 'third device' },
+                    location: 'main facility',
+                    name: 'device3',
+                    services: ['BinarySwitch[0-3]'],
+                    promotedMembers: {
+                        switch: 'BinarySwitch.switch'
+                    }
+                });
+                this.onPropertiesChanged([{ localId: '3', index: '0', member: 'switch', service: 'BinarySwitch', value: 'off' }]);
+                this.onPropertiesChanged([{ localId: '3', index: '1', member: 'switch', service: 'BinarySwitch', value: 'off' }]);
+                this.onPropertiesChanged([{ localId: '3', index: '2', member: 'switch', service: 'BinarySwitch', value: 'off' }]);
             }
 
             this.onDiscoverComplete();
@@ -89,7 +113,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    setSwitch(localId, value) {
+    setSwitch(localId, value, index) {
         // device does not exist
         if (!this.devices[localId])
             return true;
@@ -97,6 +121,29 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         // check if values are valid
         if (value !== 'on' && value !== 'off')
             return true;
+
+        // Check if indexed
+        if (Array.isArray(this.devices[localId])) {
+            if (!this.devices[localId][index])
+                return true;
+
+            // simulate setting device property
+            this.devices[localId][index]['BinarySwitch.switch'] = value;
+
+            if (!this.connectActive || this.deviceConnected[localId]) {
+                // send state change notification
+                setImmediate(() => // simulate async
+                    this.onPropertiesChanged([{
+                        localId,
+                        index,
+                        member: 'switch',
+                        service: 'BinarySwitch',
+                        value
+                    }])
+                );
+            }
+            return true;
+        }
 
         // simulate setting device property
         this.devices[localId]['BinarySwitch.switch'] = value;
@@ -107,7 +154,6 @@ class ExamplePlugin extends droplit.DroplitPlugin {
             setImmediate(() => // simulate async
                 this.onPropertiesChanged([{
                     localId,
-                    index: '0',
                     member: 'switch',
                     service: 'BinarySwitch',
                     value

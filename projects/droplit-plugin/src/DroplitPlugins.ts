@@ -218,7 +218,7 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * if overriding the plural version.
          */
         this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
-        const params = [property.localId, property.value];
+        const params = [property.localId, property.value, property.index];
         const methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
         if (methodImplementation) {
             const isSupported = methodImplementation.apply(this, params);
