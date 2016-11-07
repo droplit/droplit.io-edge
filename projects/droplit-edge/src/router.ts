@@ -49,6 +49,11 @@ let hasConnected = false;
 // overwrite settings with local settings
 Object.keys(localSettings).forEach((key) => settings[key] = localSettings[key]);
 
+// log select settings
+log(`using setting host: ${settings.transport.host}`);
+log(`using setting ecosystem: ${settings.ecosystemId}`);
+log(`using setting edge id: ${macAddress}`);
+
 // If enabled, generates a heap dump on a set interval
 if (settings.debug.generateHeapDump) {
     const heapdump = require('heapdump');
