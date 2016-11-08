@@ -175,12 +175,12 @@ class ExamplePlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    switchOff(localId) {
-        return this.setSwitch(localId, 'off');
+    switchOff(localId, value, callback, index) {
+        return this.setSwitch(localId, 'off', index);
     }
 
-    switchOn(localId) {
-        return this.setSwitch(localId, 'on');
+    switchOn(localId, value, callback, index) {
+        return this.setSwitch(localId, 'on', index);
     }
 
     // Connectivity Implementation
