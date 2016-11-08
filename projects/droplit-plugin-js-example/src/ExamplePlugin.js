@@ -78,7 +78,7 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                     deviceMeta: { name: 'third device' },
                     location: 'main facility',
                     name: 'device3',
-                    services: ['BinarySwitch[0-3]'],
+                    services: ['BinarySwitch[0..2]'],
                     promotedMembers: {
                         switch: 'BinarySwitch.switch'
                     }
@@ -99,10 +99,22 @@ class ExamplePlugin extends droplit.DroplitPlugin {
     }
 
     // BinarySwitch Implementation
-    getSwitch(localId, callback) {
+    getSwitch(localId, callback, index) {
         // device does not exist
         if (!this.devices[localId]) {
             callback(undefined);
+            return true;
+        }
+
+        // Check if indexed
+        if (Array.isArray(this.devices[localId])) {
+            if (!this.devices[localId][index])
+                return true;
+
+            setImmediate(() => { // simulate async
+                // send last set value
+                callback(this.devices[localId][index]['BinarySwitch.switch']);
+            });
             return true;
         }
 
