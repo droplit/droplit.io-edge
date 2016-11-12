@@ -14,6 +14,28 @@ export function instance(pluginName: string): Controller {
     return undefined;
 }
 
+// Derived from router types
+export interface InfoEvent {
+    message: string;
+    timestamp: Date;
+    level: ErrorLevel;
+}
+export interface ErrorEvent {
+    name: string;
+    message: string;
+    stack: string;
+    pluginName: string;
+    timestamp: Date;
+    level: ErrorLevel;
+}
+
+export enum ErrorLevel {
+    info,
+    warning,
+    error,
+    critical
+}
+
 /**
  * This class mostly just wraps the DroplitPlugin class to create a layer of abstraction
  * that allows us to later implement plugins as a separate process or in a sandbox
@@ -121,21 +143,26 @@ export class Controller extends EventEmitter {
     }
 
     private errorFilter(data: any): ErrorEvent {
-        let error: ErrorEvent;
-        if (data instanceof Error) {
+        let error: ErrorEvent = {
+            timestamp: new Date()
+
+        };
+
+        // most likely we will see an error string
+        if (typeof data === 'string') {
+            // then we know this is an individual message string
+            error.name = 'Error';
+            error.message = data;
+            error.stack = undefined;
+        }
+
+        else if (data instanceof Error) {
             // then we know this is an error type
             error.name = data.name;
             error.message = data.message;
             error.stack = data.stack;
             error.level = ErrorLevel.error;
 
-        }
-
-        else if (typeof data === 'string') {
-            // then we know this is an individual message
-            error.name = 'Error';
-            error.message = data;
-            error.stack = undefined;
         }
 
         // should we try to parse this the best we can?
@@ -166,30 +193,18 @@ export class Controller extends EventEmitter {
     }
 
     private infoFilter(data: any): InfoEvent {
+        let info: InfoEvent;
+
+        // most likely we will see an string of information
+        if (typeof data === 'string') {
+            // then we know this is an individual message string
+            info.message = data;
+            info.timestamp = new Date();
+            error.stack = undefined;
+        }
+        if (data instanceof InfoEvent) {
+            // then we know this is a well formed info event
+        }
         return undefined;
     }
-}
-
-// Derived from router types
-export interface InfoEvent {
-    origin: string;
-    message: string;
-    timestamp: Date;
-    level: ErrorLevel;
-}
-export interface ErrorEvent {
-    name: string;
-    message: string;
-    stack: string;
-    edgeDeviceId: string;
-    pluginName: string;
-    timestamp: Date;
-    level: ErrorLevel;
-}
-
-export enum ErrorLevel {
-    info,
-    warning,
-    error,
-    critical
 }
