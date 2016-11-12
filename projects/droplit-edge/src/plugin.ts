@@ -1,7 +1,7 @@
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as DP from 'droplit-plugin';
-import {DeviceMessageResponse} from './types/types';
-
+import { DeviceMessageResponse } from './types/types';
+const debug = require('debug')('droplit:plugin');
 const pluginMap: { [name: string]: Controller } = {};
 
 export function instance(pluginName: string): Controller {
@@ -40,6 +40,10 @@ export class Controller extends EventEmitter {
         this.pluginInstance.on('discover complete', this.discoverCompleteHandler.bind(this));
         this.pluginInstance.on('property changed', this.propertiesChangedHandler.bind(this));
         this.pluginInstance.on('event raised', this.eventsHandler.bind(this));
+        this.pluginInstance.on('log info', this.logInfoHandler.bind(this));
+        this.pluginInstance.on('log error', this.logErrorHandler.bind(this));
+        // this.pluginInstance.on('log info many', this.logInfoHandler.bind(this));
+        // this.pluginInstance.on('log error many', this.logErrorHandler.bind(this));
     }
 
     // event handlers
@@ -62,6 +66,14 @@ export class Controller extends EventEmitter {
 
     private eventsHandler(events: DP.DeviceServiceMember[]) {
         this.emit('event raised', events);
+    }
+
+    private logInfoHandler(...args: any[])  {
+        this.emit('log info', args.map(this.infoFilter));
+    }
+
+    private logErrorHandler(...args: any[]) {
+        this.emit('log error', args.map(this.errorFilter));
     }
 
     // management
@@ -107,4 +119,52 @@ export class Controller extends EventEmitter {
     public deviceMessage(localId: string, data: any, callback?: (response: any) => void): DeviceMessageResponse {
         return this.pluginInstance.deviceMessage(localId, data, callback);
     }
+
+    private errorFilter(data: any): ErrorEvent {
+        let error: ErrorEvent;
+        if (data instanceof Error) {
+            // then we know this is an error type
+            error.name = data.name;
+            error.message = data.message;
+            error.stack = data.stack;
+            error.level = ErrorLevel.error;
+
+        }
+
+        if (typeof data === 'string') {
+            // then we know this is an individual message
+        }
+
+        // if()
+        // debug('')
+        return undefined;
+    }
+
+    private infoFilter(data: any): InfoEvent {
+        return undefined;
+    }
+}
+
+// Derived from router types
+export interface InfoEvent {
+    origin: string;
+    message: string;
+    timestamp: Date;
+    level: ErrorLevel;
+}
+export interface ErrorEvent {
+    name: string;
+    message: string;
+    stack: string;
+    edgeDeviceId: string;
+    pluginName: string;
+    timestamp: Date;
+    level: ErrorLevel;
+}
+
+export enum ErrorLevel {
+    info,
+    warning,
+    error,
+    critical
 }
