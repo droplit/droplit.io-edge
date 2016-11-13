@@ -136,6 +136,14 @@ export class Controller extends EventEmitter {
 
     // TODO: timestamps assigned here should be optionally assigned at event conception
     private errorFilter(data: any): ErrorEvent {
+        // If we are passed an error object, parse it out as
+        // JSON.stringify will not normalize the object appropriately.
+        if (data instanceof Error)
+            data = {
+                name: data.name,
+                message: data.message,
+                stack: data.stack
+            }
         return {
             message: JSON.stringify(data),
             pluginName: undefined,  // assigned in router
