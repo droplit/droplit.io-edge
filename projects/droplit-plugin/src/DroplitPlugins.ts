@@ -1,4 +1,5 @@
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
+const debug = require('debug')('droplit:DroplitPlugin');
 
 /**
  * DeviceServiceMember - Address information for device and service member
@@ -61,7 +62,7 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
         this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
 
         // call does not support callbacks, so pass undefined (callbacks are used by request overload)
-        const params = [ method.localId, method.value, undefined, method.index ];
+        const params = [method.localId, method.value, undefined, method.index];
         const methodImplementation = this.getServiceMember(method.service, method.member);
 
         if (methodImplementation) {
@@ -236,7 +237,8 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
      * @param {...any[]} args (description)
      */
     protected log(...args: any[]): void {
-        this.emit('log info', args);
+        // TODO: this is a cheap hack
+        this.emit('log info', args.map(arg => { return arg; }));
     }
 
     /**

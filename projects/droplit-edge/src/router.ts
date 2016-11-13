@@ -358,19 +358,13 @@ function loadPlugin(pluginName: string) {
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => basicSend('log error'));
 
             p.on('discover complete', basicSend('discover complete'));
-            p.on('log info', (...args: any[]) => {
-                args.forEach(arg => {
-                    arg.edgeDeviceId = cache.getDeviceByLocalId('.');
-                    // TODO: set pluginName
-                });
-                (...args: any[]) => basicSend('log info');
+            p.on('log info', (events: any[]) => {
+                events.forEach(event => event.pluginName = p.getName());
+                basicSend('log info')(events);
             });
-            p.on('log error', (...args: any[]) => {
-                args.forEach(arg => {
-                    arg.edgeDeviceId = cache.getDeviceByLocalId('.');
-                    // TODO: set pluginName
-                });
-                (...args: any[]) => basicSend('log error');
+            p.on('log error', (events: any[]) => {
+                events.forEach(event => event.pluginName = p.getName());
+                basicSend('log error')(events);
             });
             p.on('plugin data', basicSend('plugin data'));
             p.on('plugin setting', basicSend('plugin setting'));

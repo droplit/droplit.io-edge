@@ -19,6 +19,7 @@ export interface InfoEvent {
     message: string;
     timestamp: Date;
     level: ErrorLevel;
+    pluginName: string;
 }
 export interface ErrorEvent {
     name: string;
@@ -44,10 +45,14 @@ export enum ErrorLevel {
 
 export class Controller extends EventEmitter {
     private pluginInstance: DP.DroplitPlugin;
+    private pluginName: string;
 
     constructor(pluginName: string, settings?: any) {
         super();
         this.pluginInstance = this.loadPlugin(pluginName, settings);
+        // TODO: make sure this isn't breaking some layer of abstraction
+        this.pluginName = pluginName;
+        // TODO: make sure this isn't breaking some layer of abstraction
         this.initPlugin();
     }
 
@@ -90,12 +95,12 @@ export class Controller extends EventEmitter {
         this.emit('event raised', events);
     }
 
-    private logInfoHandler(...args: any[]) {
-        this.emit('log info', args.map(this.infoFilter));
+    private logInfoHandler(events: any[]) {
+        this.emit('log info', events.map(this.infoFilter));
     }
 
-    private logErrorHandler(...args: any[]) {
-        this.emit('log error', args.map(this.errorFilter));
+    private logErrorHandler(events: any[]) {
+        this.emit('log error', events.map(this.errorFilter));
     }
 
     // management
@@ -142,17 +147,26 @@ export class Controller extends EventEmitter {
         return this.pluginInstance.deviceMessage(localId, data, callback);
     }
 
+    // TODO: requires comments cleanup
     private errorFilter(data: any): ErrorEvent {
-        let error: ErrorEvent;
+        let error: ErrorEvent = {
+            level: ErrorLevel.error,
+            pluginName: undefined,
+            timestamp: new Date(),
+            name: undefined,
+            message: undefined,
+            stack: undefined
+        };
 
         // most likely we will see an error string
         if (typeof data === 'string') {
             error.name = 'Error';
             error.message = data;
-            error.stack = undefined;
+            // leave stack undefined
         }
 
         else if (data instanceof Error) {
+            // get items from error and place in ErrorEvent
             error.name = data.name;
             error.message = data.message;
             error.stack = data.stack;
@@ -166,6 +180,7 @@ export class Controller extends EventEmitter {
         // check to make sure the value is not null
         if (data !== null && typeof data === 'object') {
             ['name', 'message', 'stack', 'timestamp', 'level'].forEach(prop => {
+                // if the property we are iterating over is in data
                 if (data[prop]) {
                     // if we know some timestamp
                     if (prop === 'timestamp') {
@@ -195,53 +210,39 @@ export class Controller extends EventEmitter {
     }
 
     private infoFilter(data: any): InfoEvent {
-        let info: InfoEvent;
-
-
-
-        // should we try to parse this the best we can?
-        // there would be some known properties that we can
-        // look for to accomodate a new error..
-
-        // As typeof returns 'object' if an value is null, we must first
-        // check to make sure the value is not null
-        if (data !== null && typeof data === 'object') {
-            ['message', 'timestamp', 'level'].forEach(prop => {
-                if (data['prop']) {
-                    // if we know some timestamp
-                    if (prop === 'timestamp') {
-                        if (data[prop] instanceof Date) {  /* then add to error event */ }
-                        else if (typeof data[prop] === 'string') { /* parse as date */ }
-                        else { /* do nothing */ }
-                    }
-                    // if we know some level
-                    else if (prop === 'level') {
-                        switch (data[prop]) {
-                            case ErrorLevel.error || 'error': return; // assign as ErrorLevel.error;
-                            case ErrorLevel.warning || 'warning': return; // assign as ErrorLevel.warning;
-                            case ErrorLevel.critical || 'critical': return; // assign as ErrorLevel.critical;
-                            default: return; // do nothing
-                        }
-                    }
-                    // otherwise assume the prop is safe and assign to error
-                    else (info as any)[prop] = data[prop];
-                }
-            });
-        }
+        debug('infoFilter', data);
 
         // most likely we will see a string of information
-        else {
-            // if the data is not an object, then the data is either a string
-            // or something we cannot normalize. Therefore we simply assign the
-            // information in the same manner than you would to pass string data.
-            info.message = data;
-            info.timestamp = new Date();
-            info.level = ErrorLevel.info;
-        }
 
-        // fill in missing properties
-        info.level = info.level || ErrorLevel.info;
-        info.timestamp = info.timestamp || new Date();
+        // if the data is not an object, then the data is either a string
+        // or something we cannot normalize. Therefore we simply assign the
+        // information in the same manner than you would to pass string data.
+        // these are our default values.
+        // pluginName gets updated in the router
+        let info: InfoEvent = {
+            timestamp: new Date(),
+            message: data,
+            level: ErrorLevel.info,
+            pluginName: undefined
+        };
+
+        // As typeof returns 'object' if an value is null, we must first
+        // check to make sure the value is not null. We make sure this is
+        // an object before trying to read the values of a non-object.
+        if (data !== null && typeof data === 'object') {
+
+            if (data.timestamp) {
+                if (data.timestamp instanceof Date) info.timestamp = data.timestamp;
+                else if (typeof data.timestamp === 'string') {
+                    try { info.timestamp = new Date(data.timestamp); }
+                    catch (e) { this.logErrorHandler(e); }
+                }
+                // otherwise leave the date as is
+            }
+        }
         return info;
     }
+
+    // local
+    public getName() { return this.pluginName; }
 }
