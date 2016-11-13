@@ -238,7 +238,7 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
      */
     protected log(...args: any[]): void {
         // TODO: this is a cheap hack
-        this.emit('log info', args.map(arg => { return arg; }));
+        this.emit('log info', args);
     }
 
     /**

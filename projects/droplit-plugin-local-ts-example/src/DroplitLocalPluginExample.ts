@@ -44,15 +44,13 @@ export class DroplitLocalPluginExample extends droplit.DroplitLocalPlugin {
   }
 
   public info() {
-    const info = 'logging info from droplit local hub plugin example';
-    // console.log(info);
+    const info = 'log info';
     this.log(info);
     return true;
   }
 
   public error() {
-    const error = 'logging example error from droplit local hub plugin example';
-    // console.log(error);
+    const error = 'log error';
     this.logError(error);
     return true;
   }
