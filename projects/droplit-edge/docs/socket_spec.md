@@ -130,7 +130,7 @@ The response contains an array of supported flags indicating whether the operati
 ### `plugin message` - sends a message down to the plugin (not persisted data)
 ```
 {
-    plugin: string;
+    pluginName: string;
     message: any;
 }
 ```
@@ -146,7 +146,7 @@ The response contains an array of supported flags indicating whether the operati
 ### `plugin setting` - sets ecosystem-wide settings for plugin of a specific type (managed by local cache // persisted in mongo)
 ```
 {
-    plugin: string;
+    pluginName: string;
     key: string;
     value: any;
 }[]
@@ -155,7 +155,7 @@ The response contains an array of supported flags indicating whether the operati
 ### `plugin data` - sets edge device-wide settings for plugin of a specific type (managed by local cache // persisted in mongo)
 ```
 {
-    plugin: string;
+    pluginName: string;
     key: string;
     value: any;
 }[]
@@ -272,9 +272,23 @@ Device raises an event
 }[]
 ```
 
-`log info`
+### `log info` - send a info message to the ecosystem log
+```
+{
+    pluginName: string;
+    timestamp: string;
+    data: any;
+}
+```
 
-`log error`
+### `log error` - sent a error message to the ecosystem log
+```
+{
+    pluginName: string;
+    timestamp: string;
+    data: any;
+}
+```
 
 `discover complete`
 
