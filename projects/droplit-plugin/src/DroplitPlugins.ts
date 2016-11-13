@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-const debug = require('debug')('droplit:DroplitPlugin');
+// const debug = require('debug')('droplit:DroplitPlugin');
 
 /**
  * DeviceServiceMember - Address information for device and service member
@@ -20,6 +20,7 @@ export interface DeviceServiceMember {
     member: string;
     value?: any;
     error?: Error;
+    timestamp?: Date;
 }
 
 /**
@@ -45,6 +46,7 @@ export interface DeviceInfo {
     services?: string[];
     promotedMembers?: { [name: string]: string };
     pluginName?: string;
+    timestamp?: Date;
 }
 export abstract class DroplitLocalPlugin extends EventEmitter {
 

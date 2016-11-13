@@ -16,13 +16,13 @@ export function instance(pluginName: string): Controller {
 
 // Derived from router types
 export interface InfoEvent {
-    message: string;
+    data: string;
     pluginName: string;
     timestamp: Date;
 }
 
 export interface ErrorEvent {
-    message: string;
+    data: string;
     pluginName: string;
     timestamp: Date;
 }
@@ -63,11 +63,11 @@ export class Controller extends EventEmitter {
     // event handlers
 
     private deviceInfoHandler(deviceInfo: DP.DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) {
-        this.emit('device info', deviceInfo, callback);
+        this.emit('device info', this.deviceInfoFilter(deviceInfo), callback);
     }
 
     private deviceUpdateHandler(deviceInfo: DP.DeviceInfo) {
-        this.emit('device update', deviceInfo);
+        this.emit('device update', this.deviceInfoFilter(deviceInfo));
     }
 
     private discoverCompleteHandler() {
@@ -75,11 +75,11 @@ export class Controller extends EventEmitter {
     }
 
     private propertiesChangedHandler(properties: DP.DeviceServiceMember[]) {
-        this.emit('property changed', properties);
+        this.emit('property changed', properties.map(this.eventFilter));
     }
 
     private eventsHandler(events: DP.DeviceServiceMember[]) {
-        this.emit('event raised', events);
+        this.emit('event raised', events.map(this.eventFilter));
     }
 
     private logInfoHandler(events: any[]) {
@@ -134,8 +134,19 @@ export class Controller extends EventEmitter {
         return this.pluginInstance.deviceMessage(localId, data, callback);
     }
 
+    private deviceInfoFilter(event: DP.DeviceInfo): DP.DeviceInfo {
+        event.timestamp = event.timestamp ? event.timestamp as Date : new Date();
+        return event;
+    }
+    private eventFilter(event: DP.DeviceServiceMember): DP.DeviceServiceMember {
+        event.index = event.index ? event.index : '0';
+        event.timestamp = event.timestamp ? event.timestamp as Date : new Date();
+        return event;
+    }
+
     // TODO: timestamps assigned here should be optionally assigned at event conception
     private errorFilter(data: any): ErrorEvent {
+        debug('errorFilter', data);
         // If we are passed an error object, parse it out as
         // JSON.stringify will not normalize the object appropriately.
         if (data instanceof Error)
@@ -143,9 +154,9 @@ export class Controller extends EventEmitter {
                 name: data.name,
                 message: data.message,
                 stack: data.stack
-            }
+            };
         return {
-            message: JSON.stringify(data),
+            data: JSON.stringify(data),
             pluginName: undefined,  // assigned in router
             timestamp: new Date(),
         };
@@ -154,7 +165,7 @@ export class Controller extends EventEmitter {
     private infoFilter(data: any): InfoEvent {
         debug('infoFilter', data);
         return {
-            message: JSON.stringify(data),
+            data: JSON.stringify(data),
             pluginName: undefined,  // assigned in router
             timestamp: new Date(),
         };

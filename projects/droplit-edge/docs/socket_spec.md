@@ -242,6 +242,7 @@ The service responds with the current device info including the system assigned 
     deviceMeta?: any;
     services?: string[];
     promotedMembers?: { [name: string]: string };
+    timestamp: string;
 }
 ```
 
@@ -254,6 +255,7 @@ The service responds with the current device info including the system assigned 
     index: string;
     member: string;
     value: any;
+    timestamp: string;
 }[]
 ```
 
@@ -269,6 +271,7 @@ Device raises an event
     index: string;
     member: string;
     value: any;
+    timestamp: string;
 }[]
 ```
 
