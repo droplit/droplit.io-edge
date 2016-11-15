@@ -99,7 +99,7 @@ export class VoyagerClient extends events.EventEmitter {
             const temperature = {
                 value: result.body.cooltemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
-            }
+            };
             callback(temperature);
         });
     }
@@ -133,7 +133,7 @@ export class VoyagerClient extends events.EventEmitter {
             let temperature = {
                 value: result.body.heattemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
-            }
+            };
             callback(temperature);
         });
     }
@@ -167,7 +167,7 @@ export class VoyagerClient extends events.EventEmitter {
             const temperature = {
                 value: result.body.spacetemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
-            }
+            };
             callback(temperature);
         });
     }
