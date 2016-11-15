@@ -15,7 +15,7 @@ enum Fan {
     auto,
     on
 }
-enum Tempunits {
+enum UnitMode {
     fahrenheit,
     celsius
 }
@@ -59,12 +59,12 @@ export class VoyagerClient extends events.EventEmitter {
             this.device.interval = setInterval(() => {
                 if (!this.device.deferred) {
                     this.findChanges()
-                        .then(result => this.device.changes = result)
-                        .then(() => {
-                            if (this.device.changes.stateChanged)
-                                this.emit('propertiesChanged', this.device.changes.properties);
-                        })
-                        .catch(() => {}); // Do not want to actually do anything on reject; however, need to handle to avoid 6.6.0 warning
+                    .then(result => this.device.changes = result)
+                    .then(() => {
+                        if (this.device.changes.stateChanged)
+                            this.emit('propertiesChanged', this.device.changes.properties);
+                    })
+                    .catch(() => {}); // Do not want to actually do anything on reject; however, need to handle to avoid 6.6.0 warning
                 }
                 this.device.deferred = false;
             }, 5000);
@@ -96,36 +96,88 @@ export class VoyagerClient extends events.EventEmitter {
     }
     getCool(callback: any) {
         this.query().then((result) => {
-            callback(result.body.cooltemp);
+            const temperature = {
+                value: result.body.cooltemp,
+                unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+            }
+            callback(temperature);
         });
     }
-    setCool(value: number) {
-        this.control('cooltemp', value).then((result) => {
-            // console.log(result);
-        });
+    setCool(value: number, units?: string) {
+        if (!units) {
+            this.control('cooltemp', value).then((result) => {
+                // console.log(result);
+            });
+        } else {
+            let currentUnits: string;
+            let temperature: number;
+            this.query().then((result) => {
+                currentUnits = UnitMode[result.body.tempunits];
+                temperature = (currentUnits === units) ? value : undefined;
+                if ((currentUnits ===  'fahrenheit') && (units === 'celsius')) {
+                    temperature = (value * (9 / 5)) + 32; // given fahrenheit to celsius
+                }
+                if ((currentUnits ===  'celsius') && (units === 'fahrenheit')) {
+                    temperature = (value - 32) * (5 / 9); // given celsius to fahrenheit
+                }
+            }).then(() => {
+                // console.log(value, temperature);
+                this.control('cooltemp', temperature).then((result) => {
+                    // console.log(result);
+                });
+            });
+        }
     }
     getHeat(callback: any) {
         this.query().then((result) => {
-            callback(result.body.heattemp);
+            let temperature = {
+                value: result.body.heattemp,
+                unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+            }
+            callback(temperature);
         });
     }
-    setHeat(value: number) {
-        this.control('heattemp', value).then((result) => {
-            // console.log(result);
-        });
+    setHeat(value: number, units?: string) {
+        if (!units) {
+            this.control('heattemp', value).then((result) => {
+                // console.log(result);
+            });
+        } else {
+            let currentUnits: string;
+            let temperature: number;
+            this.query().then((result) => {
+                currentUnits = UnitMode[result.body.tempunits];
+                temperature = (currentUnits === units) ? value : undefined;
+                if ((currentUnits ===  'fahrenheit') && (units === 'celsius')) {
+                    temperature = (value * (9 / 5)) + 32; // given fahrenheit to celsius
+                }
+                if ((currentUnits ===  'celsius') && (units === 'fahrenheit')) {
+                    temperature = (value - 32) * (5 / 9); // given celsius to fahrenheit
+                }
+            }).then(() => {
+                // console.log(value, temperature);
+                this.control('heattemp', temperature).then((result) => {
+                    // console.log(result);
+                });
+            });
+        }
     }
     getTemperature(callback: any) {
         this.query().then((result) => {
-            callback(result.body.spacetemp);
+            const temperature = {
+                value: result.body.spacetemp,
+                unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+            }
+            callback(temperature);
         });
     }
     getUnits(callback: any) {
         this.query().then((result) => {
-            callback(Tempunits[result.body.tempunits]);
+            callback(UnitMode[result.body.tempunits]);
         });
     }
     setUnits(value: string) {
-        const tempunits = <any>Tempunits[<any>value];
+        const tempunits = <any>UnitMode[<any>value];
         this.setting('tempunits', tempunits).then((result) => {
             // console.log(result);
         });
@@ -158,7 +210,7 @@ export class VoyagerClient extends events.EventEmitter {
 
     findChanges() {
         return new Promise<Response>((resolve, reject) => {
-            const changes: any = {
+            let changes: any = {
                 stateChanged: false,
                 properties: []
             };
@@ -168,7 +220,10 @@ export class VoyagerClient extends events.EventEmitter {
                         localId: this.device.identifier,
                         service: 'Temperature',
                         member: 'temperature',
-                        value: result.body.spacetemp
+                        value: {
+                            value: result.body.spacetemp,
+                            unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+                        }
                     });
                     this.device.temperature = result.body.spacetemp;
                     changes.stateChanged = true;
@@ -198,7 +253,10 @@ export class VoyagerClient extends events.EventEmitter {
                         localId: this.device.identifier,
                         service: 'Thermostat',
                         member: 'heatTemperature',
-                        value: result.body.heattemp
+                        value: {
+                            value: result.body.heattemp,
+                            unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+                        }
                     });
                     this.device.heattemp = result.body.heattemp;
                     changes.stateChanged = true;
@@ -208,7 +266,10 @@ export class VoyagerClient extends events.EventEmitter {
                         localId: this.device.identifier,
                         service: 'Thermostat',
                         member: 'coolTemperature',
-                        value: result.body.cooltemp
+                        value: {
+                            value: result.body.cooltemp,
+                            unit: ((result.body.tempunits === 0) ? 'F' : 'C')
+                        }
                     });
                     this.device.cooltemp = result.body.cooltemp;
                     changes.stateChanged = true;
@@ -217,8 +278,8 @@ export class VoyagerClient extends events.EventEmitter {
                     changes.properties.push({
                         localId: this.device.identifier,
                         service: 'Temperature',
-                        member: 'units',
-                        value: Tempunits[result.body.tempunits]
+                        member: 'unitMode',
+                        value: UnitMode[result.body.tempunits]
                     });
                     this.device.tempunits = result.body.tempunits;
                     changes.stateChanged = true;
