@@ -342,7 +342,8 @@ function loadPlugin(pluginName: string) {
                 properties = Array.isArray(properties) ? properties : [properties];
                 properties.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
-                    log(`pc < ${c.localId}\\${c.service}.${c.member} ${c.value}`);
+                    const valueOutput = c.value && typeof c.value === 'object' && !Array.isArray(c.value) ? JSON.stringify(c.value) : c.value;
+                    log(`pc < ${c.localId}\\${c.service}.${c.member} ${valueOutput}`);
                     if (d && d.pluginName)
                         c.pluginName = d.pluginName;
                     return p.concat([c]);
