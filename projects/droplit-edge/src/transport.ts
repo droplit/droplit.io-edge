@@ -188,7 +188,7 @@ export default class Transport extends EventEmitter {
     }
 
     private onError(error: any) {
-        log('conn error', error.stack);
+        log('conn error', error.message);
         this.isOpen = false;
         this.stopHeartbeat();
         this.connectOperation.retry(error);
