@@ -39,9 +39,10 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                 this.onDeviceInfo({
                     localId: '1',
                     address: 'device.1',
-                    deviceMeta: { name: 'first device' },
-                    location: 'main facility',
-                    name: 'device1',
+                    deviceMeta: {
+                        customName: 'first device',
+                        location: 'main facility'
+                    },
                     services: ['BinarySwitch'],
                     promotedMembers: {
                         switch: 'BinarySwitch.switch'
@@ -55,9 +56,10 @@ class ExamplePlugin extends droplit.DroplitPlugin {
                 this.onDeviceInfo({
                     localId: '2',
                     address: 'device.2',
-                    deviceMeta: { name: 'second device' },
-                    location: 'main facility',
-                    name: 'device2',
+                    deviceMeta: {
+                        customName: 'second device',
+                        location: 'main facility'
+                    },
                     services: ['BinarySwitch'],
                     promotedMembers: {
                         switch: 'BinarySwitch.switch'

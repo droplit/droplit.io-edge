@@ -337,8 +337,8 @@ class Bridge extends EventEmitter {
         this.key = crypto.createHash('md5').update(AppName).digest('hex');
         this.identifier = config.identifier;
         this.isInstalled = false;
-        this.product = {
-            friendlyName: config.info.device.friendlyName,
+        this.deviceMeta = {
+            customName: config.info.device.friendlyName,
             manufacturer: config.info.device.manufacturer,
             modelDescription: config.info.device.modelDescription,
             modelName: config.info.device.modelName,
@@ -368,8 +368,7 @@ class Bridge extends EventEmitter {
         return {
             localId: this.identifier,
             address: this.address,
-            product: this.product,
-            deviceMeta: { name: this.product.friendlyName },
+            deviceMeta: this.deviceMeta,
             services: this.services,
             promotedMembers: this.promotedMembers
         };
@@ -588,13 +587,12 @@ class Light {
         return {
             localId: this.uniqueid,
             address: this.pathId,
-            product: {
-                friendlyName: this.name,
+            deviceMeta: {
+                customName: this.name,
                 manufacturer: this.manufacturername,
                 modelName: this.type,
                 modelNumber: this.modelid
             },
-            deviceMeta: { name: this.name },
             services: this.services,
             promotedMembers: this.promotedMembers
         };

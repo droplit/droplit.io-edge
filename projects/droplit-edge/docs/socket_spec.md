@@ -35,8 +35,14 @@ The service may send updated device info to the edge
     pluginName: string;
     localId: string;
     address?: any;
-    product?: any;
-    localData?: any;
+    deviceMeta?: {
+        customName?: string,
+        manufacturer?: string,
+        modelDescription?: string,
+        modelName?: string,
+        modelNumber?: string,
+        [x: string]: any
+    };
     services?: string[];
     promotedMembers?: { [name: string]: string };
 }
@@ -220,10 +226,15 @@ A token will be issued later; when the new edge node has been approved
     pluginName: string;
     localId: string;
     address?: any;
-    product?: any;
-    name?: string;
     location?: string;
-    deviceMeta?: any;
+    deviceMeta?: {
+        customName?: string,
+        manufacturer?: string,
+        modelDescription?: string,
+        modelName?: string,
+        modelNumber?: string,
+        [x: string]: any
+    };
     services?: string[];
     promotedMembers?: { [name: string]: string };
 }
@@ -236,10 +247,15 @@ The service responds with the current device info including the system assigned 
     pluginName: string;
     localId: string;
     address?: any;
-    product?: any;
-    name?: string;
     location?: string;
-    deviceMeta?: any;
+    deviceMeta?: {
+        customName?: string,
+        manufacturer?: string,
+        modelDescription?: string,
+        modelName?: string,
+        modelNumber?: string,
+        [x: string]: any
+    };
     services?: string[];
     promotedMembers?: { [name: string]: string };
     timestamp: string;

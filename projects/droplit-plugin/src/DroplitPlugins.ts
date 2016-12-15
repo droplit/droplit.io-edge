@@ -28,21 +28,26 @@ export interface DeviceServiceMember {
  * @typedef {Object} DeviceInfo
  * @param {string} localId - device unique identifier (unique within this plugin in this environment)
  * @param {any} address - device address on this network
- * @param {string} product - manufacturer, assigned name and type
- * @param {string} name - user assigned friendly name (seeds the label)
  * @param {string} location - user assigned location
  * @param {any} deviceMeta - any custom device information
  * @param {string[]} services - list of services supported on this device
  * @param {any} promotedMembers - list of properties and methods that are promoted formatted as 'serviceName.memberName[:alias]'
+ * @param {string} pluginName - the name of the plugin that the info comes from
  * @export
  * @interface DeviceInfo
  */
 export interface DeviceInfo {
     localId: string;
     address?: any;
-    product?: any;
-    localName?: string;
-    localData?: any;
+    deviceMeta?: {
+        customName?: string,
+        edgeData?: any,
+        manufacturer?: string,
+        modelDescription?: string,
+        modelName?: string,
+        modelNumber?: string,
+        [x: string]: any
+    };
     services?: string[];
     promotedMembers?: { [name: string]: string };
     pluginName?: string;

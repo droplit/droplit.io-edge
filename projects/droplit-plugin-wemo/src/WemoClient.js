@@ -17,8 +17,8 @@ class WemoClient extends EventEmitter {
 
         this.address = init.location.host;
         this.identifier = init.identifier;
-        this.product = {
-            friendlyName: init.info.device.friendlyName,
+        this.deviceMeta = {
+            customName: init.info.device.friendlyName,
             manufacturer: init.info.device.manufacturer,
             modelDescription: init.info.device.modelDescription,
             modelName: init.info.device.modelName,
@@ -152,8 +152,7 @@ class WemoClient extends EventEmitter {
         return {
             localId: this.identifier,
             address: this.address,
-            product: this.product,
-            deviceMeta: { name: `Belkin WeMo ${this.product.modelName}` },
+            deviceMeta: this.deviceMeta,
             services: this.services,
             promotedMembers: this.promotedMembers
         };

@@ -58,18 +58,18 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
                 this.onPropertiesChanged(data);
             });
             this.devices[device.identifier] = client;
-            device.product = {};
+            device.deviceMeta = {};
             const onInfo = (data: any) => {
-                device.product.model = data.body.model;
-                device.product.firmwareVersion = data.body.firmware;
-                device.product.manufacturer = 'Venstar';
+                device.deviceMeta.modelName = data.body.model;
+                device.deviceMeta.firmwareVersion = data.body.firmware;
+                device.deviceMeta.manufacturer = 'Venstar';
 
                 this.onDeviceInfo(
                     {
                         localId: device.identifier,
                         services: ['Thermostat', 'Temperature'],
                         address: device.address,
-                        product: device.product
+                        deviceMeta: device.deviceMeta
                     }
                 );
             };

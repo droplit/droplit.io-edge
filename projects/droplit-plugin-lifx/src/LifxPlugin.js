@@ -542,8 +542,9 @@ class LifxBulb extends EventEmitter {
         super();
 
         this.address = address;
-        this.deviceMeta = { name: '' };
-        this.product = {};
+        this.deviceMeta = {
+            manufacturer: 'LIFX'
+        };
         this.services = [];
         this.promotedMembers = {
             switch: 'BinarySwitch.switch',
@@ -559,7 +560,7 @@ class LifxBulb extends EventEmitter {
         return {
             localId: this.address,
             address: this.address,
-            product: this.product,
+            deviceMeta: this.deviceMeta,
             services: this.services,
             promotedMembers: this.promotedMembers
         };
@@ -604,7 +605,8 @@ class LifxBulb extends EventEmitter {
     set version(version) {
         this[_version] = version;
         const isWhite = (version.product === 167772160);
-        this.product.modelName = isWhite ? 'LIFX White' : 'LIFX';
+        this.deviceMeta.modelName = isWhite ? 'LIFX White' : 'LIFX';
+        this.deviceMeta.modelNumber = version.product;
         this.services = isWhite ?
             ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature', 'Connectivity'] :
             ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'Connectivity', 'ColorTemperature'];

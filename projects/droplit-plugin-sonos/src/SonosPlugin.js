@@ -118,7 +118,9 @@ class SonosPlugin extends droplit.DroplitPlugin {
                 this.onDeviceInfo({
                     localId: player.uuid,
                     address: player.baseUrl,
-                    localName: player.roomName,
+                    deviceMeta: {
+                        customName: player.roomName
+                    },
                     services: [ 'AudioOutput', 'BinarySwitch', 'Indicator', 'MediaControl', 'MediaInfo' ],
                     promotedMembers: {
                         blink: 'Indicator.blink',
