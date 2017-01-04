@@ -23,7 +23,7 @@ class HuePlugin extends droplit.DroplitPlugin {
 
         this._getBridgeByLight = function (identifier) {
             for (const bridge of this.bridges.values()) {
-                if (!bridge.isInstalled)
+                if (!bridge.registered)
                     continue;
                 if (bridge.lights.has(identifier))
                     return bridge;
@@ -34,7 +34,8 @@ class HuePlugin extends droplit.DroplitPlugin {
         /* eslint-disable camelcase */
         this.services = {
             BasicAuthBridge: {
-                register: this.register
+                register: this.register,
+                get_authenticated: this.getAuthenticated
             },
             BinarySwitch: {
                 get_switch: this.getSwitch,
@@ -74,8 +75,8 @@ class HuePlugin extends droplit.DroplitPlugin {
                 bridge.getLights();
         }, PollInterval);
 
-        function onBridgeInstalled(bridge) {
-            this.onDeviceInfo({ localId: bridge.identifier, isInstalled: true });
+        function onBridgeRegistered(bridge) {
+            this.onPropertiesChanged([bridge.propertyObject('BasicAuthBridge', 'authenticated', bridge.registered)]);
         }
 
         function onDiscovered(data) {
@@ -84,7 +85,7 @@ class HuePlugin extends droplit.DroplitPlugin {
             if (bridge === undefined) {
                 bridge = new Bridge(data);
                 bridge.on('discovered', onLightDiscovered.bind(this));
-                bridge.on('installed', onBridgeInstalled.bind(this));
+                bridge.on('registered', onBridgeRegistered.bind(this));
                 bridge.on('state-changes', onStateChanges.bind(this));
                 bridge.on('username', onUsername.bind(this));
 
@@ -158,7 +159,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         if (this.bridges.has(localId)) {
             const bridge = this.bridges.get(localId);
             bridge.removeAllListeners('discovered');
-            bridge.removeAllListeners('installed');
+            bridge.removeAllListeners('registered');
             bridge.removeAllListeners('stateChanges');
             this.bridges.delete(localId);
             this.discoverer.undiscover(localId);
@@ -336,7 +337,7 @@ class Bridge extends EventEmitter {
         };
         this.key = crypto.createHash('md5').update(AppName).digest('hex');
         this.identifier = config.identifier;
-        this.isInstalled = false;
+        this.registered = null;
         this.deviceMeta = {
             customName: config.info.device.friendlyName,
             manufacturer: config.info.device.manufacturer,
@@ -411,15 +412,19 @@ class Bridge extends EventEmitter {
 
             // See if response is an error
             if (Array.isArray(b) && b[0].hasOwnProperty('error')) {
+                if (this.registered === null || this.registered === true) {
+                    this.registered = false;
+                    this.emit('registered', this);
+                }
                 // App is not registered
                 if (b[0].error.type === 1)
                     setImmediate(() => this.register.bind(this)());
                 return;
             }
 
-            if (!this.isInstalled) {
-                this.isInstalled = true;
-                this.emit('installed', this);
+            if (!this.registered) {
+                this.registered = true;
+                this.emit('registered', this);
             }
 
             const deviceChanges = [];
@@ -456,6 +461,15 @@ class Bridge extends EventEmitter {
             if (callback)
                 return callback(e, b);
         });
+    }
+
+    propertyObject(service, member, value) {
+        return {
+            localId: this.identifier,
+            service,
+            member,
+            value
+        };
     }
 
     register(callback) {
