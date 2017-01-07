@@ -153,8 +153,8 @@ gulp.task('watch', 'Contiuous build', ['build'], function () {
 // see https://www.npmjs.com/package/tslint
 gulp.task('tslint', 'Lints all TypeScript source files', function () {
     return gulp.src(wildcharPaths(settings.tsfiles))
-        .pipe(G$.tslint())
-        .pipe(G$.tslint.report('verbose'));
+        .pipe(G$.tslint({ formatter: 'verbose' }))
+        .pipe(G$.tslint.report());
 });
 
 // Cleaning
@@ -175,7 +175,7 @@ projectNames.forEach(project => {
     gulp.task(`ts-${project}`, `Transpile ${chalk.green(project)}`, function () {
         const tsResult = gulp.src(mapPaths(settings.tsfiles, project))
             .pipe(G$.sourcemaps.init())
-            .pipe(G$.typescript(tsProjects[project]));
+            .pipe(tsProjects[project]());
         const dest = mapPath(settings.dest, project);
         return merge([
             tsResult.dts.pipe(gulp.dest(dest)),

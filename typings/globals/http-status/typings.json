@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/f5b469b012f515428f9643ef31395282481031d4/http-status/http-status.d.ts",
+    "raw": "registry:dt/http-status#0.2.1+20160412142223",
+    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/f5b469b012f515428f9643ef31395282481031d4/http-status/http-status.d.ts"
+  }
+}

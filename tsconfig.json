@@ -1,15 +1,18 @@
 {
     "compilerOptions": {
+        "allowUnreachableCode": false,
         "declaration": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
         "preserveConstEnums": true,
         "removeComments": false,
         "target": "ES5"
     },
-    "filesGlob": [
-        "typings/main.d.ts",
+    "include": [
+        "typings/index.d.ts",
         "projects/**/*.ts"
     ]
 }

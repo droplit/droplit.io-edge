@@ -10,7 +10,7 @@
             "spaces"
         ],
         "no-conditional-assignment": true,
-        "no-consecutive-blank-lines": true,
+        "no-consecutive-blank-lines": [ true, 1],
         "no-eval": true,
         "no-inferrable-types": [
             true,
@@ -18,8 +18,6 @@
         ],
         "no-internal-module": true,
         "no-trailing-whitespace": true,
-        "no-unreachable": true,
-        "no-unused-variable": true,
         "no-var-keyword": true,
         "one-line": [
             true,
