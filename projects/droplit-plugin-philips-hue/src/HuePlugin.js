@@ -238,19 +238,25 @@ class HuePlugin extends droplit.DroplitPlugin {
         bridge.setState(localId, { bri: brightness });
     }
 
-    stepDown(localId) {
-        this.getDSBrightness(localId, value => {
-            if (value === undefined)
+    stepDown(localId, value) {
+        this.getDSBrightness(localId, current => {
+            if (current === undefined)
                 return;
-            this.setDSBrightness(localId, Math.max(value - StepSize, 0));
+            const step = value !== undefined ?
+                Math.min(Math.max(value, 0), 100) :
+                StepSize;
+            this.setDSBrightness(localId, Math.max(current - step, 0));
         });
     }
 
-    stepUp(localId) {
-        this.getDSBrightness(localId, value => {
-            if (value === undefined)
+    stepUp(localId, value) {
+        this.getDSBrightness(localId, current => {
+            if (current === undefined)
                 return;
-            this.setDSBrightness(localId, Math.min(value + StepSize, 100));
+            const step = value !== undefined ?
+                Math.min(Math.max(value, 0), 100) :
+                StepSize;
+            this.setDSBrightness(localId, Math.min(current + step, 100));
         });
     }
 

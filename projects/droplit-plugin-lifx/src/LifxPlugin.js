@@ -422,20 +422,26 @@ class LifxPlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    stepDown(localId) {
+    stepDown(localId, value) {
         const bulb = this.bulbs.get(localId);
         if (bulb) {
+            const step = value !== undefined ?
+                normalize(Math.min(Math.max(value, 0), 100), 0, 100, 0xFFFF) :
+                StepSize;
             const state = bulb.state;
-            const brightness = normalize(Math.max(state.brightness - StepSize, 0), 0, 0xFFFF, 100);
+            const brightness = normalize(Math.max(state.brightness - step, 0), 0, 0xFFFF, 100);
             this.setDSBrightness(localId, brightness);
         }
     }
 
-    stepUp(localId) {
+    stepUp(localId, value) {
         const bulb = this.bulbs.get(localId);
         if (bulb) {
+            const step = value !== undefined ?
+                normalize(Math.min(Math.max(value, 0), 100), 0, 100, 0xFFFF) :
+                StepSize;
             const state = bulb.state;
-            const brightness = normalize(Math.min(state.brightness + StepSize, 0xFFFF), 0, 0xFFFF, 100);
+            const brightness = normalize(Math.min(state.brightness + step, 0xFFFF), 0, 0xFFFF, 100);
             this.setDSBrightness(localId, brightness);
         }
     }
