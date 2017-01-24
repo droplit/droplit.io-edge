@@ -7,7 +7,7 @@ const config: any = require('../test-config.json');
 const connections: any[] = [];
 
 function start() {
-    getEdgeId((edgeId) => {
+    getEdgeId(edgeId => {
         // let connections = 0;
         // TODO: Count maximum supported connections
         // let totalConnections = config.loadTest.numConnections;
@@ -23,18 +23,15 @@ function start() {
         for (let ii = 0; ii < config.loadTest.numConnections; ii++) {
             startConnection(edgeId, ii, (connected: boolean, transportId: number) => {
                 log(`${transportId} finished!`);
-                for (let index = 0; index < connections.length; index++) {
-                    if (connections[index].id === transportId) {
-                        connections[index].connected = connected;
-                    }
-                }
+                connections
+                    .filter(connection => connection.id === transportId)
+                    .forEach(connection => connection.connected = connected);
             });
         }
     // });
         setTimeout(() => {
-            for (let index = 0; index < connections.length; index++) {
-                console.log(connections[index]);
-            }
+            for (const connection of connections)
+                console.log(connection);
         }, 100000);
     });
 }
@@ -56,13 +53,9 @@ function startConnection(edgeId: string, iteration: number, callback: (connected
 
     transport.on(`#retry:${iteration}`, (currentAttempt: any, transportId: number) => {
         console.log('on retry', iteration, currentAttempt);
-
-        for (let index = 0; index < connections.length; index++) {
-            // console.log(connections[index], index, connections.length);
-            if (connections[index].id === transportId) {
-                connections[index].retries = currentAttempt;
-            }
-        }
+        connections
+            .filter(connection => connection.id === transportId)
+            .forEach(connection => connection.retries = currentAttempt);
     });
 
     // console.log("beforeStart");
@@ -71,7 +64,7 @@ function startConnection(edgeId: string, iteration: number, callback: (connected
     transport.start(config.transport, {
         'x-edge-id': edgeId,
         'x-ecosystem-id': localSettings.ecosystemId
-    }, (connected) => {
+    }, connected => {
         callback(connected, iteration);
     });
 

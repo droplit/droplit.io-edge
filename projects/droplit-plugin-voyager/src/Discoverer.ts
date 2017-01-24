@@ -44,7 +44,7 @@ export class Discoverer extends events.EventEmitter {
                 }
                 // IP address has changed since last discovery
                 this.found[identifier].location = url.parse(ipMatch);
-                this.emit('ipchange', { identifier: identifier, ip: this.found[identifier].location });
+                this.emit('ipchange', { identifier, ip: this.found[identifier].location });
                 return;
             }
 

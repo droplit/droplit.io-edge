@@ -214,7 +214,7 @@ export default class Transport extends EventEmitter {
             return;
         }
 
-        this._send(JSON.stringify(packet), (err) => {
+        this._send(JSON.stringify(packet), err => {
             if (err)
                 this.queue(packet);
         });
@@ -223,7 +223,7 @@ export default class Transport extends EventEmitter {
     public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
         const packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.responseMap[packet.i] = cb;
-        this._send(JSON.stringify(packet), (err) => {
+        this._send(JSON.stringify(packet), err => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
             if (err) {
                 cb(undefined, err);
@@ -244,7 +244,7 @@ export default class Transport extends EventEmitter {
             return;
         }
 
-        this._send(JSON.stringify(packet), (err) => {
+        this._send(JSON.stringify(packet), err => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
             if (err) {
                 this.queue(packet);
@@ -323,7 +323,7 @@ export default class Transport extends EventEmitter {
     private digestCycle() {
         // cleanup the second-to-last cycle
         const messageIds = Object.keys(this.responseMap);
-        messageIds.forEach((messageId) => {
+        messageIds.forEach(messageId => {
             const id = parseInt(messageId);
             if (this.prevMessageId < this.messageIdSeed) {
                 /**

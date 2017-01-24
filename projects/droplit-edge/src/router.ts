@@ -47,7 +47,7 @@ let autodiscoverTimer: number;
 let hasConnected = false;
 
 // overwrite settings with local settings
-Object.keys(localSettings).forEach((key) => settings[key] = localSettings[key]);
+Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
 
 // log select settings
 log(`using setting host: ${settings.transport.host}`);

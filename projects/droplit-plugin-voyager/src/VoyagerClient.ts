@@ -73,29 +73,29 @@ export class VoyagerClient extends events.EventEmitter {
     }
 
     getMode(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             callback(Mode[result.body.mode]);
         });
     }
     setMode(value: string) {
         const mode = <any>Mode[<any>value];
-        this.control('mode', mode).then((result) => {
+        this.control('mode', mode).then(result => {
             // console.log(result);
         });
     }
     getFan(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             callback(Fan[result.body.fan]);
         });
     }
     setFan(value: string) {
         const fan = <any>Fan[<any>value];
-        this.control('fan', fan).then((result) => {
+        this.control('fan', fan).then(result => {
             // console.log(result);
         });
     }
     getCool(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             const temperature = {
                 value: result.body.cooltemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
@@ -105,13 +105,13 @@ export class VoyagerClient extends events.EventEmitter {
     }
     setCool(value: number, units?: string) {
         if (!units) {
-            this.control('cooltemp', value).then((result) => {
+            this.control('cooltemp', value).then(result => {
                 // console.log(result);
             });
         } else {
             let currentUnits: string;
             let temperature: number;
-            this.query().then((result) => {
+            this.query().then(result => {
                 currentUnits = UnitMode[result.body.tempunits];
                 temperature = (currentUnits === units) ? value : undefined;
                 if ((currentUnits ===  'fahrenheit') && (units === 'celsius')) {
@@ -122,15 +122,15 @@ export class VoyagerClient extends events.EventEmitter {
                 }
             }).then(() => {
                 // console.log(value, temperature);
-                this.control('cooltemp', temperature).then((result) => {
+                this.control('cooltemp', temperature).then(result => {
                     // console.log(result);
                 });
             });
         }
     }
     getHeat(callback: any) {
-        this.query().then((result) => {
-            let temperature = {
+        this.query().then(result => {
+            const temperature = {
                 value: result.body.heattemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
             };
@@ -139,13 +139,13 @@ export class VoyagerClient extends events.EventEmitter {
     }
     setHeat(value: number, units?: string) {
         if (!units) {
-            this.control('heattemp', value).then((result) => {
+            this.control('heattemp', value).then(result => {
                 // console.log(result);
             });
         } else {
             let currentUnits: string;
             let temperature: number;
-            this.query().then((result) => {
+            this.query().then(result => {
                 currentUnits = UnitMode[result.body.tempunits];
                 temperature = (currentUnits === units) ? value : undefined;
                 if ((currentUnits ===  'fahrenheit') && (units === 'celsius')) {
@@ -156,14 +156,14 @@ export class VoyagerClient extends events.EventEmitter {
                 }
             }).then(() => {
                 // console.log(value, temperature);
-                this.control('heattemp', temperature).then((result) => {
+                this.control('heattemp', temperature).then(result => {
                     // console.log(result);
                 });
             });
         }
     }
     getTemperature(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             const temperature = {
                 value: result.body.spacetemp,
                 unit: ((result.body.tempunits === 0) ? 'F' : 'C')
@@ -172,23 +172,23 @@ export class VoyagerClient extends events.EventEmitter {
         });
     }
     getUnits(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             callback(UnitMode[result.body.tempunits]);
         });
     }
     setUnits(value: string) {
         const tempunits = <any>UnitMode[<any>value];
-        this.setting('tempunits', tempunits).then((result) => {
+        this.setting('tempunits', tempunits).then(result => {
             // console.log(result);
         });
     }
     getState(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             callback(State[result.body.state]);
         });
     }
     getAway(callback: any) {
-        this.query().then((result) => {
+        this.query().then(result => {
             callback(Away[result.body.away] === 'away');
         });
     }
@@ -199,7 +199,7 @@ export class VoyagerClient extends events.EventEmitter {
         } else {
             away = Away['home'];
         }
-        this.setting('away', away).then((result) => {
+        this.setting('away', away).then(result => {
         });
     }
     // getAirFilter(callback: any) {
@@ -210,7 +210,7 @@ export class VoyagerClient extends events.EventEmitter {
 
     findChanges() {
         return new Promise<Response>((resolve, reject) => {
-            let changes: any = {
+            const changes: any = {
                 stateChanged: false,
                 properties: []
             };
@@ -450,7 +450,7 @@ export class VoyagerClient extends events.EventEmitter {
 
     control(property: string, value: number): Promise<Response> {
         return new Promise<Response>((resolve, reject) => {
-            this.query().then((result) => {
+            this.query().then(result => {
                 const controls: any = {};
 
                 if (property === 'mode') {
@@ -462,16 +462,16 @@ export class VoyagerClient extends events.EventEmitter {
                             reject(`Cool temp must be at least ${result.body.setpointdelta} greater than heat temp`);
                         }
                     }
-                    this.controlPost(controls).then((postResult) => {
+                    this.controlPost(controls).then(postResult => {
                         resolve(postResult);
                     });
                 } else if (property === 'fan') {
                     controls.fan = value;
-                    this.controlPost(controls).then((postResult) => {
+                    this.controlPost(controls).then(postResult => {
                         const res: Response = { status: 200 };
                         res.body = postResult.body;
                         resolve(postResult);
-                    }).catch((postResult) => {
+                    }).catch(postResult => {
                         const res: Response = { status: 200 };
                         res.body = postResult.body;
                         reject(res);
@@ -495,13 +495,13 @@ export class VoyagerClient extends events.EventEmitter {
                 } else if (property === 'heattemp') {
                     controls.heattemp = value;
                     if (result.body.mode === 1) {
-                        this.controlPost(controls).then((postResult) => {
+                        this.controlPost(controls).then(postResult => {
                             const res: Response = {
                                 status: postResult.status,
                                 body: postResult.body
                             };
                             resolve(res);
-                        }).catch((postResult) => {
+                        }).catch(postResult => {
                             const res: Response = {
                                 status: postResult.status,
                                 body: postResult.body
@@ -510,13 +510,13 @@ export class VoyagerClient extends events.EventEmitter {
                         });
                     } else if (result.body.mode === 3) {
                         if ((result.body.cooltemp) >= (value + result.body.setpointdelta)) {
-                            this.controlPost(controls).then((postResult) => {
+                            this.controlPost(controls).then(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
                                 };
                                 resolve(res);
-                            }).catch((postResult) => {
+                            }).catch(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
@@ -525,13 +525,13 @@ export class VoyagerClient extends events.EventEmitter {
                             });
                         } else {
                             controls.cooltemp = value + result.body.setpointdelta;
-                            this.controlPost(controls).then((postResult) => {
+                            this.controlPost(controls).then(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
                                 };
                                 resolve(res);
-                            }).catch((postResult) => {
+                            }).catch(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
@@ -549,13 +549,13 @@ export class VoyagerClient extends events.EventEmitter {
                 } else if (property === 'cooltemp') {
                     controls.cooltemp = value;
                     if (result.body.mode === 2) {
-                        this.controlPost(controls).then((postResult) => {
+                        this.controlPost(controls).then(postResult => {
                             const res: Response = {
                                 status: postResult.status,
                                 body: postResult.body
                             };
                             resolve(res);
-                        }).catch((postResult) => {
+                        }).catch(postResult => {
                             const res: Response = {
                                 status: postResult.status,
                                 body: postResult.body
@@ -564,13 +564,13 @@ export class VoyagerClient extends events.EventEmitter {
                         });
                     } else if (result.body.mode === 3) {
                         if ((controls.cooltemp) >= (result.body.heattemp + result.body.setpointdelta)) {
-                            this.controlPost(controls).then((postResult) => {
+                            this.controlPost(controls).then(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
                                 };
                                 resolve(res);
-                            }).catch((postResult) => {
+                            }).catch(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
@@ -579,13 +579,13 @@ export class VoyagerClient extends events.EventEmitter {
                             });
                         } else {
                             controls.heattemp = controls.cooltemp - result.body.setpointdelta;
-                            this.controlPost(controls).then((postResult) => {
+                            this.controlPost(controls).then(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
                                 };
                                 resolve(res);
-                            }).catch((postResult) => {
+                            }).catch(postResult => {
                                 const res: Response = {
                                     status: postResult.status,
                                     body: postResult.body
@@ -602,9 +602,9 @@ export class VoyagerClient extends events.EventEmitter {
                     }
                 } else {
                     controls[property] = value;
-                    this.controlPost(controls).then((postResult) => {
+                    this.controlPost(controls).then(postResult => {
                         resolve(postResult);
-                    }).catch((postResult) => {
+                    }).catch(postResult => {
                         reject(postResult);
                     });
                 }
