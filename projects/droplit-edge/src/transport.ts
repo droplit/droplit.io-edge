@@ -52,6 +52,9 @@ export default class Transport extends EventEmitter {
     private isOpen = false;
     private headers: { [key: string]: string };
     private connectedCallback: (connected: boolean) => void;
+    private connectedAt: Date;
+    private lastHeartbeat: Date;
+    private lastHeartbeatAttempt: Date;
 
     // timeout
     private messageTimeout = 5000;
@@ -65,6 +68,19 @@ export default class Transport extends EventEmitter {
         super();
         EventEmitter.call(this);
         this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
+    }
+
+    public getState() {
+        return {
+            connectedAt: this.connectedAt,
+            lastHeartbeat: this.lastHeartbeat,
+            lastHeartbeatAttempt: this.lastHeartbeatAttempt,
+            state: (this.ws.readyState === this.ws.CLOSED) ? 'closed' :
+                   (this.ws.readyState === this.ws.CLOSING) ? 'closing' :
+                   (this.ws.readyState === this.ws.CONNECTING) ? 'connecting' :
+                   (this.ws.readyState === this.ws.OPEN) ? 'open' :
+                   'unknown'
+        };
     }
 
     public start(settings: any, headers: { [key: string]: string }, callback?: (connected: boolean) => void) {
@@ -121,6 +137,7 @@ export default class Transport extends EventEmitter {
         this.startHeartbeat();
         log('connected');
         this.sendBacklog();
+        this.connectedAt = new Date();
         this.emit('connected');
         if (this.connectedCallback) {
             this.connectedCallback(true);
@@ -369,7 +386,11 @@ export default class Transport extends EventEmitter {
     private heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
-        this._send(this.heartbeatPacket);
+        this.lastHeartbeatAttempt = new Date();
+        this._send(this.heartbeatPacket, err => {
+            if (!err)
+                this.lastHeartbeat = new Date();
+        });
     }
 
     // Message Id

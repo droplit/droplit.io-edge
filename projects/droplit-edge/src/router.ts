@@ -39,9 +39,9 @@ const AutoDiscoverCadence = 60000;
 const GetPropertyTimeout = 3000;
 
 const localSettings = require('../localsettings.json');
-const plugins = new Map();
+export const plugins = new Map();
 const settings = require('../settings.json');
-const transport = new Transport();
+export const transport = new Transport();
 
 let autodiscoverTimer: number;
 let hasConnected = false;
@@ -55,7 +55,7 @@ log(`using setting ecosystem: ${settings.ecosystemId}`);
 log(`using setting edge id: ${macAddress}`);
 
 // If enabled, generates a heap dump on a set interval
-if (settings.debug.generateHeapDump) {
+if (settings.debug && settings.debug.generateHeapDump) {
     const heapdump = require('heapdump');
     const heapInterval = 30 * 60 * 1000;
     const writeSnapshot = () => {
@@ -70,6 +70,10 @@ if (settings.debug.generateHeapDump) {
 
     writeSnapshot.bind(this)();
     setInterval(writeSnapshot.bind(this), heapInterval);
+}
+
+if (settings.diagnostics && settings.diagnostics.enabled) {
+    require('./diagnostics');
 }
 
 loadPlugins().then(() => {
