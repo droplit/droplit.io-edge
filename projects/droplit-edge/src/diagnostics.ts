@@ -4,8 +4,6 @@ import * as router from './router';
 import net = require('net');
 import readline = require('readline');
 
-const PassThrough = require('stream').PassThrough;
-
 const log = debug('droplit:diagnostics');
 const settings = require('../localsettings.json');
 
