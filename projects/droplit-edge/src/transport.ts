@@ -75,7 +75,8 @@ export default class Transport extends EventEmitter {
             connectedAt: this.connectedAt,
             lastHeartbeat: this.lastHeartbeat,
             lastHeartbeatAttempt: this.lastHeartbeatAttempt,
-            state: (this.ws.readyState === this.ws.CLOSED) ? 'closed' :
+            state: (this.ws === undefined) ? 'ws is undefined' :
+                   (this.ws.readyState === this.ws.CLOSED) ? 'closed' :
                    (this.ws.readyState === this.ws.CLOSING) ? 'closing' :
                    (this.ws.readyState === this.ws.CONNECTING) ? 'connecting' :
                    (this.ws.readyState === this.ws.OPEN) ? 'open' :

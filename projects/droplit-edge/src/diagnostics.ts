@@ -37,10 +37,10 @@ function connection(socket: net.Socket) {
             socket.write(`  ${(Array as any).from(router.plugins.keys()).join(',\n\r  ')}\n\r`),
         socket: () => {
             const state = router.transport.getState();
-            socket.write(`  last connected at:      ${state.connectedAt.toISOString()}\n\r`);
+            socket.write(`  last connected at:      ${state.connectedAt ? state.connectedAt.toISOString() : null}\n\r`);
             socket.write(`  current time:           ${new Date().toISOString()}\n\r`);
-            socket.write(`  last heartbeat:         ${state.lastHeartbeat.toISOString()}\n\r`);
-            socket.write(`  last heartbeat attempt: ${state.lastHeartbeat.toISOString()}\n\r`);
+            socket.write(`  last heartbeat:         ${state.lastHeartbeat ? state.lastHeartbeat.toISOString() : null}\n\r`);
+            socket.write(`  last heartbeat attempt: ${state.lastHeartbeatAttempt ? state.lastHeartbeatAttempt.toISOString() : null}\n\r`);
             socket.write(`  state:                  ${state.state}\n\r`);
         }
     };
