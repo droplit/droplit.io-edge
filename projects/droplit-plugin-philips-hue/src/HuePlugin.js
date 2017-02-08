@@ -49,6 +49,9 @@ class HuePlugin extends droplit.DroplitPlugin {
                 get_tempUpperLimit: this.getTempUpperLimit,
                 set_temperature: this.setTemperature
             },
+            Connectivity: {
+                get_status: this.getStatus
+            },
             DimmableSwitch: {
                 get_brightness: this.getDSBrightness,
                 set_brightness: this.setDSBrightness,
@@ -95,6 +98,7 @@ class HuePlugin extends droplit.DroplitPlugin {
                         bridge.key = info.localData.username;
                     bridge.getLights();
                 });
+                this.onPropertiesChanged([bridge.propertyObject('Connectivity', 'status', 'online')]);
             }
         }
 
@@ -140,6 +144,10 @@ class HuePlugin extends droplit.DroplitPlugin {
                         p.push(data.light.propertyObject('LightColor', 'hue', output.hue));
                     if (c.state === 'sat')
                         p.push(data.light.propertyObject('LightColor', 'saturation', output.sat));
+                }
+                if (data.light.services.some(s => s === 'Connectivity')) {
+                    if (c.state === 'connected')
+                        p.push(data.light.propertyObject('Connectivity', 'status', output.connected));
                 }
 
                 return p;
@@ -222,6 +230,11 @@ class HuePlugin extends droplit.DroplitPlugin {
             return;
 
         bridge.setState(localId, { on: true });
+    }
+
+    // Connectivity
+    getStatus(localId, callback) {
+        this.getState(localId, 'connected', callback);
     }
 
     // DimmableSwitch Implementation
@@ -354,7 +367,7 @@ class Bridge extends EventEmitter {
         this.promotedMembers = {
             register: 'BasicAuthBridge.register'
         };
-        this.services = [ 'BasicAuthBridge' ];
+        this.services = [ 'BasicAuthBridge', 'Connectivity' ];
 
         this.lights = new Map();
     }
@@ -367,7 +380,8 @@ class Bridge extends EventEmitter {
             mcl_brightness: normalize(state.bri, 0, 254, 0xffff),
             on: !state.reachable ? 'off' :
                 state.on ? 'on' : 'off',
-            sat: normalize(state.sat, 0, 254, 0xffff)
+            sat: normalize(state.sat, 0, 254, 0xffff),
+            connected: state.reachable ? 'online' : 'offline'
         };
     }
 
@@ -594,12 +608,12 @@ class Light {
         switch (this.type) {
             case 'Extended color light':
             case 'Color light':
-                return [ 'BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature' ];
+                return [ 'BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature', 'Connectivity' ];
             case 'Dimmable light':
             case 'Dimmable plug-in unit':
-                return [ 'BinarySwitch', 'DimmableSwitch' ];
+                return [ 'BinarySwitch', 'DimmableSwitch', 'Connectivity' ];
             default:
-                return [ 'BinarySwitch' ];
+                return [ 'BinarySwitch', 'Connectivity' ];
         }
     }
 
@@ -633,6 +647,8 @@ class Light {
             props.push({ state: 'temp_low', value: TempLower });
             props.push({ state: 'temp_high', value: TempUpper });
         }
+        if (this.state.hasOwnProperty('reachable'))
+            props.push({ state: 'connected', value: this.state.reachable ? 'online' : 'offline' });
 
         return props;
     }
