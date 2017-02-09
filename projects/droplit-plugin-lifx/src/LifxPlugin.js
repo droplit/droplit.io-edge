@@ -64,9 +64,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 stepDown: this.stepDown,
                 stepUp: this.stepUp
             },
-            Connectivity: {
-                get_status: this.getStatus
-            },
             LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
@@ -295,19 +292,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
         });
         // Discovery is done through UDP broadcast to port 56700
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', () => { });
-    }
-
-    getStatus(localId, callback) {
-        console.log('getStatus', callback ? 'callback' : 'no callback', connectedRecently(this._deviceCache.get(localId)));
-        // Last seen tolerance: 5s
-        const connectedRecently = lastSeen => {
-            if (!lastSeen) { return false; }
-            const LAST_SEEN_TOLERANCE = 5000;
-            return new Date(Date.now()).getTime() - lastSeen.getTime() < LAST_SEEN_TOLERANCE;
-        };
-
-        if (callback)
-            callback(connectedRecently(this._deviceCache.get(localId)) ? 'online' : 'offline'); // eslint-disable-line callback-return
     }
 
     dropDevice(localId) {
@@ -614,8 +598,8 @@ class LifxBulb extends EventEmitter {
         this.deviceMeta.modelName = isWhite ? 'LIFX White' : 'LIFX';
         this.deviceMeta.modelNumber = version.product;
         this.services = isWhite ?
-            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature', 'Connectivity'] :
-            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'Connectivity', 'ColorTemperature'];
+            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature'] :
+            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature'];
 
         if (this[_state] && !this[_ready]) {
             this[_ready] = true;
