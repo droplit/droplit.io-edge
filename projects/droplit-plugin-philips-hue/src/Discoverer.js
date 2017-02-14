@@ -30,7 +30,14 @@ class Discoverer extends EventEmitter {
                 if (e)
                     return;
                 if (b) {
-                    const bridgeData = JSON.parse(b);
+                    let bridgeData;
+                    try {
+                        bridgeData = JSON.parse(b);
+                    } catch (ex) {
+                        console.log('Expecting JSON on Hue broker endpoint:', b);
+                    }
+                    if (!bridgeData)
+                        return;
                     bridgeData.forEach(data => {
                         const identifier = data.id.toUpperCase();
                         const ip = data.internalipaddress;
