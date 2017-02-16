@@ -13,3 +13,5 @@ npm-debug.log
 /projects/droplit-edge/localsettings.json
 .vscode
 **/yarn.lock
+
+.DS_Store
