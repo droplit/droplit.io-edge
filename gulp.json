@@ -7,6 +7,14 @@
         "projects/{project}/lib/**/*",
         "projects/{project}/node_modules/**/*"
     ],
+    "prep": [
+        "projects/{project}/node_modules/**/*.md",
+        "projects/{project}/node_modules/**/*.markdown",
+        "projects/{project}/node_modules/**/README",
+        "projects/{project}/node_modules/**/example",
+        "projects/{project}/node_modules/**/test",
+        "projects/{project}/node_modules/**/dist"
+    ],
     "tsfiles": [
         "typings/index.d.ts",
         "projects/{project}/src/**/*.ts"
@@ -45,6 +53,7 @@
         "projects/droplit-edge/**/*.*",
         "!projects/droplit-edge/**/*.ts",
         "!projects/droplit-edge/**/*.map",
-        "!projects/droplit-edge/**/*.md"
+        "!projects/droplit-edge/**/*.md",
+        "!projects/droplit-edge/**/*.markdown"
     ]
 }

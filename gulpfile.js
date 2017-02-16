@@ -203,22 +203,22 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
     runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('stats', 'Get lines of code', function (project) {
     console.log(project);
@@ -230,10 +230,10 @@ gulp.task('stats', 'Get lines of code', function (project) {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('size', 'Get size of code', function (project) {
     console.log(project);
@@ -245,10 +245,10 @@ gulp.task('size', 'Get size of code', function (project) {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 // Deploying
 
@@ -264,6 +264,11 @@ gulp.task('package', 'Package the Droplit Edge for embedding', function () {
         .pipe(G$.tar(packageFileName))
         .pipe(G$.gzip())
         .pipe(gulp.dest('dist'));
+});
+
+// Testing for improving package
+gulp.task('prep', false, function () {
+    return del(expandPaths(settings.prep));
 });
 
 // .pipe(G$.plumber()) // exit gracefully if something fails after this
