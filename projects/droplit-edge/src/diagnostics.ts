@@ -35,6 +35,9 @@ function connection(socket: net.Socket) {
             socket.write(`  ${JSON.stringify(settings)}\n\r`),
         plugins: () =>
             socket.write(`  ${(Array as any).from(router.plugins.keys()).join(',\n\r  ')}\n\r`),
+        reset: () => {
+            throw new Error('This crash is intentional');
+        },
         socket: () => {
             const state = router.transport.getState();
             socket.write(`  last connected at:      ${state.connectedAt ? state.connectedAt.toISOString() : null}\n\r`);

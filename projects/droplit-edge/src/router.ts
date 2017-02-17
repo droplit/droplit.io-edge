@@ -1,10 +1,10 @@
-import * as async from 'async';         /// import npm module
-import * as cache from './cache';       /// import local module
-import * as debug from 'debug';         /// import npm module
-import * as DP from 'droplit-plugin';   /// import npm linked module
-import * as plugin from './plugin';     /// import local module
-import Transport from './transport';    /// import local module, used as the websocket connectivity layer between cloud and edge router. 
-/// Import types
+import * as async from 'async';         // import npm module
+import * as cache from './cache';       // import local module
+import * as debug from 'debug';         // import npm module
+import * as DP from 'droplit-plugin';   // import npm linked module
+import * as plugin from './plugin';     // import local module
+import Transport from './transport';    // import local module, used as the websocket connectivity layer between cloud and edge router.
+// Import types
 import {
     CallMethodResponse,
     DeviceCommand,
@@ -20,9 +20,9 @@ import {
     SetPropertiesResponse
 } from './types/types';
 
-const log = debug('droplit:router');    /// initilize logging module for log levels 
-export { Transport };                   /// export Transport interface
-const macAddress = require('node-getmac').trim();   /// use node-getmac library to get hahrdware mac address, used to uniquely identify this device
+const log = debug('droplit:router');    // initilize logging module for log levels
+export { Transport };                   // export Transport interface
+const macAddress = require('node-getmac').trim();   // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
 
 // Uncomment to detect/debug unhandled rejection warning
 // const process = require('process');
@@ -36,16 +36,16 @@ declare var Map: any; // Work-around typescript not knowing Map when it exists f
 const AutoDiscoverDelay = 2 * 60 * 1000;
 // Amount of time (ms) between discovery attempts
 const AutoDiscoverCadence = 60000;
-/// Amount of time (ms) for device to respond  
+// Amount of time (ms) for device to respond
 const GetPropertyTimeout = 3000;
 
-const localSettings = require('../localsettings.json'); /// Load local settings file
-export const plugins = new Map();                       /// Create hashmap of plugins
-const settings = require('../settings.json');           /// Load settings file
-export const transport = new Transport();               /// Create a new instance of the transport layer
+const localSettings = require('../localsettings.json'); // Load local settings file
+export const plugins = new Map();                       // Create hashmap of plugins
+const settings = require('../settings.json');           // Load settings file
+export const transport = new Transport();               // Create a new instance of the transport layer
 
-let autodiscoverTimer: number;                          /// Device auto discovery timer
-let hasConnected = false;                               /// Has Transport layer connected, used first time connection
+let autodiscoverTimer: number;                          // Device auto discovery timer
+let hasConnected = false;                               // Has Transport layer connected, used first time connection
 
 // overwrite settings with local settings
 Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
@@ -55,12 +55,12 @@ log(`using setting host: ${settings.transport.host}`);
 log(`using setting ecosystem: ${settings.ecosystemId}`);
 log(`using setting edge id: ${macAddress}`);
 
-/// If enabled, generates a heap dump on a set interval for diognostic purposes
+// If enabled, generates a heap dump on a set interval for diognostic purposes
 if (settings.debug && settings.debug.generateHeapDump) {
     const heapdump = require('heapdump');
     const heapInterval = 30 * 60 * 1000;
     const writeSnapshot = () => {
-        /// Creates the snapshot file named with the current time
+        // Creates the snapshot file named with the current time
         heapdump.writeSnapshot(`droplit-${Date.now()}.heapsnapshot`, (err: any, filename: string) => {
             if (err) {
                 log('error writing heap snapshot:', err);
@@ -74,12 +74,12 @@ if (settings.debug && settings.debug.generateHeapDump) {
     setInterval(writeSnapshot.bind(this), heapInterval);
 }
 
-/// If diagnostics enabled, load local diognostics module
+// If diagnostics enabled, load local diognostics module
 if (settings.diagnostics && settings.diagnostics.enabled) {
     require('./diagnostics');
 }
 
-/// Load plugins
+// Load plugins
 loadPlugins().then(() => {
     // Initialize the transport
     transport.start(settings.transport, {
@@ -96,10 +96,10 @@ transport.once('connected', () => {
         setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
 });
 
-/// Unimplemented transport event 
+// Unimplemented transport event
 transport.on('disconnected', () => { });
 
-/// When device message recieved from cloud
+// When device message recieved from cloud
 transport.on('#device message', (message: DeviceMessage, cb: (response: any) => void) => {
     let result: DeviceMessageResponse;
     if (message)
@@ -108,19 +108,19 @@ transport.on('#device message', (message: DeviceMessage, cb: (response: any) => 
         cb(result);
 });
 
-/// Unimplemented discover request
+// Unimplemented discover request
 transport.on('#discover', (data: any) => { });
 
-/// Hello message sent from cloud
+// Hello message sent from cloud
 transport.on('#ehlo', (data: any, cb: (response: any) => void) => { if (cb) cb('ack'); });
 
-/// Message to drop discovered device
+// Message to drop discovered device
 transport.on('#drop', (data: any) => {
     if (data)
         dropDevice(data);
 });
 
-/// Call a device method
+// Call a device method
 transport.on('#method call', (data: any, cb: (response: any) => void) => {
     // Wrap single method in an array
     let results: CallMethodResponse;
@@ -152,10 +152,10 @@ transport.on('#plugin setting', (data: PluginSetting[], cb: (response: any) => v
         cb(results);
 });
 
-/// Unimplemented plugin data event
+// Unimplemented plugin data event
 transport.on('#plugin data', (data: PluginData[], cb: (response: any) => void) => { });
 
-/// Cloud requests property value
+// Cloud requests property value
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
@@ -165,7 +165,7 @@ transport.on('#property get', (data: any, cb: (response: any) => void) => {
         getProperties(data).then(results => cb(results));
 });
 
-/// Cloud sets device property value
+// Cloud sets device property value
 transport.on('#property set', (data: any, cb: (response: any) => void) => {
     let results: SetPropertiesResponse;
     // Wrap single property in an array
@@ -179,9 +179,9 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
         cb(results);
 });
 
-/// Implementaions
+// Implementaions
 
-/// calls device methods 
+// calls device methods
 function callMethods(commands: DeviceCommand[]): CallMethodResponse {
     log(`call > ${JSON.stringify(commands)}`);
     const map = groupByPlugin(commands);    // Group batch of commands into a map
@@ -202,8 +202,7 @@ function callMethods(commands: DeviceCommand[]): CallMethodResponse {
 //     discoverAll();
 // }
 
-
-/// Tells plugins to start discovering devices, staggers them by 2000 ms
+// Tells plugins to start discovering devices, staggers them by 2000 ms
 function discoverAll() {
     let timeout = 0;
     plugins.forEach((plugin: any) => {
@@ -221,7 +220,7 @@ function discoverAll() {
 //     plugins.get(pluginName).discover();
 // }
 
-/// Removes discovered device instance
+// Removes discovered device instance
 function dropDevice(commands: DeviceCommand[]) {
     log(`drop > ${JSON.stringify(commands)}`);
     const map = groupByPlugin(commands);
@@ -234,7 +233,7 @@ function dropDevice(commands: DeviceCommand[]) {
     });
 }
 
-/// Utility to parse command to find the plugin name
+// Utility to parse command to find the plugin name
 function getPluginName(command: DeviceCommand) {
     if (command.deviceId === '.')
         return cache.getServicePlugin(command.service);
@@ -250,7 +249,7 @@ function getPluginName(command: DeviceCommand) {
     return null;
 }
 
-/// used when doing a forced refresh
+// used when doing a forced refresh
 function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse> {
     log(`get > ${JSON.stringify(commands)}`);
     const map: { [pluginName: string]: DP.DeviceServiceMember[] } = groupByPlugin(commands);
@@ -622,7 +621,6 @@ function startAutodiscover() {
     discoverAll.bind(this)();
     autodiscoverTimer = setInterval(discoverAll.bind(this), AutoDiscoverCadence);
 }
-
 
 /*
     There are a fair bit of magic numbers that should be pulled out to the top.
