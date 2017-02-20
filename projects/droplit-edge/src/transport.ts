@@ -52,9 +52,6 @@ export default class Transport extends EventEmitter {
     private isOpen = false;
     private headers: { [key: string]: string };
     private connectedCallback: (connected: boolean) => void;
-    private connectedAt: Date;
-    private lastHeartbeat: Date;
-    private lastHeartbeatAttempt: Date;
 
     // timeout
     private messageTimeout = 5000;
@@ -70,18 +67,8 @@ export default class Transport extends EventEmitter {
         this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
 
-    public getState() {
-        return {
-            connectedAt: this.connectedAt,
-            lastHeartbeat: this.lastHeartbeat,
-            lastHeartbeatAttempt: this.lastHeartbeatAttempt,
-            state: (this.ws === undefined) ? 'ws is undefined' :
-                   (this.ws.readyState === this.ws.CLOSED) ? 'closed' :
-                   (this.ws.readyState === this.ws.CLOSING) ? 'closing' :
-                   (this.ws.readyState === this.ws.CONNECTING) ? 'connecting' :
-                   (this.ws.readyState === this.ws.OPEN) ? 'open' :
-                   'unknown'
-        };
+    public getReadyState() {
+        return this.ws ? this.ws.readyState : null;
     }
 
     public start(settings: any, headers: { [key: string]: string }, callback?: (connected: boolean) => void) {
@@ -138,7 +125,6 @@ export default class Transport extends EventEmitter {
         this.startHeartbeat();
         log('connected');
         this.sendBacklog();
-        this.connectedAt = new Date();
         this.emit('connected');
         if (this.connectedCallback) {
             this.connectedCallback(true);
@@ -156,6 +142,8 @@ export default class Transport extends EventEmitter {
         }
         if (!packet)
             return;
+
+        this.emit('message');
 
         if (packet.r === true) {
             // log(`onMessage: request expecting a result`);
@@ -387,10 +375,10 @@ export default class Transport extends EventEmitter {
     private heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
-        this.lastHeartbeatAttempt = new Date();
+        this.emit('attemptHB');
         this._send(this.heartbeatPacket, err => {
             if (!err)
-                this.lastHeartbeat = new Date();
+                this.emit('hb');
         });
     }
 
