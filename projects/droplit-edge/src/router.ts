@@ -22,7 +22,7 @@ import {
 
 const log = debug('droplit:router');    // initilize logging module for log levels
 export { Transport };                   // export Transport interface
-const macAddress = require('node-getmac').trim();   // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
+export const macAddress = require('node-getmac').trim();   // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
 
 // Uncomment to detect/debug unhandled rejection warning
 // const process = require('process');
