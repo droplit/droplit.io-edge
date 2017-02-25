@@ -168,14 +168,11 @@ gulp.task('deepclean', 'Cleans the generated files from lib directory and all no
 });
 
 // Transpiling
-
-const tsProjects = {};
 projectNames.forEach(project => {
-    tsProjects[project] = G$.typescript.createProject(tsconfig.compilerOptions);
     gulp.task(`ts-${project}`, `Transpile ${chalk.green(project)}`, function () {
         const tsResult = gulp.src(mapPaths(settings.tsfiles, project))
             .pipe(G$.sourcemaps.init())
-            .pipe(tsProjects[project]());
+            .pipe(G$.typescript.createProject(tsconfig.compilerOptions)());
         const dest = mapPath(settings.dest, project);
         return merge([
             tsResult.dts.pipe(gulp.dest(dest)),
