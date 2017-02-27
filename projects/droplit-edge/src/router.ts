@@ -1,3 +1,5 @@
+
+
 import * as async from 'async';         // import npm module
 import * as cache from './cache';       // import local module
 import * as debug from 'debug';         // import npm module
@@ -20,9 +22,15 @@ import {
     SetPropertiesResponse
 } from './types/types';
 
-const log = debug('droplit:router');    // initilize logging module for log levels
-export { Transport };                   // export Transport interface
-export const macAddress = require('node-getmac').trim();   // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
+const log = debug('droplit:router');                    // initilize logging module for log levels
+const settings = require('../settings.json');           // Load settings file
+const localSettings = require('../localsettings.json'); // Load local settings file
+export { Transport };                                   // export Transport interface
+export const macAddress =                               // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
+    require('node-getmac').trim() ||                    // Primary method of UID retrieval
+    localSettings.config.MACAddressOverride ||          // Override UID retrieval
+    undefined;
+
 
 // Uncomment to detect/debug unhandled rejection warning
 // const process = require('process');
@@ -39,9 +47,7 @@ const AutoDiscoverCadence = 60000;
 // Amount of time (ms) for device to respond
 const GetPropertyTimeout = 3000;
 
-const localSettings = require('../localsettings.json'); // Load local settings file
 export const plugins = new Map();                       // Create hashmap of plugins
-const settings = require('../settings.json');           // Load settings file
 export const transport = new Transport();               // Create a new instance of the transport layer
 
 let autodiscoverTimer: number;                          // Device auto discovery timer
