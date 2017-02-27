@@ -87,7 +87,7 @@ loadPlugins().then(() => {
     // Initialize the transport
     transport.start(settings.transport, {
         'x-edge-id': macAddress,
-        'x-ecosystem-id': settings.ecosystemId // requires ecosystemId to be set in localsettings.json
+        'x-ecosystem-id': settings.ecosystemId || null // requires ecosystemId to be set in localsettings.json
     });
 });
 
