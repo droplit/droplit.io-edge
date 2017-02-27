@@ -1,5 +1,3 @@
-
-
 import * as async from 'async';         // import npm module
 import * as cache from './cache';       // import local module
 import * as debug from 'debug';         // import npm module
@@ -30,7 +28,6 @@ export const macAddress =                               // use node-getmac libra
     require('node-getmac').trim() ||                    // Primary method of UID retrieval
     localSettings.config.MACAddressOverride ||          // Override UID retrieval
     undefined;
-
 
 // Uncomment to detect/debug unhandled rejection warning
 // const process = require('process');
