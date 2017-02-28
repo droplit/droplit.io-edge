@@ -268,6 +268,30 @@ gulp.task('prep', false, function () {
     return del(expandPaths(settings.prep));
 });
 
+// Version bump
+
+const bumpOpts = {
+    options: {
+        major: `when you make incompatible API changes`,
+        minor: `when you add functionality in a backwards-compatible manner`,
+        patch: `when you make backwards-compatible bug fixes`,
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+};
+
+gulp.task('bump', 'Version bump a project.', function (major, minor, patch, project) {
+    if (!project) return console.log(`${chalk.red('No project specified!')}`);
+    let type = '';
+    if (major && !minor && !patch) type = 'major';
+    if (!major && minor && !patch) type = 'minor';
+    if (!major && !minor && patch) type = 'patch';
+    if (!type) return console.log(`${chalk.red('Specify one version type to bump!')}`);
+    const cwd = 'projects/project/';
+    return gulp.src('./package.json', { cwd })
+        .pipe(G$.bump({ type }))
+        .pipe(gulp.dest('./', { cwd }));
+}, bumpOpts);
+
 // .pipe(G$.plumber()) // exit gracefully if something fails after this
 
 
