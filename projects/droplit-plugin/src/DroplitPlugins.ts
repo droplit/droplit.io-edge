@@ -66,7 +66,6 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * it is just here as an abstraction layer and can be disregarded
          * if overriding the plural version.
          */
-        this.log(`call ${this.getServiceSelector(method)} with ${method.value}`);
 
         // call does not support callbacks, so pass undefined (callbacks are used by request overload)
         const params = [method.localId, method.value, undefined, method.index];
@@ -136,7 +135,6 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * it is just here as an abstraction layer and can be disregarded
          * if overriding the plural version.
          */
-        this.log(`get ${this.getServiceSelector(property)}`);
 
         const params = [property.localId, callback, property.index];
         const methodImplementation = this.getServiceMember(property.service, `get_${property.member}`);
@@ -158,8 +156,6 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
      * @returns {boolean} boolean indicating if property is supported
      */
     public requestMethod(method: DeviceServiceMember, callback: (value: any) => void): boolean {
-        this.log(`request ${this.getServiceSelector(method)} with ${method.value}`);
-
         const params = [method.localId, method.value, callback, method.index];
         const methodImplementation = this.getServiceMember(method.service, method.member);
 
@@ -225,7 +221,6 @@ export abstract class DroplitLocalPlugin extends EventEmitter {
          * it is just here as an abstraction layer and can be disregarded
          * if overriding the plural version.
          */
-        this.log(`set ${this.getServiceSelector(property)} to ${property.value}`);
         const params = [property.localId, property.value, property.index];
         const methodImplementation = this.getServiceMember(property.service, `set_${property.member}`);
         if (methodImplementation) {
