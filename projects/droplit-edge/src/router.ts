@@ -20,13 +20,13 @@ import {
     SetPropertiesResponse
 } from './types/types';
 
-const log = debug('droplit:router');                    // initilize logging module for log levels
-const settings = require('../settings.json');           // Load settings file
-const localSettings = require('../localsettings.json'); // Load local settings file
-export { Transport };                                   // export Transport interface
-export const macAddress =                               // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
-    localSettings.config.MACAddressOverride ||          // Override UID retrieval
-    require('node-getmac').trim() ||                    // Primary method of UID retrieval
+const log = debug('droplit:router');                                         // initilize logging module for log levels
+const settings = require('../settings.json');                                // Load settings file
+const localSettings = require('../localsettings.json');                      // Load local settings file
+export { Transport };                                                        // export Transport interface
+export const macAddress =                                                    // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
+    localSettings.config ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
+    require('node-getmac').trim() ||                                         // Primary method of UID retrieval
     undefined;
 
 // Uncomment to detect/debug unhandled rejection warning
