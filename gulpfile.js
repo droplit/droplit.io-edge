@@ -266,10 +266,13 @@ gulp.task('package', 'Package the Droplit Edge for embedding', function () {
 gulp.task('clean-dist', 'Clean dist', function () {
     return del('dist');
 });
-
-gulp.task('deploy', 'Glob the Droplit Edge for embedding', ['clean-dist'], function () {
+gulp.task('build-dist', 'Clean dist', ['clean-dist'], function () {
     return gulp.src(settings.packageFiles, { follow: true })
         .pipe(gulp.dest('dist'));
+});
+
+gulp.task('deploy', 'Glob the Droplit Edge for embedding', function (callback) {
+    G$.sequence('setup', 'build', 'build-dist', callback);
 });
 
 // Testing for improving package
