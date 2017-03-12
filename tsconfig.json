@@ -8,7 +8,7 @@
         "noUnusedLocals": true,
         "noUnusedParameters": false,
         "preserveConstEnums": true,
-        "removeComments": false,
+        "removeComments": true,
         "target": "ES5"
     },
     "include": [

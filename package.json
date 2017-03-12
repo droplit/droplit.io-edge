@@ -1,6 +1,6 @@
 {
   "name": "droplit.io-edge",
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "Instant Cloud Control for smart devices",
   "main": "index.js",
   "scripts": {
@@ -46,6 +46,7 @@
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
+    "gulp-bump": "^2.7.0",
     "gulp-debug": "^2.1.2",
     "gulp-gzip": "^1.4.0",
     "gulp-help": "^1.6.1",
@@ -62,7 +63,7 @@
     "gulp-util": "^3.0.7",
     "merge2": "^1.0.2",
     "source-map-support": "^0.4.0",
-    "tslint": "4.4.2",
-    "typescript": "2.1.6"
+    "tslint": "4.5.1",
+    "typescript": "2.2.1"
   }
 }

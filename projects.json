@@ -24,6 +24,9 @@
     "droplit-plugin-local-ts-example": {
         "dependencies": [ "droplit-plugin" ]
     },
+    "droplit-plugin-gpio": {
+        "dependencies": [ "droplit-plugin" ]
+    },
     "droplit-edge": {
         "dependencies": [
             "droplit-plugin",
@@ -34,7 +37,8 @@
             "droplit-plugin-js-example",
             "droplit-plugin-ts-example",
             "droplit-plugin-voyager",
-            "droplit-plugin-local-ts-example"
+            "droplit-plugin-local-ts-example",
+            "droplit-plugin-gpio"
         ]
     },
     "load-test": {

@@ -1,0 +1,22 @@
+{
+  "name": "droplit-plugin-gpio",
+  "description": "Plugin for Raspberry Pi GPIO pins.",
+  "author": "Droplit, Inc.",
+  "version": "1.0.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Ryan Culp",
+      "email": "NA"
+    }
+  ],
+  "main": "index.js",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

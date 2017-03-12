@@ -1,11 +1,14 @@
 {
     "compilerOptions": {
+        "allowUnreachableCode": false,
         "declaration": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
         "preserveConstEnums": true,
-        "removeComments": false,
+        "removeComments": true,
         "watch": true,
         "target": "ES5"
     }
