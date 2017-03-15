@@ -35,6 +35,12 @@ export function setDeviceInfo(deviceInfo: DP.DeviceInfo | DeviceInfo): void {
     }
 }
 
+export function getDevicesByPlugin(pluginName: string) {
+    return Object.keys(deviceCache_global)
+        .map(key => deviceCache_global[key])
+        .filter(device => device.pluginName === pluginName);
+}
+
 // Plugin Management
 export function getPluginData(pluginName: string, key: string): string {
     const pluginKey = `${pluginName};${key}`;

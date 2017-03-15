@@ -1,4 +1,5 @@
 import * as debug from 'debug';
+import * as cache from './cache';
 import * as router from './router';
 import * as WebSocket from 'ws';
 
@@ -39,6 +40,16 @@ function connection(socket: net.Socket) {
     socket.write('Edge Diagnostics console\n\r');
 
     const commands: any = {
+        discovered: () => {
+            router.plugins.forEach((plugin: any) => {
+                const discovered = cache.getDevicesByPlugin(plugin.pluginName);
+                if (discovered.length > 0) {
+                    socket.write(`  ${plugin.pluginName}\n\r`);
+                    discovered.forEach(device =>
+                        socket.write(`    ${device.deviceId}\n\r`));
+                }
+            });
+        },
         exit: () =>
             socket.end('Goodbye!\n\r'),
         help: () =>
