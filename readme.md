@@ -107,7 +107,7 @@ run: `npm install -g ntypescript gulp typings`
 Using git:
 
 
-run: `git clone https://bitbucket.org/droplit/droplit.io-edge.git --depth 1`
+run: `git clone https://github.com/droplit/droplit.io-edge.git --depth 1`
 
 ## Installing project dependencies
 
