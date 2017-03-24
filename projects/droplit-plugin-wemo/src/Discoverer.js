@@ -25,7 +25,13 @@ class Discoverer extends EventEmitter {
                     .parseString(b, (error, result) => {
                         if (error)
                             return;
-                        const valid = [/WeMo Switch/g, /WeMo Insight/g, /WeMo LightSwitch/g, /WeMo Motion/g, /CoffeeMaker/g];
+                        const valid = [
+                            /urn:Belkin:device:CoffeeMaker:1/g, // Mr. Coffee
+                            /urn:Belkin:device:controllee:1/g,  // Switch
+                            /urn:Belkin:device:insight:1/g,     // Insight
+                            /urn:Belkin:device:lightswitch:1/g, // LightSwitch
+                            /urn:Belkin:device:sensor:1/g       // Motion Sensor
+                        ];
                         if (valid.some(pattern => pattern.test(b))) {
                             this.found.get(identifier).info = result;
                             this.emit('discovered', this.found.get(identifier));
