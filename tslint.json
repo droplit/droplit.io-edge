@@ -31,6 +31,7 @@
         ],
         "prefer-const": true,
         "prefer-for-of": true,
+        "prefer-template": true,
         "quotemark": [
             true,
             "single",
