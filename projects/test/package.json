@@ -1,0 +1,21 @@
+{
+  "name": "test",
+  "description": "Automated test module",
+  "author": "Droplit, Inc.",
+  "version": "",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Davis Kauffmann",
+      "email": "davis@droplit.io"
+    }
+  ],
+  "main": "index.ts",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/mocha": "^2.2.40",
+    "droplit-sdk": "^1.0.3",
+    "droplit-websocket-sdk": "^1.0.4",
+    "mocha": "^3.2.0"
+  }
+}
