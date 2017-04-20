@@ -286,6 +286,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
     discover() {
         if (this.sequencer === 0xFF)
             this.sequencer = 0;
+        this.sequence[this.sequencer] = {};
         const packet = lifxPacket.getService({
             source: this.source,
             sequence: this.sequencer++
