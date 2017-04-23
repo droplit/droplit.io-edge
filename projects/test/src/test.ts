@@ -5,6 +5,7 @@ import 'mocha';
 import * as assert from 'assert';
 import * as http from 'http';
 
+const droplitEdgeSettings = require('../../droplit-edge/localsettings.json');
 const localSettings = require('../localsettings.json');
 
 const baseUri = localSettings.baseUri;
@@ -328,7 +329,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
 // webhook tests not done yet
 describe('Edge Device, Websockets, and Webhooks', function () {
-    const ecosystemId = localSettings.ecosystemId;
+    const ecosystemId = droplitEdgeSettings.ecosystemId;
     const webhookUrl = localSettings.webhookUrl;
     let environmentId: string;
     let webhookId: string;
