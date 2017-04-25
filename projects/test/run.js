@@ -23,6 +23,6 @@ mocha.addFile(path.join(__dirname, 'lib/test.js'));
 
 mocha.run((failures) => {
   app.listen(port, () => {
-    openurl.open('http://localhost:3000/report.html');
+    openurl.open('http://localhost:' + port + '/report.html');
   });
 });

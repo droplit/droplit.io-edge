@@ -20,14 +20,18 @@ droplitClient.on('authenticateRequest', function () {
     droplitClient.authenticate(authToken);
 });
 
+// give the edge server time to setup
 before(function (done) {
-    this.timeout(6000);
+    this.timeout(5000);
+
     setTimeout(() => {
         done();
-    }, 5000);
+    }, 4000);
 });
 
 describe('Ecosystems, Environments, Devices, and Zones', function () {
+    this.timeout(5000);
+
     let ecosystemId: string;
     let environmentId: string;
     const deviceIds: string[] = [];
@@ -204,7 +208,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
             assert.equal(devicesChecked, 2, 'Both devices successfully checked');
 
             done();
-        }, 1000);
+        }, 4000);
     });
 
     it('Create a third device in the environment', function (done) {
@@ -264,7 +268,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
             assert.equal(devicesAdded, 2, 'Both devices successfully added to the zone');
 
             done();
-        }, 1000);
+        }, 4000);
     });
 
     it('Verify that both devices and no others are in the zone', function (done) {
@@ -323,12 +327,14 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
             assert.equal(devicesChecked, 3, 'All devices successfully checked');
 
             done();
-        }, 1000);
+        }, 4000);
     });
 });
 
 // webhook tests not done yet
 describe('Edge Device, Websockets, and Webhooks', function () {
+    this.timeout(5000);
+
     const ecosystemId = droplitEdgeSettings.ecosystemId;
     const webhookUrl = localSettings.webhookUrl;
     let environmentId: string;
@@ -507,23 +513,29 @@ describe('Edge Device, Websockets, and Webhooks', function () {
         droplit.devices.setServiceProperty(deviceIds[1], 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set');
-        });
-
-        setTimeout(() => {
-            assert.ok(websocketSet, 'Set message recieved from websocket');
-            assert.ok(websocketChanged, 'Changed message recieved from websocket');
-            assert.ok(webhookSet, 'Set message received from webhook');
-            assert.ok(webhookChanged, 'Changed message received from webhook');
-
             droplitClient.removeAllListeners('event');
 
             callback = function (body) {
 
             };
 
+            assert.equal(value.status, 200, 'Service property successfully set');
+
+            try {
+                assert.ok(websocketSet, 'Set message recieved from websocket');
+                assert.ok(websocketChanged, 'Changed message recieved from websocket');
+                assert.ok(webhookSet, 'Set message received from webhook');
+                assert.ok(webhookChanged, 'Changed message received from webhook');
+            } catch (error) {
+                done(error);
+                
+                return;
+            }
+
             done();
-        }, 1000);
+        }).catch(error => {
+            done(error);
+        });
     });
 
     it('Test service methods and events', function (done) {
@@ -564,27 +576,35 @@ describe('Edge Device, Websockets, and Webhooks', function () {
         };
 
         droplit.devices.callServiceMethod(deviceIds[1], 'Test.doStuff', {}).then(value => {
-            assert.equal(value.status, 200, 'Service method successfully called');
-        });
-
-        setTimeout(() => {
-            assert.ok(websocketCall, 'Call message recieved from websocket');
-            assert.ok(websocketEvent, 'Event message recieved from websocket');
-            assert.ok(webhookCall, 'Call message received from webhook');
-            assert.ok(webhookEvent, 'Event message received from webhook');
-
             droplitClient.removeAllListeners('event');
 
             callback = function (body) {
 
             };
 
+            assert.equal(value.status, 200, 'Service method successfully called');
+
+            try {
+                assert.ok(websocketCall, 'Call message recieved from websocket');
+                assert.ok(websocketEvent, 'Event message recieved from websocket');
+                assert.ok(webhookCall, 'Call message received from webhook');
+                assert.ok(webhookEvent, 'Event message received from webhook');
+            } catch (error) {
+                done(error);
+
+                return;
+            }
+
             done();
-        }, 1000);
+        }).catch(error => {
+            done(error);
+        });
     });
 });
 
 describe('History', function () {
+    this.timeout(5000);
+
     let ecosystemId: string;
     let environmentId: string;
     let deviceId: string;
@@ -724,6 +744,8 @@ describe('History', function () {
 });
 
 describe('Users', function () {
+    this.timeout(5000);
+
     let ecosystemId: string;
     const environmentIds: string[] = [];
     const deviceIds: string[] = [];
@@ -966,6 +988,8 @@ describe('Users', function () {
 });
 
 describe('Clients', function () {
+    this.timeout(5000);
+
     let ecosystemId: string;
     let clientId: string;
     let tokenId: string;
@@ -1078,6 +1102,8 @@ describe('Clients', function () {
 });
 
 describe('Service classes', function () {
+    this.timeout(5000);
+
     let ecosystemId: string;
 
     after(function (done) {
