@@ -6,23 +6,27 @@ const openurl = require('openurl');
 
 const port = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  console.log('Running tests');
+  
+  Object.keys(require.cache).forEach(file => {
+    delete require.cache[file];
+  });
 
-var mocha = new Mocha({
-  reporter: 'mochawesome',
-  reporterOptions: {
-    reportDir: path.join(__dirname, 'public'),
-    reportFilename: 'report',
-    reportTitle: 'Report',
-    reportPageTitle: 'Report'
-  },
-  autoOpen: true
+  new Mocha({
+    reporter: 'mochawesome',
+    reporterOptions: {
+      reportDir: path.join(__dirname, 'public'),
+      reportFilename: 'report',
+      reportTitle: 'Report',
+      reportPageTitle: 'Report',
+      inlineAssets: true
+    }
+  }).addFile(path.join(__dirname, 'lib', 'test.js')).run((failures) => {
+    res.sendFile(path.join(__dirname, 'public', 'report.html'));
+  });
 });
 
-mocha.addFile(path.join(__dirname, 'lib/test.js'));
-
-mocha.run((failures) => {
-  app.listen(port, () => {
-    openurl.open('http://localhost:' + port + '/report.html');
-  });
+app.listen(port, () => {
+  console.log('Server running on port', port);
 });

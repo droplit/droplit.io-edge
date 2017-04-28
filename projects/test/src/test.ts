@@ -8,16 +8,12 @@ import * as http from 'http';
 const droplitEdgeSettings = require('../../droplit-edge/localsettings.json');
 const localSettings = require('../localsettings.json');
 
-const baseUri = localSettings.baseUri;
-const clientId = localSettings.clientId;
-const authToken = localSettings.authToken;
-
 const droplit = new droplitSdk.Droplit();
-droplit.initialize(baseUri, clientId, authToken);
+droplit.initialize(localSettings.baseUri, localSettings.clientId, localSettings.authToken);
 
-const droplitClient = new droplitWebsocketSdk.DroplitClient(baseUri);
+const droplitClient = new droplitWebsocketSdk.DroplitClient(localSettings.baseUri);
 droplitClient.on('authenticateRequest', function () {
-    droplitClient.authenticate(authToken);
+    droplitClient.authenticate(localSettings.authToken);
 });
 
 // give the edge server time to setup
@@ -521,16 +517,10 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
             assert.equal(value.status, 200, 'Service property successfully set');
 
-            try {
-                assert.ok(websocketSet, 'Set message recieved from websocket');
-                assert.ok(websocketChanged, 'Changed message recieved from websocket');
-                assert.ok(webhookSet, 'Set message received from webhook');
-                assert.ok(webhookChanged, 'Changed message received from webhook');
-            } catch (error) {
-                done(error);
-                
-                return;
-            }
+            assert.ok(websocketSet, 'Set message recieved from websocket');
+            assert.ok(websocketChanged, 'Changed message recieved from websocket');
+            assert.ok(webhookSet, 'Set message received from webhook');
+            assert.ok(webhookChanged, 'Changed message received from webhook');
 
             done();
         }).catch(error => {
@@ -584,16 +574,10 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
             assert.equal(value.status, 200, 'Service method successfully called');
 
-            try {
-                assert.ok(websocketCall, 'Call message recieved from websocket');
-                assert.ok(websocketEvent, 'Event message recieved from websocket');
-                assert.ok(webhookCall, 'Call message received from webhook');
-                assert.ok(webhookEvent, 'Event message received from webhook');
-            } catch (error) {
-                done(error);
-
-                return;
-            }
+            assert.ok(websocketCall, 'Call message recieved from websocket');
+            assert.ok(websocketEvent, 'Event message recieved from websocket');
+            assert.ok(webhookCall, 'Call message received from webhook');
+            assert.ok(webhookEvent, 'Event message received from webhook');
 
             done();
         }).catch(error => {
@@ -753,7 +737,7 @@ describe('Users', function () {
     let userId: string;
 
     after(function (done) {
-        droplit.setAuthorization(authToken);
+        droplit.setAuthorization(localSettings.authToken);
 
         droplit.ecosystems.deleteEcosystem(ecosystemId).then(value => {
             done();
