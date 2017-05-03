@@ -19,6 +19,7 @@
     "droplit-sdk": "^1.0.3",
     "droplit-websocket-sdk": "^1.0.4",
     "express": "^4.15.2",
+    "instant": "^1.10.1",
     "mocha": "^3.3.0",
     "mochawesome": "^2.0.5",
     "morgan": "^1.8.1",

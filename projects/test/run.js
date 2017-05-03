@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const instant = require('instant');
 const path = require('path');
 const ngrok = require('ngrok');
 const openurl = require('openurl');
@@ -7,15 +8,13 @@ const Mocha = require('mocha');
 
 const app = express();
 const port = process.env.PORT || 3000;
-var publicUrl = '';
 
-app.use(morgan('dev')); 
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'report.html'));
-});
+app.use(morgan('dev'));
+app.use(instant(path.join(__dirname, 'public')));
 
 app.post('/', (req, res) => {
+  res.sendStatus(200);
+  
   console.log('Running tests');
 
   Object.keys(require.cache).forEach(file => {
@@ -31,19 +30,18 @@ app.post('/', (req, res) => {
       reportPageTitle: 'Report',
       inlineAssets: true
     }
-  }).addFile(path.join(__dirname, 'lib', 'test.js')).run((failures) => {
-    openurl.open(publicUrl); // this opens a new tab, i want it to refresh
-  });
+  }).addFile(path.join(__dirname, 'lib', 'test.js')).run();
 });
 
 app.listen(port, () => {
   console.log('Server running on port', port);
 
-  ngrok.connect(port, (err, url) => {
-    publicUrl = url;
+  ngrok.connect({
+    proto: 'http',
+    addr: port,
+  }, (err, url) => {
+    console.log('Public URL is', url);
 
-    console.log('Public URL is', publicUrl);
-
-    openurl.open(publicUrl);
+    openurl.open(path.join('http://localhost:' + port, 'report.html'));
   });
 });

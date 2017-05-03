@@ -336,13 +336,14 @@ describe('Edge Device, Websockets, and Webhooks', function () {
     let webhookId: string;
     const deviceIds: string[] = [];
     let webhookUrl: string;
+    let server: http.Server;
     const port = 3001;
     let callback = function (body: any) {
 
     };
 
     before(function (done) {
-        http.createServer((req, res) => {
+        server = http.createServer((req, res) => {
             let body = '';
             req.on('data', data => {
                 body += data;
@@ -353,7 +354,9 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
             res.writeHead(200);
             res.end();
-        }).listen(port, 'localhost', () => {
+        });
+
+        server.listen(port, 'localhost', () => {
             ngrok.connect(port, (err: any, url: any) => {
                 webhookUrl = url;
 
@@ -363,6 +366,9 @@ describe('Edge Device, Websockets, and Webhooks', function () {
     });
 
     after(function (done) {
+        server.close();
+        ngrok.disconnect(webhookUrl);
+
         let environmentDeleted = false;
         let webhookDeleted = false;
 
