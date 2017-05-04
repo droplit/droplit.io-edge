@@ -26,7 +26,7 @@ const localSettings = require('../localsettings.json');                      // 
 export { Transport };                                                        // export Transport interface
 export const macAddress =                                                    // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
     localSettings.config ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
-    require('node-getmac').trim() ||                                         // Primary method of UID retrieval
+    require('./node-getmac').trim() ||                                         // Primary method of UID retrieval
     undefined;
 
 // Uncomment to detect/debug unhandled rejection warning
