@@ -15,22 +15,7 @@ app.use(instant(path.join(__dirname, 'public')));
 app.post('/', (req, res) => {
   res.sendStatus(200);
   
-  console.log('Running tests');
-
-  Object.keys(require.cache).forEach(file => {
-    delete require.cache[file];
-  });
-
-  new Mocha({
-    reporter: 'mochawesome',
-    reporterOptions: {
-      reportDir: path.join(__dirname, 'public'),
-      reportFilename: 'report',
-      reportTitle: 'Report',
-      reportPageTitle: 'Report',
-      inlineAssets: true
-    }
-  }).addFile(path.join(__dirname, 'lib', 'test.js')).run();
+  run();
 });
 
 app.listen(port, () => {
@@ -42,6 +27,25 @@ app.listen(port, () => {
   }, (err, url) => {
     console.log('Public URL is', url);
 
-    openurl.open(path.join('http://localhost:' + port, 'report.html'));
+    openurl.open(path.join('http://localhost:' + port));
+
+    run();
   });
 });
+
+function run() {
+  console.log('Running tests');
+
+  Object.keys(require.cache).forEach(file => {
+    delete require.cache[file];
+  });
+
+  new Mocha({
+    reporter: 'mochawesome',
+    reporterOptions: {
+      reportDir: path.join(__dirname, 'public'),
+      reportFilename: 'index',
+      inlineAssets: true
+    }
+  }).addFile(path.join(__dirname, 'lib', 'test.js')).run();
+}

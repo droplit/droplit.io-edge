@@ -15,7 +15,9 @@
     "start": "node run.js"
   },
   "dependencies": {
+    "@types/chai": "^3.5.2",
     "@types/mocha": "^2.2.40",
+    "chai": "^3.5.0",
     "droplit-sdk": "^1.0.3",
     "droplit-websocket-sdk": "^1.0.4",
     "express": "^4.15.2",
