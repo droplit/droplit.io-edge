@@ -304,6 +304,20 @@ gulp.task('bump', 'Version bump a project.', function (major, minor, patch, proj
         .pipe(gulp.dest('./', { cwd }));
 }, bumpOpts);
 
+gulp.task('debug', 'Debug droplit-edge', function (callback) {
+    var project = 'droplit-edge';
+      G$.nodemon({
+        script: `${project}.js`,
+        ext: 'js',
+        env: {
+            DEBUG: 'droplit:*'
+        },
+        delay: 1, // Sec
+        watch: `projects/${project}`,
+        ignore: `projects/${project}/src`
+    });
+});
+
 // .pipe(G$.plumber()) // exit gracefully if something fails after this
 
 

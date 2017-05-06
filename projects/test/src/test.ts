@@ -2,35 +2,32 @@ import 'droplit-edge';
 import * as droplitSdk from 'droplit-sdk';
 import * as droplitWebsocketSdk from 'droplit-websocket-sdk';
 import 'mocha';
-import * as assert from 'assert';
+import { expect } from 'chai';
 import * as http from 'http';
+const ngrok = require('ngrok');
 
-const droplitEdgeSettings = require('../../droplit-edge/localsettings.json');
-const localSettings = require('../localsettings.json');
-
-const baseUri = localSettings.baseUri;
-const clientId = localSettings.clientId;
-const authToken = localSettings.authToken;
+const localsettings = require('../../droplit-edge/localsettings.json');
+const config = require('../config.json');
 
 const droplit = new droplitSdk.Droplit();
-droplit.initialize(baseUri, clientId, authToken);
+droplit.initialize(config.baseUri, config.clientId, config.authToken);
 
-const droplitClient = new droplitWebsocketSdk.DroplitClient(baseUri);
-droplitClient.on('authenticateRequest', function () {
-    droplitClient.authenticate(authToken);
+const droplitClient = new droplitWebsocketSdk.DroplitClient(config.baseUri);
+droplitClient.on('authenticateRequest', () => {
+    droplitClient.authenticate(config.authToken);
 });
 
 // give the edge server time to setup
 before(function (done) {
-    this.timeout(5000);
+    this.timeout(10000);
 
     setTimeout(() => {
         done();
-    }, 4000);
+    }, 5000);
 });
 
 describe('Ecosystems, Environments, Devices, and Zones', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     let ecosystemId: string;
     let environmentId: string;
@@ -47,8 +44,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Create an ecosystem', function (done) {
         droplit.ecosystems.create().then(value => {
-            assert.equal(value.status, 201, 'Ecosystem successfully created');
-            assert.ok(value.body.id, 'Ecosystem has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             ecosystemId = value.body.id;
 
@@ -60,8 +57,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the ecosystem exists', function (done) {
         droplit.ecosystems.info(ecosystemId).then(value => {
-            assert.equal(value.status, 200, 'Ecosystem exists');
-            assert.equal(value.body.id, ecosystemId, 'Ecosystem ID matches the created ecosystem ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.id).to.equal(ecosystemId);
 
             done();
         }).catch(error => {
@@ -71,8 +68,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Create an environment', function (done) {
         droplit.environments.create({ ecosystemId }).then(value => {
-            assert.equal(value.status, 201, 'Environment successfully created');
-            assert.ok(value.body.id, 'Environment has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             environmentId = value.body.id;
 
@@ -84,8 +81,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the environment exists', function (done) {
         droplit.environments.info(environmentId).then(value => {
-            assert.equal(value.status, 200, 'Environment exists');
-            assert.equal(value.body.id, environmentId, 'Environment ID matches the created environment ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.id).to.equal(environmentId);
 
             done();
         }).catch(error => {
@@ -95,8 +92,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Create a virtual device', function (done) {
         droplit.devices.create({ environmentId }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceIds[0] = value.body.id;
 
@@ -108,8 +105,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the device exists', function (done) {
         droplit.devices.info(deviceIds[0]).then(value => {
-            assert.equal(value.status, 200, 'Device exists');
-            assert.equal(value.body.id, deviceIds[0], 'Device ID matches the created device ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.id).to.equal(deviceIds[0]);
 
             done();
         }).catch(error => {
@@ -121,7 +118,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
         droplit.devices.setServiceProperty(deviceIds[0], 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set on the device');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -131,8 +128,10 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the property value has changed', function (done) {
         droplit.devices.getServiceProperty(deviceIds[0], 'BinarySwitch.switch', 'false').then(value => {
-            assert.equal(value.status, 200, 'Service property exists on device 1');
-            assert.equal(value.body.items[0].value, 'on', 'Service property value on the device successfully changed');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].value).to.equal('on');
 
             done();
         }).catch(error => {
@@ -146,7 +145,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
                 $label: 'New Label'
             }
         }).then(value => {
-            assert.equal(value.status, 200, 'Device record successfully updated');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -156,8 +155,9 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the record has been updated', function (done) {
         droplit.devices.info(deviceIds[0]).then(value => {
-            assert.equal(value.status, 200, 'Device 1 exists');
-            assert.equal(value.body.meta.$label, 'New Label', 'Device record successfully set');
+            expect(value.status).to.equal(200);
+            expect(value.body.meta.$label).to.exist;
+            expect(value.body.meta.$label).to.equal('New Label');
 
             done();
         }).catch(error => {
@@ -167,8 +167,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Create and add a second device to the environment', function (done) {
         droplit.devices.create({ environmentId }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceIds[1] = value.body.id;
 
@@ -182,7 +182,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
         droplit.environments.setServiceProperty(environmentId, 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set on the environment');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -195,26 +195,24 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
         deviceIds.forEach((deviceId, index) => {
             droplit.devices.getServiceProperty(deviceId, 'BinarySwitch.switch', 'false').then(value => {
-                assert.equal(value.status, 200, 'Service property exists on device' + (index + 1));
-                assert.equal(value.body.items[0].value, 'on', 'Service property successfully set on device' + (index + 1));
+                expect(value.status).to.equal(200);
+                expect(value.body.items).to.exist;
+                expect(value.body.items).to.have.lengthOf(1);
+                expect(value.body.items[0].value).to.equal('on');
 
-                devicesChecked++;
+                if (++devicesChecked === 2) {
+                    done();
+                }
             }).catch(error => {
                 done(error);
             });
         });
-
-        setTimeout(() => {
-            assert.equal(devicesChecked, 2, 'Both devices successfully checked');
-
-            done();
-        }, 4000);
     });
 
     it('Create a third device in the environment', function (done) {
         droplit.devices.create({ environmentId }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceIds[2] = value.body.id;
 
@@ -226,8 +224,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Create a zone', function (done) {
         droplit.zones.create({ environmentId }).then(value => {
-            assert.equal(value.status, 201, 'Zone successfully created');
-            assert.ok(value.body.id, 'Zone has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             zoneId = value.body.id;
 
@@ -239,8 +237,8 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
     it('Verify that the zone exists', function (done) {
         droplit.zones.info(zoneId).then(value => {
-            assert.equal(value.status, 200, 'Zone exists');
-            assert.equal(value.body.id, zoneId, 'Zone ID matches the created zone ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.id).to.equal(zoneId);
 
             done();
         }).catch(error => {
@@ -256,34 +254,29 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
                 return;
             }
             droplit.zones.addItem(zoneId, deviceId).then(value => {
-                assert.equal(value.status, 201, 'Device ' + (index + 1) + ' successfully added to the zone');
+                expect(value.status).to.equal(201);
 
-                devicesAdded++;
-            }).catch(error => {
-                done(error);
+                if (++devicesAdded === 2) {
+                    done();
+                }
             });
         });
-
-        setTimeout(() => {
-            assert.equal(devicesAdded, 2, 'Both devices successfully added to the zone');
-
-            done();
-        }, 4000);
     });
 
     it('Verify that both devices and no others are in the zone', function (done) {
         droplit.zones.listItems(zoneId).then(value => {
-            assert.equal(value.status, 200, 'Zone exists');
-            assert.equal(value.body.items.length, 2, 'Zone contains 2 items');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(2);
 
             deviceIds.forEach((deviceId, index) => {
                 if (index === 2) {
                     return;
                 }
 
-                assert.equal(value.body.items.some(item => {
+                expect(value.body.items.some(item => {
                     return item.itemId === deviceId;
-                }), true, 'Zone contains device ' + (index + 1));
+                })).to.be.true;
             });
 
             done();
@@ -296,7 +289,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
         droplit.zones.setServiceProperty(zoneId, 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set on the zone');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -309,43 +302,67 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 
         deviceIds.forEach((deviceId, index) => {
             droplit.devices.getServiceProperty(deviceId, 'BinarySwitch.switch', 'false').then(value => {
-                assert.equal(value.status, 200, 'Service property exists');
+                expect(value.status).to.equal(200);
+                expect(value.body.items).to.exist;
 
                 if (index === 2) {
-                    assert.equal(value.body.items.length, 0, 'Service property not set on device 3');
+                    expect(value.body.items).to.have.lengthOf(0);
                 } else {
-                    assert.equal(value.body.items[0].value, 'on', 'Service property successfully set on device ' + (index + 1));
+                    expect(value.body.items).to.have.lengthOf(1);
+                    expect(value.body.items[0].value).to.equal('on');
                 }
 
-                devicesChecked++;
+                if (++devicesChecked === 3) {
+                    done();
+                }
             }).catch(error => {
                 done(error);
             });
         });
-
-        setTimeout(() => {
-            assert.equal(devicesChecked, 3, 'All devices successfully checked');
-
-            done();
-        }, 4000);
     });
 });
 
-// webhook tests not done yet
 describe('Edge Device, Websockets, and Webhooks', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
-    const ecosystemId = droplitEdgeSettings.ecosystemId;
-    const webhookUrl = localSettings.webhookUrl;
+    const ecosystemId = localsettings.ecosystemId;
     let environmentId: string;
     let webhookId: string;
     const deviceIds: string[] = [];
-
+    let webhookUrl: string;
+    let server: http.Server;
+    const port = 3001;
     let callback = function (body: any) {
 
     };
 
+    before(function (done) {
+        server = http.createServer((req, res) => {
+            let body = '';
+            req.on('data', data => {
+                body += data;
+            });
+            req.on('end', () => {
+                callback(body);
+            });
+
+            res.writeHead(200);
+            res.end();
+        });
+
+        server.listen(port, 'localhost', () => {
+            ngrok.connect(port, (err: any, url: any) => {
+                webhookUrl = url;
+
+                done();
+            });
+        });
+    });
+
     after(function (done) {
+        server.close();
+        ngrok.disconnect(webhookUrl);
+
         let environmentDeleted = false;
         let webhookDeleted = false;
 
@@ -370,26 +387,9 @@ describe('Edge Device, Websockets, and Webhooks', function () {
         });
     });
 
-    it('Setup HTTP server', function (done) {
-        http.createServer((req, res) => {
-            let body = '';
-            req.on('data', data => {
-                body += data;
-            });
-            req.on('end', () => {
-                callback(body);
-            });
-
-            res.writeHead(200);
-            res.end();
-        }).listen(80, 'localhost', () => {
-            done();
-        });
-    });
-
     it('Setup webhook', function (done) {
         droplit.webhooks.create(ecosystemId, webhookUrl).then(value => {
-            assert.equal(value.status, 201, 'Webhook successfully created');
+            expect(value.status).to.equal(201);
 
             webhookId = value.body.id;
 
@@ -401,7 +401,7 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
     it('Verify webhook is valid', function (done) {
         droplit.webhooks.invokeWebhook(webhookId).then(value => {
-            assert.equal(value.status, 200, 'Webhook verified');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -411,7 +411,9 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
     it('Get the environment from the running edge server', function (done) {
         droplit.environments.list(ecosystemId).then(value => {
-            assert.notEqual(value.body.items.length, 0, 'There is at least one environment');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
 
             environmentId = value.body.items[0].id;
 
@@ -425,7 +427,9 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
     it('Identify devices that have been created by running edge server', function (done) {
         droplit.devices.list(environmentId).then(value => {
-            assert.notEqual(value.body.items.length, 0, 'Edge server has detected devices');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.length.above(0);
 
             value.body.items.forEach((item, index) => {
                 deviceIds[index] = item.id;
@@ -441,7 +445,7 @@ describe('Edge Device, Websockets, and Webhooks', function () {
         droplit.devices.setServiceProperty(deviceIds[1], 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -451,9 +455,10 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
     it('Verify the property has been set using refresh = false', function (done) {
         droplit.devices.getServiceProperty(deviceIds[1], 'BinarySwitch.switch', 'false').then(value => {
-            assert.equal(value.status, 200, 'Device exists');
-            assert.notEqual(value.body.items.length, 0, 'A service property exists on the device');
-            assert.equal(value.body.items[0].value, 'on', 'Service property successfully changed');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].value).to.equal('on');
 
             done();
         }).catch(error => {
@@ -463,9 +468,10 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
     it('Verify the property has been set using refresh = true', function (done) {
         droplit.devices.getServiceProperty(deviceIds[1], 'BinarySwitch.switch', 'true').then(value => {
-            assert.equal(value.status, 200, 'Device exists');
-            assert.notEqual(value.body.items.length, 0, 'A service property exists on the device');
-            assert.equal(value.body.items[0].value, 'on', 'Service property successfully changed');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].value).to.equal('on');
 
             done();
         }).catch(error => {
@@ -512,30 +518,28 @@ describe('Edge Device, Websockets, and Webhooks', function () {
 
         droplit.devices.setServiceProperty(deviceIds[1], 'BinarySwitch.switch', {
             value: 'on'
-        }).then(value => {
+        });
+
+        setTimeout(() => {
             droplitClient.removeAllListeners('event');
 
             callback = function (body) {
 
             };
 
-            assert.equal(value.status, 200, 'Service property successfully set');
-
             try {
-                assert.ok(websocketSet, 'Set message recieved from websocket');
-                assert.ok(websocketChanged, 'Changed message recieved from websocket');
-                assert.ok(webhookSet, 'Set message received from webhook');
-                assert.ok(webhookChanged, 'Changed message received from webhook');
+                expect(websocketSet).to.be.true;
+                expect(websocketChanged).to.be.true;
+                expect(webhookSet).to.be.true;
+                expect(webhookChanged).to.be.true;
             } catch (error) {
                 done(error);
-                
+
                 return;
             }
 
             done();
-        }).catch(error => {
-            done(error);
-        });
+        }, 5000);
     });
 
     it('Test service methods and events', function (done) {
@@ -575,20 +579,20 @@ describe('Edge Device, Websockets, and Webhooks', function () {
             }
         };
 
-        droplit.devices.callServiceMethod(deviceIds[1], 'Test.doStuff', {}).then(value => {
+        droplit.devices.callServiceMethod(deviceIds[1], 'Test.doStuff', {});
+
+        setTimeout(() => {
             droplitClient.removeAllListeners('event');
 
             callback = function (body) {
 
             };
 
-            assert.equal(value.status, 200, 'Service method successfully called');
-
             try {
-                assert.ok(websocketCall, 'Call message recieved from websocket');
-                assert.ok(websocketEvent, 'Event message recieved from websocket');
-                assert.ok(webhookCall, 'Call message received from webhook');
-                assert.ok(webhookEvent, 'Event message received from webhook');
+                expect(websocketCall).to.be.true;
+                expect(websocketEvent).to.be.true;
+                expect(webhookCall).to.be.true;
+                expect(webhookEvent).to.be.true;
             } catch (error) {
                 done(error);
 
@@ -596,14 +600,12 @@ describe('Edge Device, Websockets, and Webhooks', function () {
             }
 
             done();
-        }).catch(error => {
-            done(error);
-        });
+        }, 5000);
     });
 });
 
 describe('History', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     let ecosystemId: string;
     let environmentId: string;
@@ -619,8 +621,8 @@ describe('History', function () {
 
     it('Create an ecosystem', function (done) {
         droplit.ecosystems.create().then(value => {
-            assert.equal(value.status, 201, 'Ecosystem successfully created');
-            assert.ok(value.body.id, 'Ecosystem has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             ecosystemId = value.body.id;
 
@@ -630,8 +632,8 @@ describe('History', function () {
 
     it('Create an environment', function (done) {
         droplit.environments.create({ ecosystemId }).then(value => {
-            assert.equal(value.status, 201, 'Environment successfully created');
-            assert.ok(value.body.id, 'Environment has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             environmentId = value.body.id;
 
@@ -643,8 +645,8 @@ describe('History', function () {
 
     it('Create a virtual device', function (done) {
         droplit.devices.create({ environmentId }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceId = value.body.id;
 
@@ -658,7 +660,7 @@ describe('History', function () {
         droplit.devices.setServiceProperty(deviceId, 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully changed');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -670,7 +672,7 @@ describe('History', function () {
         droplit.devices.setServiceProperty(deviceId, 'BinarySwitch.switch', {
             value: 'off'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully changed');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -680,7 +682,7 @@ describe('History', function () {
 
     it('Call a service method on the device', function (done) {
         droplit.devices.callServiceMethod(deviceId, 'BinarySwitch.switchOn', {}).then(value => {
-            assert.equal(value.status, 200, 'Service method successfully called');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -690,21 +692,21 @@ describe('History', function () {
 
     it('Verify device history is correct', function (done) {
         droplit.devices.history(deviceId, '').then(value => {
-            assert.equal(value.status, 200, 'Device history successfully retrieved');
-            assert.equal((<any>value.body).items.length, 3, 'Exactly three events found in history');
+            expect(value.status).to.equal(200);
+            expect((<any>value.body).items).to.have.lengthOf(3);
 
             (<any>value.body).items.forEach((item: any, index: number) => {
                 switch (index) {
                     case 0:
-                        assert.equal(item.type, 'call', 'Call event found in history');
+                        expect(item.type).to.equal('call');
                         break;
                     case 1:
-                        assert.equal(item.type, 'set', 'Set event found in history');
-                        assert.equal(item.value, 'off', 'Set off event found in history');
+                        expect(item.type).to.equal('set');
+                        expect(item.value).to.equal('off');
                         break;
                     case 2:
-                        assert.equal(item.type, 'set', 'Set event found in history');
-                        assert.equal(item.value, 'on', 'Set on event found in history');
+                        expect(item.type).to.equal('set');
+                        expect(item.value).to.equal('on');
                         break;
                 }
             });
@@ -717,21 +719,21 @@ describe('History', function () {
 
     it('Verify environment history is correct', function (done) {
         droplit.environments.history(environmentId, '').then(value => {
-            assert.equal(value.status, 200, 'Environment history successfully retrieved');
-            assert.equal((<any>value.body).items.length, 3, 'Exactly three events found in history');
+            expect(value.status).to.equal(200);
+            expect((<any>value.body).items).to.have.lengthOf(3);
 
             (<any>value.body).items.forEach((item: any, index: number) => {
                 switch (index) {
                     case 0:
-                        assert.equal(item.type, 'call', 'Call event found in history');
+                        expect(item.type).to.equal('call');
                         break;
                     case 1:
-                        assert.equal(item.type, 'set', 'Set event found in history');
-                        assert.equal(item.value, 'off', 'Set off event found in history');
+                        expect(item.type).to.equal('set');
+                        expect(item.value).to.equal('off');
                         break;
                     case 2:
-                        assert.equal(item.type, 'set', 'Set event found in history');
-                        assert.equal(item.value, 'on', 'Set on event found in history');
+                        expect(item.type).to.equal('set');
+                        expect(item.value).to.equal('on');
                         break;
                 }
             });
@@ -744,7 +746,7 @@ describe('History', function () {
 });
 
 describe('Users', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     let ecosystemId: string;
     const environmentIds: string[] = [];
@@ -753,7 +755,7 @@ describe('Users', function () {
     let userId: string;
 
     after(function (done) {
-        droplit.setAuthorization(authToken);
+        droplit.setAuthorization(config.authToken);
 
         droplit.ecosystems.deleteEcosystem(ecosystemId).then(value => {
             done();
@@ -764,8 +766,8 @@ describe('Users', function () {
 
     it('Create an ecosystem', function (done) {
         droplit.ecosystems.create().then(value => {
-            assert.equal(value.status, 201, 'Ecosystem successfully created');
-            assert.ok(value.body.id, 'Ecosystem has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             ecosystemId = value.body.id;
 
@@ -777,8 +779,8 @@ describe('Users', function () {
 
     it('Create an environment', function (done) {
         droplit.environments.create({ ecosystemId }).then(value => {
-            assert.equal(value.status, 201, 'Environment successfully created');
-            assert.ok(value.body.id, 'Environment has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             environmentIds[0] = value.body.id;
 
@@ -790,8 +792,8 @@ describe('Users', function () {
 
     it('Create another environment', function (done) {
         droplit.environments.create({ ecosystemId }).then(value => {
-            assert.equal(value.status, 201, 'Environment successfully created');
-            assert.ok(value.body.id, 'Environment has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             environmentIds[1] = value.body.id;
 
@@ -803,8 +805,8 @@ describe('Users', function () {
 
     it('Create a virtual device in the first environment', function (done) {
         droplit.devices.create({ environmentId: environmentIds[0] }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceIds[0] = value.body.id;
 
@@ -816,8 +818,8 @@ describe('Users', function () {
 
     it('Create a virtual device in the second environment', function (done) {
         droplit.devices.create({ environmentId: environmentIds[1] }).then(value => {
-            assert.equal(value.status, 201, 'Device successfully created');
-            assert.ok(value.body.id, 'Device has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             deviceIds[1] = value.body.id;
 
@@ -842,8 +844,8 @@ describe('Users', function () {
                 $label: 'Test User'
             }
         }, '?generateToken=true').then(value => {
-            assert.equal(value.status, 201, 'User successfully created');
-            assert.ok(value.body.token, 'User has a token');
+            expect(value.status).to.equal(201);
+            expect(value.body.token).to.exist;
 
             droplit.setAuthorization(value.body.token);
 
@@ -853,9 +855,21 @@ describe('Users', function () {
         });
     });
 
+    it('Verify the user exists', function (done) {
+        droplit.users.read(userId).then(value => {
+            expect(value.status).to.equal(200);
+            expect((<any>value.body).id).to.exist;
+            expect((<any>value.body).id).to.equal(userId);
+
+            done();
+        }).catch(error => {
+            done(error);
+        });
+    });
+
     it('Fail to list ecosystems', function (done) {
         droplit.ecosystems.list().then(value => {
-            assert.equal(value.body, 'Token type not permitted!', 'User does not have access');
+            expect(value.body).to.equal('Token type not permitted!');
 
             done();
         }).catch(error => {
@@ -865,9 +879,10 @@ describe('Users', function () {
 
     it('List environments', function (done) {
         droplit.environments.list(ecosystemId).then(value => {
-            assert.equal(value.status, 200, 'Environments successfully retrieved');
-            assert.equal(value.body.items.length, 1, 'Exactly one environment listed');
-            assert.equal(value.body.items[0].id, environmentIds[0], 'Environment ID matches the created environment ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].id).to.equal(environmentIds[0]);
 
             done();
         }).catch(error => {
@@ -877,9 +892,10 @@ describe('Users', function () {
 
     it('List devices', function (done) {
         droplit.devices.list(environmentIds[0]).then(value => {
-            assert.equal(value.status, 200, 'Devices successfully retrieved');
-            assert.equal(value.body.items.length, 1, 'Exactly one device listed');
-            assert.equal(value.body.items[0].id, deviceIds[0], 'Device ID matches the created device ID');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].id).to.equal(deviceIds[0]);
 
             done();
         }).catch(error => {
@@ -889,7 +905,7 @@ describe('Users', function () {
 
     it('Fail to list devices in the second environment', function (done) {
         droplit.devices.list(environmentIds[1]).then(value => {
-            assert.equal(value.body, 'Token type not permitted!', 'User does not have access');
+            expect(value.body).to.equal('Token type not permitted!');
 
             done();
         }).catch(error => {
@@ -901,7 +917,7 @@ describe('Users', function () {
         droplit.devices.setServiceProperty(deviceIds[0], 'BinarySwitch.switch', {
             value: 'on'
         }).then(value => {
-            assert.equal(value.status, 200, 'Service property successfully set');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -915,7 +931,7 @@ describe('Users', function () {
                 $label: 'New Label'
             }
         }).then(value => {
-            assert.equal(value.status, 200, 'Device record successfully updated');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -925,8 +941,8 @@ describe('Users', function () {
 
     it('Create a zone', function (done) {
         droplit.zones.create({ environmentId: environmentIds[0] }).then(value => {
-            assert.equal(value.status, 201, 'Zone successfully created');
-            assert.ok(value.body.id, 'Zone has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             zoneId = value.body.id;
 
@@ -938,7 +954,7 @@ describe('Users', function () {
 
     it('Add the first device to the zone', function (done) {
         droplit.zones.addItem(zoneId, deviceIds[0]).then(value => {
-            assert.equal(value.status, 201, 'Device successfully added to the zone');
+            expect(value.status).to.equal(201);
 
             done();
         }).catch(error => {
@@ -948,7 +964,7 @@ describe('Users', function () {
 
     it('Fail to add the second device to the zone', function (done) {
         droplit.zones.addItem(zoneId, deviceIds[1]).then(value => {
-            assert.equal(value.body, 'Token type not permitted!', 'User does not have access');
+            expect(value.body).to.equal('Token type not permitted!');
 
             done();
         }).catch(error => {
@@ -958,7 +974,7 @@ describe('Users', function () {
 
     it('Fail to delete the ecosystem', function (done) {
         droplit.ecosystems.deleteEcosystem(ecosystemId).then(value => {
-            assert.equal(value.body, 'Token type not permitted!', 'User does not have access');
+            expect(value.body).to.equal('Token type not permitted!');
 
             done();
         }).catch(error => {
@@ -968,7 +984,7 @@ describe('Users', function () {
 
     it('Delete the first device', function (done) {
         droplit.devices.delete(deviceIds[0]).then(value => {
-            assert.equal(value.status, 200, 'Device successfully deleted');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -978,7 +994,7 @@ describe('Users', function () {
 
     it('Delete the first environment', function (done) {
         droplit.environments.deleteEnvironment(environmentIds[0]).then(value => {
-            assert.equal(value.status, 200, 'Environment successfully deleted');
+            expect(value.status).to.equal(200);
 
             done();
         }).catch(error => {
@@ -988,7 +1004,7 @@ describe('Users', function () {
 });
 
 describe('Clients', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     let ecosystemId: string;
     let clientId: string;
@@ -1005,8 +1021,8 @@ describe('Clients', function () {
 
     it('Create an ecosystem', function (done) {
         droplit.ecosystems.create().then(value => {
-            assert.equal(value.status, 201, 'Ecosystem successfully created');
-            assert.ok(value.body.id, 'Ecosystem has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body).to.exist;
 
             ecosystemId = value.body.id;
 
@@ -1018,7 +1034,7 @@ describe('Clients', function () {
 
     it('Create a client', function (done) {
         droplit.clients.create(ecosystemId, 'application').then(value => {
-            assert.equal(value.status, 201, 'Client successfully created');
+            expect(value.status).to.equal(201);
 
             clientId = value.body.id;
 
@@ -1028,7 +1044,7 @@ describe('Clients', function () {
 
     it('Verify the client exists', function (done) {
         droplit.clients.info(clientId).then(value => {
-            assert.equal(value.status, 200, 'Client exists');
+            expect(value.status).to.equal(200);
 
             done();
         });
@@ -1038,7 +1054,7 @@ describe('Clients', function () {
         droplit.clients.update(clientId, {
             name: 'Test Client'
         }).then(value => {
-            assert.equal(value.status, 200, 'Client info successfully updated');
+            expect(value.status).to.equal(200);
 
             done();
         });
@@ -1046,8 +1062,9 @@ describe('Clients', function () {
 
     it('Verify the client info has been updated', function (done) {
         droplit.clients.info(clientId).then(value => {
-            assert.equal(value.status, 200, 'Client exists');
-            assert.equal(value.body.name, 'Test Client', 'Client info successfully changed');
+            expect(value.status).to.equal(200);
+            expect(value.body.name).to.exist;
+            expect(value.body.name).to.equal('Test Client');
 
             done();
         });
@@ -1055,7 +1072,7 @@ describe('Clients', function () {
 
     it('Create a client token', function (done) {
         droplit.tokens.create(clientId).then(value => {
-            assert.equal(value.status, 201, 'Token successfully created');
+            expect(value.status).to.equal(201);
 
             tokenId = value.body.id;
             token = value.body.token;
@@ -1066,7 +1083,7 @@ describe('Clients', function () {
 
     it('Verify the token exists', function (done) {
         droplit.tokens.info(clientId, tokenId).then(value => {
-            assert.equal(value.status, 200, 'Token exists');
+            expect(value.status).to.equal(200);
 
             done();
         });
@@ -1076,7 +1093,7 @@ describe('Clients', function () {
         droplit.tokens.updateToken(clientId, tokenId, {
             description: 'Primary access token'
         }).then(value => {
-            assert.equal(value.status, 200, 'Token record successfully updated');
+            expect(value.status).to.equal(200);
 
             done();
         });
@@ -1084,8 +1101,9 @@ describe('Clients', function () {
 
     it('Verify the token record has been updated', function (done) {
         droplit.tokens.info(clientId, tokenId).then(value => {
-            assert.equal(value.status, 200, 'Token exists');
-            assert.equal(value.body.description, 'Primary access token', 'Token record successfully changed');
+            expect(value.status).to.equal(200);
+            expect(value.body.description).to.exist;
+            expect(value.body.description).to.equal('Primary access token');
 
             done();
         });
@@ -1093,8 +1111,11 @@ describe('Clients', function () {
 
     it('Regenerate the client token and verify it is different', function (done) {
         droplit.tokens.regenerateToken(clientId, tokenId).then(value => {
-            assert.equal(value.status, 201, 'Token successfully regenerated');
-            assert.notEqual(value.body.token, token, 'Token successfully changed');
+            expect(value.status).to.equal(201);
+            expect(value.body.token).to.exist;
+            expect(value.body.token).to.not.equal(token);
+
+            token = value.body.token;
 
             done();
         });
@@ -1102,7 +1123,7 @@ describe('Clients', function () {
 });
 
 describe('Service classes', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     let ecosystemId: string;
 
@@ -1116,8 +1137,8 @@ describe('Service classes', function () {
 
     it('Create an ecosystem', function (done) {
         droplit.ecosystems.create().then(value => {
-            assert.equal(value.status, 201, 'Ecosystem successfully created');
-            assert.ok(value.body.id, 'Ecosystem has an ID');
+            expect(value.status).to.equal(201);
+            expect(value.body.id).to.exist;
 
             ecosystemId = value.body.id;
 
@@ -1129,7 +1150,7 @@ describe('Service classes', function () {
 
     it('Create a new service class', function (done) {
         droplit.serviceClasses.create(ecosystemId, 'Test').then(value => {
-            assert.equal(value.status, 201, 'Service class successfully created');
+            expect(value.status).to.equal(201);
 
             done();
         });
@@ -1137,9 +1158,10 @@ describe('Service classes', function () {
 
     it('Verify the service class exists', function (done) {
         droplit.serviceClasses.list(ecosystemId).then(value => {
-            assert.equal(value.status, 200, 'Service classes successfully listed');
-            assert.equal(value.body.items.length, 1, 'Exactly one service class exists');
-            assert.equal(value.body.items[0].name, 'Test', 'Service class name matches the created service class name');
+            expect(value.status).to.equal(200);
+            expect(value.body.items).to.exist;
+            expect(value.body.items).to.have.lengthOf(1);
+            expect(value.body.items[0].name).to.equal('Test');
 
             done();
         });

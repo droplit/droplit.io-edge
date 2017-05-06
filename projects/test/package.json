@@ -15,12 +15,17 @@
     "start": "node run.js"
   },
   "dependencies": {
+    "@types/chai": "^3.5.2",
     "@types/mocha": "^2.2.40",
+    "chai": "^3.5.0",
     "droplit-sdk": "^1.0.3",
     "droplit-websocket-sdk": "^1.0.4",
     "express": "^4.15.2",
-    "mocha": "^3.2.0",
+    "instant": "^1.10.1",
+    "mocha": "^3.3.0",
     "mochawesome": "^2.0.5",
+    "morgan": "^1.8.1",
+    "ngrok": "^2.2.7",
     "openurl": "^1.1.1"
   }
 }

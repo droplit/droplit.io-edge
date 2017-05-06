@@ -26,9 +26,9 @@ const settings = require('../settings.json');                                // 
 const localSettings = require('../localsettings.json');                      // Load local settings file
 export { Transport };                                                        // export Transport interface
 export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
-    localSettings.config  && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
-    require('node-getmac').trim() ||                                         // Primary method of UID retrieval
-    undefined;
+    localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
+        require('node-getmac').trim() ||
+        undefined;
 
 // Uncomment to detect/debug unhandled rejection warning
 // const process = require('process');
@@ -88,7 +88,7 @@ new network.Network(macAddress);
 // Load plugins
 loadPlugins().then(() => {
     // Initialize the transport
-    const headers: { [k: string]: any } = {'x-edge-id': macAddress};
+    const headers: { [k: string]: any } = { 'x-edge-id': macAddress };
     if (settings.ecosystemId) {
         headers['x-ecosystem-id'] = settings.ecosystemId;
     }
