@@ -4,17 +4,17 @@ import * as droplitWebsocketSdk from 'droplit-websocket-sdk';
 import 'mocha';
 import { expect } from 'chai';
 import * as http from 'http';
-import * as ngrok from 'ngrok';
+const ngrok = require('ngrok');
 
-const droplitEdgeSettings = require('../../droplit-edge/localsettings.json');
-const localSettings = require('../localsettings.json');
+const localsettings = require('../../droplit-edge/localsettings.json');
+const config = require('../config.json');
 
 const droplit = new droplitSdk.Droplit();
-droplit.initialize(localSettings.baseUri, localSettings.clientId, localSettings.authToken);
+droplit.initialize(config.baseUri, config.clientId, config.authToken);
 
-const droplitClient = new droplitWebsocketSdk.DroplitClient(localSettings.baseUri);
+const droplitClient = new droplitWebsocketSdk.DroplitClient(config.baseUri);
 droplitClient.on('authenticateRequest', () => {
-    droplitClient.authenticate(localSettings.authToken);
+    droplitClient.authenticate(config.authToken);
 });
 
 // give the edge server time to setup
@@ -325,7 +325,7 @@ describe('Ecosystems, Environments, Devices, and Zones', function () {
 describe('Edge Device, Websockets, and Webhooks', function () {
     this.timeout(10000);
 
-    const ecosystemId = droplitEdgeSettings.ecosystemId;
+    const ecosystemId = localsettings.ecosystemId;
     let environmentId: string;
     let webhookId: string;
     const deviceIds: string[] = [];
@@ -755,7 +755,7 @@ describe('Users', function () {
     let userId: string;
 
     after(function (done) {
-        droplit.setAuthorization(localSettings.authToken);
+        droplit.setAuthorization(config.authToken);
 
         droplit.ecosystems.deleteEcosystem(ecosystemId).then(value => {
             done();
@@ -848,6 +848,18 @@ describe('Users', function () {
             expect(value.body.token).to.exist;
 
             droplit.setAuthorization(value.body.token);
+
+            done();
+        }).catch(error => {
+            done(error);
+        });
+    });
+
+    it('Verify the user exists', function (done) {
+        droplit.users.read(userId).then(value => {
+            expect(value.status).to.equal(200);
+            expect((<any>value.body).id).to.exist;
+            expect((<any>value.body).id).to.equal(userId);
 
             done();
         }).catch(error => {

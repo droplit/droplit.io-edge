@@ -9,12 +9,14 @@ const Mocha = require('mocha');
 const app = express();
 const port = process.env.PORT || 3000;
 
+var running = false;
+
 app.use(morgan('dev'));
 app.use(instant(path.join(__dirname, 'public')));
 
 app.post('/', (req, res) => {
   res.sendStatus(200);
-  
+
   run();
 });
 
@@ -34,18 +36,26 @@ app.listen(port, () => {
 });
 
 function run() {
-  console.log('Running tests');
+  if (running) {
+    console.log('Already running');
+  } else {
+    console.log('Running tests');
 
-  Object.keys(require.cache).forEach(file => {
-    delete require.cache[file];
-  });
+    running = true;
 
-  new Mocha({
-    reporter: 'mochawesome',
-    reporterOptions: {
-      reportDir: path.join(__dirname, 'public'),
-      reportFilename: 'index',
-      inlineAssets: true
-    }
-  }).addFile(path.join(__dirname, 'lib', 'test.js')).run();
+    Object.keys(require.cache).forEach(file => {
+      delete require.cache[file];
+    });
+
+    new Mocha({
+      reporter: 'mochawesome',
+      reporterOptions: {
+        reportDir: path.join(__dirname, 'public'),
+        reportFilename: 'index',
+        inlineAssets: true
+      }
+    }).addFile(path.join(__dirname, 'lib', 'test.js')).run((failures) => {
+      running = false;
+    });
+  }
 }
