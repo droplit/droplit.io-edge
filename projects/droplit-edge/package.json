@@ -31,8 +31,10 @@
     "debug": "sudo DEBUG=droplit,droplit:* node server.js"
   },
   "dependencies": {
+    "@types/finalhandler": "0.0.31",
     "async": "^1.5.2",
     "debug": "^2.2.0",
+    "finalhandler": "^1.0.1",
     "node-getmac": "^1.0.1",
     "retry": "^0.9.0",
     "ws": "^1.1.0"

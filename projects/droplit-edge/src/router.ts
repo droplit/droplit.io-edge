@@ -3,6 +3,7 @@ import * as cache from './cache';       // import local module
 import * as debug from 'debug';         // import npm module
 import * as DP from 'droplit-plugin';   // import npm linked module
 import * as plugin from './plugin';     // import local module
+import * as network from './network';
 import Transport from './transport';    // import local module, used as the websocket connectivity layer between cloud and edge router.
 // Import types
 import {
@@ -24,8 +25,8 @@ const log = debug('droplit:router');                                         // 
 const settings = require('../settings.json');                                // Load settings file
 const localSettings = require('../localsettings.json');                      // Load local settings file
 export { Transport };                                                        // export Transport interface
-export const macAddress =                                                    // use node-getmac library to get hahrdware mac address, used to uniquely identify this device
-    localSettings.config ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
+export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
+    localSettings.config  && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
     require('node-getmac').trim() ||                                         // Primary method of UID retrieval
     undefined;
 
@@ -81,6 +82,8 @@ if (settings.debug && settings.debug.generateHeapDump) {
 if (settings.diagnostics && settings.diagnostics.enabled) {
     require('./diagnostics');
 }
+
+new network.Network(macAddress);
 
 // Load plugins
 loadPlugins().then(() => {
