@@ -79,9 +79,8 @@ if (settings.debug && settings.debug.generateHeapDump) {
 }
 
 // If diagnostics enabled, load local diognostics module
-if (settings.diagnostics && settings.diagnostics.enabled) {
-    require('./diagnostics');
-}
+if (settings.diagnostics && settings.diagnostics.enabled)
+    require('./diagnostics')(this);
 
 new network.Network(macAddress);
 
