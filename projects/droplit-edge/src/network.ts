@@ -53,7 +53,11 @@ export class Network {
             .put((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                res.end('Set WiFi AP?');
+                const result = {
+                    status: 200,
+                    message: "set AP?"
+                };
+                res.end(JSON.stringify(result));
             });
 
     }
