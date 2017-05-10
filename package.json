@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "projects/droplit-edge/server.js",
-    "test": "node projects/test/run.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Droplit, Inc.",
   "contributors": [
