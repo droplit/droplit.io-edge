@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./src/LifxPlugin');
+module.exports = require('./lib/LifxPlugin');
