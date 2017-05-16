@@ -27,7 +27,7 @@ const localSettings = require('../localsettings.json');                      // 
 export { Transport };                                                        // export Transport interface
 export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
-        require('node-getmac').trim() ||
+        require('./node-getmac').trim() ||
         undefined;
 
 // Uncomment to detect/debug unhandled rejection warning
@@ -82,7 +82,8 @@ if (settings.debug && settings.debug.generateHeapDump) {
 if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
 
-new network.Network(macAddress);
+if (localSettings.config && localSettings.config.portOverride)
+    new network.Network(macAddress);
 
 // Load plugins
 loadPlugins().then(() => {

@@ -1,12 +1,16 @@
-//Forked from https://www.npmjs.com/package/node-getmac
+// Forked from https://www.npmjs.com/package/node-getmac
+const localSettings = require('../localsettings.json');
 var execSync = require('child_process').execSync;
 var platform = process.platform;
 
 module.exports = (function () {
+    const linuxNetInterface = (localSettings.config && localSettings.config.LinuxNetInterfaceOverride) ?
+        localSettings.config.LinuxNetInterfaceOverride :
+        'eth0';
     var cmd = {
         win32: 'getmac',
         darwin: 'ifconfig -a',
-        linux: 'cat /sys/class/net/eth0/address'
+        linux: `cat /sys/class/net/${linuxNetInterface}/address`
     }[platform];
 
     var regStr = '((?:[a-z0-9]{2}[:-]){5}[a-z0-9]{2})';
