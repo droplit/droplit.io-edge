@@ -36,9 +36,8 @@ export class Network {
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                let wifis: string = "";
-                let childProcess = require('child_process'), scanWifi;
-                scanWifi = childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
+                let wifis = '';
+                childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
                     if (error)
                         console.log(error);
                     console.log(stdout);
@@ -49,23 +48,20 @@ export class Network {
                     };
                     res.end(JSON.stringify(result));
                 });
-
             })
             .put((req: http.ClientRequest, res: http.ServerResponse) => {
-                let childProcess = require('child_process'), connectWiFi;
-
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
                 let result: any;
-                console.log(req.body);
+                console.log((<any>req).body);
 
-                connectWiFi = childProcess.exec('connectWiFi ' + req.body.SSID + ' ' + req.body.passPhrase, (error: any, stdout: any, stderr: any) => {
+                childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.passPhrase}`, (error: any, stdout: any, stderr: any) => {
                     if (error) {
                         console.log(error);
                     } else {
                         result = {
                             status: 200,
-                            message: "Connected to AP: " + req.body.SSID
+                            message: `Connected to AP: ${(<any>req).body.SSID}`
                         };
                     }
                     console.log(stdout);
