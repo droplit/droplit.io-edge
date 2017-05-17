@@ -1,6 +1,6 @@
 import * as childProcess from 'child_process';
 import * as http from 'http';
-import * as bodyParser from 'body-parser';
+const bodyParser = require('body-parser');
 const router = require('router')();
 
 export class Network {

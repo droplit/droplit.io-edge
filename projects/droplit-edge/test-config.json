@@ -1,9 +1,0 @@
-{
-    "transport": {
-        "host": "ws://load-ws-droplit-io.azurewebsites.net",
-        "host-inactive": "ws://127.0.0.1:3003/edge"
-    },
-    "loadTest": {
-        "numConnections": 150
-    }
-}
