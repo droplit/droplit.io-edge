@@ -12,8 +12,10 @@ const TempLower = 2000; // in Kelvins
 const TempUpper = 6500; // in Kelvins
 
 class HuePlugin extends droplit.DroplitPlugin {
-    constructor() {
+    constructor(config = {}) {
         super();
+
+        this.config = config;
 
         this.bridges = new Map();
 
@@ -194,6 +196,19 @@ class HuePlugin extends droplit.DroplitPlugin {
             const output = Bridge.outputState(success);
             callback(output[state]);
         });
+    }
+
+    pluginMessage(message, callback) {
+        if (message === 'devices' && this.config.diagnostics) {
+            const bridges = Array.from(this.bridges.keys())
+                .map(bridge => ({
+                    key: bridge,
+                    value: Array.from(this.bridges.get(bridge).lights.keys())
+                }));
+            callback(bridges);
+            return true;
+        }
+        return false;
     }
 
     // BasicAuthBridge Implementation

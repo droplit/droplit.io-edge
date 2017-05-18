@@ -6,8 +6,10 @@ const Clients = require('./WemoClient');
 const droplit = require('droplit-plugin');
 
 class WemoPlugin extends droplit.DroplitPlugin {
-    constructor() {
+    constructor(config = {}) {
         super();
+
+        this.config = config;
 
         this.devices = new Map();
 
@@ -70,6 +72,14 @@ class WemoPlugin extends droplit.DroplitPlugin {
         device.removeListener('prop-change', this.propertiesChangedHandler);
         this.devices.delete(identifier);
         this.discoverer.undiscover(identifier);
+    }
+
+    pluginMessage(message, callback) {
+        if (message === 'devices' && this.config.diagnostics) {
+            callback(Array.from(this.devices.keys()));
+            return true;
+        }
+        return false;
     }
 
     // BinarySwitch Implementation

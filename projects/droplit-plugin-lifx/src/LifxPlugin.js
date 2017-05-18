@@ -16,8 +16,10 @@ lifxPacket.setDebug(false);
 let ips = [];
 
 class LifxPlugin extends droplit.DroplitPlugin {
-    constructor() {
+    constructor(config = {}) {
         super();
+
+        this.config = config;
 
         this.bulbs = new Map();
         this.gateways = new Map();
@@ -311,6 +313,14 @@ class LifxPlugin extends droplit.DroplitPlugin {
             this.gateways.delete(gateway.ip);
 
         this.bulbs.delete(bulb.address);
+    }
+
+    pluginMessage(message, callback) {
+        if (message === 'devices' && this.config.diagnostics) {
+            callback(Array.from(this.bulbs.keys()));
+            return true;
+        }
+        return false;
     }
 
     send(packet, address, callback, state) {

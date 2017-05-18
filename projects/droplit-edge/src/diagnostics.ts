@@ -56,7 +56,29 @@ module.exports = (router: any) => {
                 socket.write(`  ${Object.keys(commands).join(', ')}\n\r`),
             local: () =>
                 socket.write(`  ${JSON.stringify(settings)}\n\r`),
-            message: () => {
+            pmsg: (plugin: string, message: string) => {
+                router.sendPluginMessage({ plugin, message }, (value: any) => {
+                    if (Array.isArray(value)) {
+                        let output = '';
+                        value.forEach(v => {
+                            if (v.key && typeof v.key === 'string' && v.value && Array.isArray(v.value)) {
+                                output += `  ${v.key}\n\r`;
+                                if (v.value.length > 0)
+                                    output += `    ${v.value.join('\n\r    ')}\n\r`;
+                                else
+                                    output += '    (none)\n\r';
+                            } else
+                                output = `  ${value.join('\n\r  ')}\n\r`;
+                        });
+                        socket.write(output);
+                    }
+                    else if (typeof value === 'string')
+                        socket.write(value);
+                    else
+                        socket.write(value.toString());
+                });
+            },
+            ping: () => {
                 socket.write('  send message...\n\r');
                 const data = {
                     edgeId: router.macAddress,
@@ -91,7 +113,10 @@ module.exports = (router: any) => {
         };
 
         rl.on('line', line => {
-            if (commands[line])
+            const pluginMessage = /^pmsg\s([\w-]+)(?:\s([\w-]+))?$/.exec(line);
+            if (pluginMessage)
+                commands.pmsg(pluginMessage[1], pluginMessage[2]);
+            else if (commands[line])
                 commands[line]();
             else
                 socket.write(`Unknown command: ${line}\n\r`);
