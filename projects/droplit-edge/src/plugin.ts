@@ -1,12 +1,17 @@
 import { EventEmitter } from 'events';
 import * as DP from 'droplit-plugin';
-import { DeviceMessageResponse } from './types/types';
+import {
+    DeviceMessageResponse,
+    PluginMessageResponse
+} from './types/types';
 const debug = require('debug')('droplit:plugin');
 const pluginMap: { [name: string]: Controller } = {};
+const localSettings = require('../localsettings.json');
 
 export function instance(pluginName: string): Controller {
     try {
-        return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName);
+        const config = localSettings.diagnostics && localSettings.diagnostics.enabled ? { diagnostics: true } : null;
+        return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName, config);
     } catch (error) {
         // plugin failed to load
         console.log('error', error);
@@ -169,6 +174,10 @@ export class Controller extends EventEmitter {
             pluginName: undefined,  // assigned in router
             timestamp: new Date(),
         };
+    }
+
+    public pluginMessage(message: any, callback?: (response: any) => void): PluginMessageResponse {
+        return this.pluginInstance.pluginMessage(message, callback);
     }
 
     // local

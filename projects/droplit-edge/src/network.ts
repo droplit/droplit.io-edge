@@ -1,5 +1,6 @@
+import * as childProcess from 'child_process';
 import * as http from 'http';
-import * as bodyParser from 'body-parser';
+const bodyParser = require('body-parser');
 const router = require('router')();
 
 export class Network {
@@ -7,7 +8,7 @@ export class Network {
     server: http.Server;
     edgeId: string;
 
-    constructor(edgeId: string, port = 80) {
+    constructor(edgeId: string, port = 81) {
         this.PORT = port;
         this.edgeId = edgeId;
         this.server = http.createServer((request, response) => {
@@ -35,29 +36,38 @@ export class Network {
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                const result = {
-                    status: 200,
-                    availableNetworks: [
-                        {
-                            ssid: 'someWIfi',
-                            secured: true
-                        },
-                        {
-                            ssid: 'aWIfi',
-                            secured: false
-                        }
-                    ]
-                };
-                res.end(JSON.stringify(result));
+                let wifis = '';
+                childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
+                    if (error)
+                        console.log(error);
+                    console.log(stdout);
+                    wifis = stdout;
+                    const result = {
+                        status: 200,
+                        items: wifis
+                    };
+                    res.end(JSON.stringify(result));
+                });
             })
-            .put((req: http.ServerRequest, res: http.ServerResponse) => {
+            .put((req: http.ClientRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                const example = {
-                    ssid: 'sdfasdf',
-                    psk: 'w0f8jwidfu0287f'
-                };
-                res.end(example);
+                let result: any;
+                console.log((<any>req).body);
+
+                childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.passPhrase}`, (error: any, stdout: any, stderr: any) => {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        result = {
+                            status: 200,
+                            message: `Connected to AP: ${(<any>req).body.SSID}`
+                        };
+                    }
+                    console.log(stdout);
+                });
+
+                res.end(JSON.stringify(result));
             });
 
     }

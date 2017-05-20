@@ -75,7 +75,7 @@ function runCommand(command, options, callback) {
     });
 }
 
-/**
+/*
  * {cmd: "", cwd: ""}
  */
 function runCommands(commands, callback) {
@@ -146,7 +146,7 @@ gulp.task('build', 'Compiles all TypeScript source files and updates module refe
 
 gulp.task('watch', 'Contiuous build', ['build'], function () {
     projectNames.forEach(project => {
-        gulp.watch(mapPaths(settings.tsfiles, project), [`ts-${project}`]);
+        gulp.watch(mapPaths(Array.prototype.concat(settings.tsfiles, settings.jsFiles), project), [`ts-${project}`]);
     });
 });
 
@@ -200,22 +200,22 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
     runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('stats', 'Get lines of code', function (project) {
     console.log(project);
@@ -227,10 +227,10 @@ gulp.task('stats', 'Get lines of code', function (project) {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('size', 'Get size of code', function (project) {
     console.log(project);
@@ -242,10 +242,10 @@ gulp.task('size', 'Get size of code', function (project) {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 // Deploying
 
@@ -284,9 +284,9 @@ gulp.task('prep', false, function () {
 
 const bumpOpts = {
     options: {
-        major: `when you make incompatible API changes`,
-        minor: `when you add functionality in a backwards-compatible manner`,
-        patch: `when you make backwards-compatible bug fixes`,
+        major: 'when you make incompatible API changes',
+        minor: 'when you add functionality in a backwards-compatible manner',
+        patch: 'when you make backwards-compatible bug fixes',
         project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
     }
 };
@@ -304,9 +304,9 @@ gulp.task('bump', 'Version bump a project.', function (major, minor, patch, proj
         .pipe(gulp.dest('./', { cwd }));
 }, bumpOpts);
 
-gulp.task('debug', 'Debug droplit-edge', function (callback) {
-    var project = 'droplit-edge';
-      G$.nodemon({
+gulp.task('debug', 'Debug droplit-edge', function () {
+    const project = 'droplit-edge';
+    G$.nodemon({
         script: `${project}.js`,
         ext: 'js',
         env: {

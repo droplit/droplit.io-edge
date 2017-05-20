@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./src/SonosPlugin');
+module.exports = require('./lib/SonosPlugin');

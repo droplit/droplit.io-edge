@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./src/PiPlugin');
+module.exports = require('./lib/PiPlugin');

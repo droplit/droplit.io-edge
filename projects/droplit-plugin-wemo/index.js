@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./src/Wemo');
+module.exports = require('./lib/Wemo');

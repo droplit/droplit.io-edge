@@ -12,8 +12,10 @@ const TempLower = 2000; // in Kelvins
 const TempUpper = 6500; // in Kelvins
 
 class HuePlugin extends droplit.DroplitPlugin {
-    constructor() {
+    constructor(config = {}) {
         super();
+
+        this.config = config;
 
         this.bridges = new Map();
 
@@ -94,8 +96,8 @@ class HuePlugin extends droplit.DroplitPlugin {
 
                 this.bridges.set(identifier, bridge);
                 this.onDeviceInfo(bridge.discoverObject(), info => {
-                    if (info.localData && info.localData.hasOwnProperty('username'))
-                        bridge.key = info.localData.username;
+                    if (info.deviceMeta && info.deviceMeta.hasOwnProperty('username'))
+                        bridge.key = info.deviceMeta.username;
                     bridge.getLights();
                 });
                 this.onPropertiesChanged([bridge.propertyObject('Connectivity', 'status', 'online')]);
@@ -113,7 +115,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         }
 
         function onUsername(bridge) {
-            this.onDeviceInfo({ localId: bridge.identifier, localData: { username: bridge.key } });
+            this.onDeviceInfo({ localId: bridge.identifier, deviceMeta: { username: bridge.key } });
         }
 
         function onLightDiscovered(light) {
@@ -194,6 +196,19 @@ class HuePlugin extends droplit.DroplitPlugin {
             const output = Bridge.outputState(success);
             callback(output[state]);
         });
+    }
+
+    pluginMessage(message, callback) {
+        if (message === 'devices' && this.config.diagnostics) {
+            const bridges = Array.from(this.bridges.keys())
+                .map(bridge => ({
+                    key: bridge,
+                    value: Array.from(this.bridges.get(bridge).lights.keys())
+                }));
+            callback(bridges);
+            return true;
+        }
+        return false;
     }
 
     // BasicAuthBridge Implementation

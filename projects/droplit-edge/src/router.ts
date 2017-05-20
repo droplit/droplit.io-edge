@@ -15,6 +15,8 @@ import {
     EventRaised,
     GetPropertiesResponse,
     PluginData,
+    PluginMessage,
+    PluginMessageResponse,
     PluginSetting,
     PluginSettingResponse,
     RequestMethodResponse,
@@ -27,7 +29,7 @@ const localSettings = require('../localsettings.json');                      // 
 export { Transport };                                                        // export Transport interface
 export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
-        require('node-getmac').trim() ||
+        require('./node-getmac').trim() ||
         undefined;
 
 // Uncomment to detect/debug unhandled rejection warning
@@ -78,12 +80,13 @@ if (settings.debug && settings.debug.generateHeapDump) {
     setInterval(writeSnapshot.bind(this), heapInterval);
 }
 
+// WARNING: Diagnostics is meant for internal troubleshooting only, enabling may have security implications
 // If diagnostics enabled, load local diognostics module
-if (settings.diagnostics && settings.diagnostics.enabled) {
-    require('./diagnostics');
-}
+if (settings.diagnostics && settings.diagnostics.enabled)
+    require('./diagnostics')(this);
 
-new network.Network(macAddress);
+if (localSettings.config && localSettings.config.portOverride)
+    new network.Network(macAddress);
 
 // Load plugins
 loadPlugins().then(() => {
@@ -161,6 +164,17 @@ transport.on('#plugin setting', (data: PluginSetting[], cb: (response: any) => v
 
 // Unimplemented plugin data event
 transport.on('#plugin data', (data: PluginData[], cb: (response: any) => void) => { });
+
+// Unimplemented plugin data event
+transport.on('#plugin message', (data: PluginMessage, cb: (response: any) => void) => {
+    let results: PluginMessageResponse;
+
+    if (data)
+        results = sendPluginMessage(data);
+
+    if (cb)
+        cb(results);
+});
 
 // Cloud requests property value
 transport.on('#property get', (data: any, cb: (response: any) => void) => {
@@ -562,6 +576,19 @@ function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {
         });
 
     return { supported: false };
+}
+
+export function sendPluginMessage(message: PluginMessage, callback?: (value: any) => void): PluginMessageResponse {
+    log(`plug msg > ${JSON.stringify(message)}`);
+    const p = plugin.instance(message.plugin);
+    if (!p)
+        return { supported: false };
+
+    return p.pluginMessage(message.message, value => {
+        if (callback)
+            callback(value);
+        // TODO: emit device message response through some manner
+    });
 }
 
 // TODO: Unimplemented. delete?

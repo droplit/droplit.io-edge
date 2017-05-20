@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./src/HuePlugin');
+module.exports = require('./lib/HuePlugin');

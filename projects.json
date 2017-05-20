@@ -49,10 +49,5 @@
         "dependencies": [
             "droplit-edge"
         ]
-    },
-    "test": {
-        "dependencies": [
-            "droplit-edge"
-        ]
     }
 }
