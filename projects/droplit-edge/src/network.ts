@@ -20,7 +20,7 @@ export class Network {
 
         router.use(bodyParser.json());
 
-        router.route('/')
+        router.route('/droplit-edge-info')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
@@ -31,20 +31,20 @@ export class Network {
                 console.log('REQ: RECEIVED: ');
                 res.end(JSON.stringify(result));
             });
-        router.route('/setup')
+        router.route('/config/wifi')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
                 const result = {
                     status: 200,
-                    items: [
+                    availableNetworks: [
                         {
-                            SSID: 'someWIfi',
-                            security: 'PSK'
+                            ssid: 'someWIfi',
+                            secured: true
                         },
                         {
-                            SSID: 'aWIfi',
-                            security: 'WPA'
+                            ssid: 'aWIfi',
+                            secured: false
                         }
                     ]
                 };
@@ -53,7 +53,11 @@ export class Network {
             .put((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                res.end('Set WiFi AP?');
+                const example = {
+                    ssid: 'sdfasdf',
+                    psk: 'w0f8jwidfu0287f'
+                };
+                res.end(example);
             });
 
     }
