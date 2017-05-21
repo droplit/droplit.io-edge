@@ -44,41 +44,29 @@ export class Network {
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-<<<<<<< HEAD
                 let wifis: any[] = [];
-                let childProcess = require('child_process'), scanWifi;
+                let childProcess = require('child_process');
                 // wifis = parseWifi("[Stanley Homes Inc\n][TKIP][PSK] [Stanley Homes Inc-guest][OPEN][] [Foxconn OEM][OPEN][] [droplit][CCMP][PSK] [CableWiFi] [OPEN][]");
-                scanWifi = childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
-                    childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
-                        if (error)
-                            console.log(error);
-                        console.log(stdout);
-                        wifis = parseWifi(stdout);
 
-                        let result: Object = {
-                            status: 200,
-                            wifis: wifis
-                        };
-                        res.end(JSON.stringify(result));
-                    });
-=======
-                let wifis = '';
                 childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
                     if (error)
                         console.log(error);
                     console.log(stdout);
-                    wifis = stdout;
-                    const result = {
-                        items: wifis
+                    wifis = parseWifi(stdout);
+
+                    let result: Object = {
+                        status: 200,
+                        wifis: wifis
                     };
                     res.end(JSON.stringify(result));
->>>>>>> b1f0c2b8eb4d4bb3051a4303f343b83645bc7d41
                 });
+
             })
             .put((req: http.ClientRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
                 let result: any;
+                let childProcess = require('child_process');
                 console.log((<any>req).body);
 
                 childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.passPhrase}`, (error: any, stdout: any, stderr: any) => {
