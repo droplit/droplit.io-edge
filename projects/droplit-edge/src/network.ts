@@ -55,8 +55,7 @@ export class Network {
                     wifis = parseWifi(stdout);
 
                     let result: Object = {
-                        status: 200,
-                        wifis: wifis
+                        items: wifis
                     };
                     res.end(JSON.stringify(result));
                 });
@@ -69,7 +68,7 @@ export class Network {
                 let childProcess = require('child_process');
                 console.log((<any>req).body);
 
-                childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.passPhrase}`, (error: any, stdout: any, stderr: any) => {
+                childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.MODE} ${(<any>req).body.PASS}`, (error: any, stdout: any, stderr: any) => {
                     if (error) {
                         console.log(error);
                     } else {
