@@ -35,7 +35,6 @@ export class Network {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
                 const result = {
-                    status: 200,
                     edgeId: this.edgeId
                 };
                 console.log('REQ: RECEIVED: ');
@@ -45,6 +44,7 @@ export class Network {
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
+<<<<<<< HEAD
                 let wifis: any[] = [];
                 let childProcess = require('child_process'), scanWifi;
                 // wifis = parseWifi("[Stanley Homes Inc\n][TKIP][PSK] [Stanley Homes Inc-guest][OPEN][] [Foxconn OEM][OPEN][] [droplit][CCMP][PSK] [CableWiFi] [OPEN][]");
@@ -61,6 +61,18 @@ export class Network {
                         };
                         res.end(JSON.stringify(result));
                     });
+=======
+                let wifis = '';
+                childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
+                    if (error)
+                        console.log(error);
+                    console.log(stdout);
+                    wifis = stdout;
+                    const result = {
+                        items: wifis
+                    };
+                    res.end(JSON.stringify(result));
+>>>>>>> b1f0c2b8eb4d4bb3051a4303f343b83645bc7d41
                 });
             })
             .put((req: http.ClientRequest, res: http.ServerResponse) => {
@@ -75,7 +87,6 @@ export class Network {
                     } else {
                         res.statusCode = 200;
                         result = {
-                            status: 200,
                             message: `Connected to AP: ${(<any>req).body.SSID}`
                         };
                     }
