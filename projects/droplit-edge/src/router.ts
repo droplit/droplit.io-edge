@@ -3,9 +3,9 @@ import * as cache from './cache';       // import local module
 import * as debug from 'debug';         // import npm module
 import * as DP from 'droplit-plugin';   // import npm linked module
 import * as plugin from './plugin';     // import local module
-import {Network} from './network';
 import Transport from './transport';    // import local module, used as the websocket connectivity layer between cloud and edge router.
 // Import types
+
 import {
     CallMethodResponse,
     DeviceCommand,
@@ -84,16 +84,10 @@ if (settings.debug && settings.debug.generateHeapDump) {
 // If diagnostics enabled, load local diognostics module
 if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
+
 log(`config: ${localSettings.config}`);
 if (localSettings.config && localSettings.config.runHttpServer) {
-    if (localSettings.config && localSettings.config.portOverride) {
-        log('Starting Edge server on ' + localSettings.config.portOverride);
-        new Network(macAddress, localSettings.config.portOverride);
-    }
-    else {
-        log('Starting Edge server on defualt port 81');
-        new Network(macAddress);
-    }
+    require('./network')(macAddress);
 }
 
 
