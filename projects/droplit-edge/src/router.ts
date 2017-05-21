@@ -81,9 +81,17 @@ if (settings.debug && settings.debug.generateHeapDump) {
 // If diagnostics enabled, load local diognostics module
 if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
-
-if (localSettings.config && localSettings.config.portOverride)
+log(`config: ${localSettings.config}`);
+if (localSettings.config && localSettings.config.portOverride) {
+    log('Starting Edge server on ' + localSettings.config.portOverride);
+    new network.Network(macAddress, localSettings.config.portOverride);
+}
+else {
+    log('Starting Edge server on defualt port 81');
     new network.Network(macAddress);
+}
+
+
 
 // Load plugins
 loadPlugins().then(() => {

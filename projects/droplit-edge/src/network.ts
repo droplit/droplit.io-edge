@@ -1,4 +1,3 @@
-import * as childProcess from 'child_process';
 import * as http from 'http';
 const bodyParser = require('body-parser');
 const router = require('router')();
@@ -7,16 +6,26 @@ export class Network {
     private PORT: number;
     server: http.Server;
     edgeId: string;
+    SSID: string;
 
     constructor(edgeId: string, port = 81) {
+        let SSID = edgeId.replace(new RegExp('[:-]+','g'),'');
         this.PORT = port;
         this.edgeId = edgeId;
+        console.log(this.edgeId);
+        this.SSID = SSID
+        console.log(this.SSID);
+        this.SSID = 'hub_'+this.SSID.slice(this.SSID.length - 4, this.SSID.length);
         this.server = http.createServer((request, response) => {
             router(request, response, require('finalhandler')(request, response));
         });
+        
+        console.log(this.SSID);
+        createWap(this.SSID);
+
 
         this.server.listen(this.PORT, () => {
-            console.log('Listening on port:', this.PORT);
+            console.log('Edge Server Listening on Port:', this.PORT);
         });
 
         router.use(bodyParser.json());
@@ -36,33 +45,38 @@ export class Network {
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
-                let wifis: string = "";
+                let wifis: any[] = [];
                 let childProcess = require('child_process'), scanWifi;
+                // wifis = parseWifi("[Stanley Homes Inc\n][TKIP][PSK] [Stanley Homes Inc-guest][OPEN][] [Foxconn OEM][OPEN][] [droplit][CCMP][PSK] [CableWiFi] [OPEN][]");
                 scanWifi = childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
                     if (error)
                         console.log(error);
                     console.log(stdout);
-                    wifis = stdout;
-                    const result = {
+                    wifis = parseWifi(stdout);
+
+                    let result: Object = {
                         status: 200,
-                        items: wifis
+                        wifis: wifis
                     };
                     res.end(JSON.stringify(result));
                 });
 
             })
-            .put((req: http.ClientRequest, res: http.ServerResponse) => {
+            .put((req: any, res: http.ServerResponse) => {
                 let childProcess = require('child_process'), connectWiFi;
-
+                let command = 'connectWiFi ' + req.body.SSID + ' ' + req.body.MODE + ' ' + req.body.PASS;
                 res.setHeader('Content-Type', 'application/json');
-                res.statusCode = 200;
-                let result: any;
-                console.log(req.body);
+                
+                let result: Object;
+                console.log(command);
 
-                connectWiFi = childProcess.exec('connectWiFi ' + req.body.SSID + ' ' + req.body.passPhrase, (error: any, stdout: any, stderr: any) => {
-                    if (error) {
-                        console.log(error);
+                connectWiFi = childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
+                    if (error || stderr) {
+                        console.log(error | stderr);
+                        createWap(this.SSID);
+                        
                     } else {
+                        res.statusCode = 200;
                         result = {
                             status: 200,
                             message: "Connected to AP: " + req.body.SSID
@@ -70,9 +84,71 @@ export class Network {
                     }
                     console.log(stdout);
                 });
-
                 res.end(JSON.stringify(result));
             });
+        function parseWifi(wifi_string: string): any[] {
+            console.log('unparsed_string: ' + wifi_string);
+
+            let wifis: any[] = [];
+            wifi_string = wifi_string.replace('\n', '');
+            console.log('string: ' + wifi_string);
+            let parsedWifi: string[] = wifi_string.split('');
+            let counter: number = 0;
+            let counter2: number = -1;
+            let counter3: number = 0;
+            let counter4: number = 0;
+            let doConcat = true;
+            let name: string = "";
+            let mode: string = "";
+            //console.log('parsedWifi: '+parsedWifi);
+            for (var c in parsedWifi) {
+
+                //console.log('isVariable: ' + isVariable);
+                //console.log('Character: ' + parsedWifi[c]);
+                doConcat = true;
+                if (parsedWifi[c] == '[') {
+                    doConcat = false;
+                    counter2++;
+                    counter4++;
+                }
+                if (parsedWifi[c] == ']') {
+                    doConcat = false;
+                    if (counter4 % 3 == 0) {
+                        // console.log('name: ' + name);
+                        // console.log('mode: ' + mode);
+                        name = name.trim();
+                        mode = mode.trim();
+                        wifis[counter3] = {
+                            "SSID": name,
+                            "MODE": mode
+                        };
+                        name = "";
+                        mode = "";
+                        counter3++;
+                    }
+
+                    counter++;
+                }
+                // console.log('mode: ' + mode + ' ' + counter4);
+                // console.log('name: ' + name + ' ' + counter2);
+                if (doConcat && (counter2 % 3 == 0 || counter2 == 0)) {
+                    name += parsedWifi[c];
+                }
+                if (doConcat && counter4 % 3 == 0) {
+                    mode += parsedWifi[c];
+                }
+            }
+            console.log(JSON.stringify(wifis));
+            return wifis;
+        }
+        function createWap(SSID: string) {
+            let childProcess = require('child_process'), createWAP;
+            let command = 'createWAP ' + SSID;
+            console.log(command);
+            createWAP = childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
+                console.log(stdout);
+            });
+        }
 
     }
 }
