@@ -9,17 +9,17 @@ export class Network {
     SSID: string;
 
     constructor(edgeId: string, port = 81) {
-        let SSID = edgeId.replace(new RegExp('[:-]+','g'),'');
+        let SSID = edgeId.replace(new RegExp('[:-]+', 'g'), '');
         this.PORT = port;
         this.edgeId = edgeId;
         console.log(this.edgeId);
         this.SSID = SSID
         console.log(this.SSID);
-        this.SSID = 'hub_'+this.SSID.slice(this.SSID.length - 4, this.SSID.length);
+        this.SSID = 'hub_' + this.SSID.slice(this.SSID.length - 4, this.SSID.length);
         this.server = http.createServer((request, response) => {
             router(request, response, require('finalhandler')(request, response));
         });
-        
+
         console.log(this.SSID);
         createWap(this.SSID);
 
@@ -30,7 +30,7 @@ export class Network {
 
         router.use(bodyParser.json());
 
-        router.route('/')
+        router.route('/droplit-edge-info')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
@@ -41,7 +41,7 @@ export class Network {
                 console.log('REQ: RECEIVED: ');
                 res.end(JSON.stringify(result));
             });
-        router.route('/setup')
+        router.route('/config/wifi')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
@@ -49,37 +49,34 @@ export class Network {
                 let childProcess = require('child_process'), scanWifi;
                 // wifis = parseWifi("[Stanley Homes Inc\n][TKIP][PSK] [Stanley Homes Inc-guest][OPEN][] [Foxconn OEM][OPEN][] [droplit][CCMP][PSK] [CableWiFi] [OPEN][]");
                 scanWifi = childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
-                    if (error)
-                        console.log(error);
-                    console.log(stdout);
-                    wifis = parseWifi(stdout);
+                    childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
+                        if (error)
+                            console.log(error);
+                        console.log(stdout);
+                        wifis = parseWifi(stdout);
 
-                    let result: Object = {
-                        status: 200,
-                        wifis: wifis
-                    };
-                    res.end(JSON.stringify(result));
+                        let result: Object = {
+                            status: 200,
+                            wifis: wifis
+                        };
+                        res.end(JSON.stringify(result));
+                    });
                 });
-
             })
-            .put((req: any, res: http.ServerResponse) => {
-                let childProcess = require('child_process'), connectWiFi;
-                let command = 'connectWiFi ' + req.body.SSID + ' ' + req.body.MODE + ' ' + req.body.PASS;
+            .put((req: http.ClientRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
-                
-                let result: Object;
-                console.log(command);
+                res.statusCode = 200;
+                let result: any;
+                console.log((<any>req).body);
 
-                connectWiFi = childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-                    if (error || stderr) {
-                        console.log(error | stderr);
-                        createWap(this.SSID);
-                        
+                childProcess.exec(`connectWiFi ${(<any>req).body.SSID} ${(<any>req).body.passPhrase}`, (error: any, stdout: any, stderr: any) => {
+                    if (error) {
+                        console.log(error);
                     } else {
                         res.statusCode = 200;
                         result = {
                             status: 200,
-                            message: "Connected to AP: " + req.body.SSID
+                            message: `Connected to AP: ${(<any>req).body.SSID}`
                         };
                     }
                     console.log(stdout);
@@ -149,6 +146,5 @@ export class Network {
                 console.log(stdout);
             });
         }
-
     }
 }

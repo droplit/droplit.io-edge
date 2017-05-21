@@ -363,6 +363,17 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
     }
 
     /**
+     * Plugin message from upstream
+     *
+     * @param {string} message - message body
+     * @param {(response: any) => void} [callback] Response callback (undefined if no response is expected)
+     */
+    public pluginMessage(message: any, callback?: (response: any) => void): { supported: boolean } {
+        console.log('dp', message);
+        return { supported: true };
+    }
+
+    /**
      * dropDevice - clear device information from memory, disconnect
      *
      * @abstract

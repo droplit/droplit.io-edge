@@ -52,4 +52,5 @@ export interface CallMethodResponse { supported: boolean[]; }
 export interface RequestMethodResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface DeviceMessageResponse { supported: boolean; }
 export interface PluginDataResponse { supported: boolean[]; }
+export interface PluginMessageResponse { supported: boolean; }
 export interface PluginSettingResponse { supported: boolean[]; }

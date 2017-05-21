@@ -146,7 +146,7 @@ gulp.task('build', 'Compiles all TypeScript source files and updates module refe
 
 gulp.task('watch', 'Contiuous build', ['build'], function () {
     projectNames.forEach(project => {
-        gulp.watch(mapPaths(settings.tsfiles, project), [`ts-${project}`]);
+        gulp.watch(mapPaths(Array.prototype.concat(settings.tsfiles, settings.jsFiles), project), [`ts-${project}`]);
     });
 });
 

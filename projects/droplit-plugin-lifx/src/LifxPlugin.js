@@ -6,6 +6,7 @@ const EventEmitter = require('events').EventEmitter;
 const os = require('os');
 const lifxPacket = require('./Packet');
 
+const EmptySource = new Buffer([0, 0, 0, 0]);
 const MulticastPort = 56700;
 const StepSize = parseInt(0xFFFF / 10);
 const TempLower = 2500;
@@ -16,8 +17,10 @@ lifxPacket.setDebug(false);
 let ips = [];
 
 class LifxPlugin extends droplit.DroplitPlugin {
-    constructor() {
+    constructor(config = {}) {
         super();
+
+        this.config = config;
 
         this.bulbs = new Map();
         this.gateways = new Map();
@@ -27,10 +30,17 @@ class LifxPlugin extends droplit.DroplitPlugin {
         this.sequencer = 1;
         this.sequence = {};
 
-        getIps();
+        this.source = EmptySource;
 
-        // Use local IP as source to identify LIFX packets for this server
-        this.source = new Buffer(ips[0].split('.'));
+        this.setSource = () => {
+            getIps();
+
+            // Use local IP as source to identify LIFX packets for this server
+            if (ips.length > 0)
+                this.source = new Buffer(ips[0].split('.'));
+        };
+
+        this.setSource();
 
         // Packet types that should be sequenced
         this.packetMap = {
@@ -128,26 +138,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
             if (propChanges.length > 0)
                 this.onPropertiesChanged(propChanges);
-        }
-
-        // Find IP addresses for this machine
-        function getIps() {
-            if (ips.length > 0)
-                return ips;
-
-            const ipSet = new Set();
-            const interfaces = os.networkInterfaces();
-            Object.keys(interfaces).forEach(name => {
-                if (/(loopback|vmware|internal)/gi.test(name))
-                    return;
-                interfaces[name].forEach(info => {
-                    if (!info.internal && info.family === 'IPv4')
-                        ipSet.add(info.address);
-                });
-            });
-
-            ips = Array.from(ipSet);
-            return ips;
         }
 
         // Processes LIFX packets
@@ -284,6 +274,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 
     discover() {
+        if (this.source.equals(EmptySource))
+            this.setSource();
+
         if (this.sequencer === 0xFF)
             this.sequencer = 0;
         this.sequence[this.sequencer] = {};
@@ -313,10 +306,21 @@ class LifxPlugin extends droplit.DroplitPlugin {
         this.bulbs.delete(bulb.address);
     }
 
+    pluginMessage(message, callback) {
+        if (message === 'devices' && this.config.diagnostics) {
+            callback(Array.from(this.bulbs.keys()));
+            return true;
+        }
+        return false;
+    }
+
     send(packet, address, callback, state) {
         // Ensure address is in buffer form
         if (typeof address === 'string')
             address = new Buffer(address, 'hex');
+
+        if (this.source.equals(EmptySource))
+            this.setSource();
 
         // Add source to all outbound packets
         this.source.copy(packet, 4);
@@ -607,6 +611,27 @@ class LifxBulb extends EventEmitter {
             this.emit('ready', this);
         }
     }
+}
+
+// Find IP addresses for this machine
+function getIps() {
+    if (ips.length > 0)
+        return ips;
+
+    const ipSet = new Set();
+    const interfaces = os.networkInterfaces();
+    Object.keys(interfaces).forEach(name => {
+        if (/(loopback|vmware|internal)/gi.test(name))
+            return;
+        interfaces[name].forEach(info => {
+            if (!info.internal && info.family === 'IPv4')
+                ipSet.add(info.address);
+        });
+    });
+    ipSet.add('0.0.0.0');
+
+    ips = Array.from(ipSet);
+    return ips;
 }
 
 function normalize(value, min, max, mult) {
