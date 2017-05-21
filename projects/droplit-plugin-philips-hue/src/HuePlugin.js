@@ -326,7 +326,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         if (!bridge)
             return;
 
-        bridge.setState(localId, { hue: +value });
+        bridge.setState(localId, { hue: Math.round(+value) });
     }
 
     setMclBrightness(localId, value) {
@@ -382,7 +382,7 @@ class Bridge extends EventEmitter {
         this.promotedMembers = {
             register: 'BasicAuthBridge.register'
         };
-        this.services = [ 'BasicAuthBridge', 'Connectivity' ];
+        this.services = ['BasicAuthBridge', 'Connectivity'];
 
         this.lights = new Map();
     }
@@ -477,7 +477,7 @@ class Bridge extends EventEmitter {
 
                 const light = this.lights.get(identifier);
                 const changes = [];
-                [ 'on', 'bri', 'hue', 'sat', 'ct' ].forEach(state => {
+                ['on', 'bri', 'hue', 'sat', 'ct'].forEach(state => {
                     if (lightData.state[state] !== light.state[state])
                         changes.push({ state, value: lightData.state[state] });
                 });
@@ -623,12 +623,12 @@ class Light {
         switch (this.type) {
             case 'Extended color light':
             case 'Color light':
-                return [ 'BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature', 'Connectivity' ];
+                return ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature', 'Connectivity'];
             case 'Dimmable light':
             case 'Dimmable plug-in unit':
-                return [ 'BinarySwitch', 'DimmableSwitch', 'Connectivity' ];
+                return ['BinarySwitch', 'DimmableSwitch', 'Connectivity'];
             default:
-                return [ 'BinarySwitch', 'Connectivity' ];
+                return ['BinarySwitch', 'Connectivity'];
         }
     }
 
