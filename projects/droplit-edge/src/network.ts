@@ -30,7 +30,7 @@ export class Network {
 
         router.use(bodyParser.json());
 
-        router.route('/droplit-edge-info')
+        router.route('/droplit-edge')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
@@ -40,7 +40,7 @@ export class Network {
                 console.log('REQ: RECEIVED: ');
                 res.end(JSON.stringify(result));
             });
-        router.route('/config/wifi')
+        router.route('/droplit-edge/config/wifi')
             .get((req: http.ServerRequest, res: http.ServerResponse) => {
                 res.setHeader('Content-Type', 'application/json');
                 res.statusCode = 200;
