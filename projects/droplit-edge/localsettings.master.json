@@ -7,12 +7,26 @@
         "droplit-plugin-philips-hue": {
             "enabled": true
         },
-        "droplit-plugin-lifx": {},
-        "droplit-plugin-sonos": {},
-        "droplit-plugin-wemo": {}
+        "droplit-plugin-lifx": {
+            "enabled": true
+        },
+        "droplit-plugin-sonos": {
+            "enabled": true
+        },
+        "droplit-plugin-wemo": {
+            "enabled": true
+        }
     },
-       "promotedMembers": {
-            "motd" : "Host.motd",
-            "announce": "Host.announce"
+    "debug": {
+        "generateHeapDump": false
+    },
+    "diagnostics": {
+        "enabled": false,
+        "port": 8888
+    },
+    "config": {
+        "runHttpServer": false,
+        "portOverride": null,
+        "MACAddressOverride": null
     }
 }
