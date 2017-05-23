@@ -307,9 +307,20 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 
     pluginMessage(message, callback) {
-        if (message === 'devices' && this.config.diagnostics) {
-            callback(Array.from(this.bulbs.keys()));
-            return true;
+        if (this.config.diagnostics) {
+            if (message === 'devices') {
+                callback(Array.from(this.bulbs.keys()));
+                return true;
+            }
+            if (message === 'info') {
+                callback([
+                    `bulbs: ${Array.from(this.bulbs.keys()).join(', ')}`,
+                    `gateways: ${Array.from(this.gateways.keys()).join(', ')}`,
+                    `current sequence: ${this.sequencer}`,
+                    `source: ${Array.from(this.source.values()).join('.')}`
+                ]);
+                return true;
+            }
         }
         return false;
     }
@@ -615,7 +626,7 @@ class LifxBulb extends EventEmitter {
 
 // Find IP addresses for this machine
 function getIps() {
-    if (ips.length > 0)
+    if (ips.length > 0 && !ips[0].equals(EmptySource))
         return ips;
 
     const ipSet = new Set();
