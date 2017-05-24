@@ -10,6 +10,7 @@ const merge = require('merge2');
 const path = require('path');
 
 // load gulp plugins
+var jeditor = require("gulp-json-editor");
 const G$ = require('gulp-load-plugins')({ lazy: true });
 const chalk = G$.util.colors;
 
@@ -200,22 +201,22 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
     runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('stats', 'Get lines of code', function (project) {
     console.log(project);
@@ -227,10 +228,10 @@ gulp.task('stats', 'Get lines of code', function (project) {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('size', 'Get size of code', function (project) {
     console.log(project);
@@ -242,10 +243,10 @@ gulp.task('size', 'Get size of code', function (project) {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 // Deploying
 
@@ -256,23 +257,56 @@ function getPackageName(packagePath) {
 
 gulp.task('package', 'Package the Droplit Edge for embedding', function () {
     const packageFileName = `${getPackageName(settings.edgeDir)}.tar`;
-    gulp.src(settings.packageFiles, { follow: true })
+    return gulp.src(settings.packageFiles, { follow: true })
+        .pipe(gulp.dest(`dist/droplit-edge`))
         .pipe(G$.debug({ title: 'package:' }))
         .pipe(G$.tar(packageFileName))
         .pipe(G$.gzip())
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('clean-dist', 'Clean dist', function () {
+gulp.task('clean-dist', false, function () {
     return del('dist');
 });
-gulp.task('build-dist', 'Clean dist', ['clean-dist'], function () {
-    return gulp.src(settings.packageFiles, { follow: true })
-        .pipe(gulp.dest('dist'));
+
+gulp.task('move-temp', false, function () {
+    return gulp.src(settings.edgeFiles, { follow: true })
+        .pipe(gulp.dest('temp/droplit-edge'));
+});
+
+gulp.task('clean-temp', false, function () {
+    return del('temp');
+});
+
+gulp.task('setup-package', false, function () {
+    return gulp.src('./temp/droplit-edge/package.json')
+        .pipe(jeditor(function (json) {
+            const localConfig = require('./temp/droplit-edge/localsettings.json');
+            Object.keys(localConfig.plugins).forEach(plugin => {
+                if (localConfig.plugins[plugin] && localConfig.plugins[plugin].enabled != false) {
+                    json.dependencies[plugin] = `../../projects/${plugin}`;
+                }
+            });
+            return json;
+        }))
+        .pipe(gulp.dest('temp/droplit-edge/'));
+});
+
+gulp.task('pre-install-dist', false, function () {
+    return del('temp/droplit-edge/node_modules');
+});
+
+gulp.task('install-dist', false, function (callback) {
+
+    runCommand('npm install', { cwd: 'temp/droplit-edge' }, callback)
+});
+
+gulp.task('build-dist', false, function (callback) {
+    G$.sequence('clean-dist', 'build', 'unlink', 'move-temp', 'setup-package', 'pre-install-dist', 'install-dist', 'package', 'clean-temp', callback);
 });
 
 gulp.task('deploy', 'Glob the Droplit Edge for embedding', function (callback) {
-    G$.sequence('setup', 'build', 'build-dist', callback);
+    G$.sequence('setup', 'build-dist', callback);
 });
 
 // Testing for improving package

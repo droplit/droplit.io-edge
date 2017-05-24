@@ -17,6 +17,8 @@
       "node": true
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "droplit-plugin": "../droplit-plugin"
+  },
   "devDependencies": {}
 }

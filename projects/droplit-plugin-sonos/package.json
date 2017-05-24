@@ -18,6 +18,7 @@
     }
   },
   "dependencies": {
-    "sonos-discovery": "git+https://github.com/droplit/node-sonos-discovery.git#master"
+    "sonos-discovery": "git+https://github.com/droplit/node-sonos-discovery.git#master",
+    "droplit-plugin": "../droplit-plugin"
   }
 }

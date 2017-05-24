@@ -49,11 +49,12 @@
         "projects/{project}/src/**/*.json"
     ],
     "edgeDir": "./projects/droplit-edge",
+    "edgeFiles": "./projects/droplit-edge/**/*.*",
     "packageFiles": [
-        "projects/droplit-edge/**/*.*",
-        "!projects/droplit-edge/**/*.ts",
-        "!projects/droplit-edge/**/*.map",
-        "!projects/droplit-edge/**/*.md",
-        "!projects/droplit-edge/**/*.markdown"
+        "temp/droplit-edge/**/*.*",
+        "!temp/droplit-edge/**/*.ts",
+        "!temp/droplit-edge/**/*.map",
+        "!temp/droplit-edge/**/*.md",
+        "!temp/droplit-edge/**/*.markdown"
     ]
 }
