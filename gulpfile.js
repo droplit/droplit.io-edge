@@ -282,11 +282,22 @@ gulp.task('setup-package', false, function () {
     return gulp.src('./temp/droplit-edge/package.json')
         .pipe(jeditor(function (json) {
             const localConfig = require('./temp/droplit-edge/localsettings.json');
-            Object.keys(localConfig.plugins).forEach(plugin => {
-                if (localConfig.plugins[plugin] && localConfig.plugins[plugin].enabled != false) {
-                    json.dependencies[plugin] = `../../projects/${plugin}`;
-                }
-            });
+            if (Array.isArray(localConfig.plugins))
+                localConfig.plugins.forEach(plugin => {
+                    if (typeof plugin === 'string') {
+                        json.dependencies[plugin] = `../../projects/${plugin}`;
+                        return;
+                    }
+
+                    if (typeof plugin === 'object' && plugin.hasOwnProperty('name') && plugin.enabled !== false)
+                        json.dependencies[plugin.name] = `../../projects/${plugin.name}`;
+                });
+            else
+                Object.keys(localConfig.plugins).forEach(plugin => {
+                    if (localConfig.plugins[plugin] && localConfig.plugins[plugin].enabled !== false) {
+                        json.dependencies[plugin] = `../../projects/${plugin}`;
+                    }
+                });
             return json;
         }))
         .pipe(gulp.dest('temp/droplit-edge/'));
