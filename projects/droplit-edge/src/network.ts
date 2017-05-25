@@ -47,26 +47,28 @@ module.exports = (edgeId: string) => {
         .get((req: http.ServerRequest, res: http.ServerResponse) => {
             res.setHeader('Content-Type', 'application/json');
             res.statusCode = 200;
-            let wifis: any[] = [];
-            const childProcess = require('child_process');
-            // wifis = parseWifi('[Stanley Homes Inc\n][TKIP][PSK] [Stanley Homes Inc-guest][OPEN][] [Foxconn OEM][OPEN][] [droplit][CCMP][PSK] [CableWiFi] [OPEN][]');
+            // const childProcess = require('child_process');
+            const items = parseWifi('  [Stanley Homes Inc][TKIP][PSK]\n[Stanley Homes Inc-guest][OPEN][]\n[Foxconn OEM][OPEN][]\n[droplit][CCMP][PSK]\n[CableWiFi][OPEN][] ');
 
-            childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
-                if (error) {
-                    res.statusCode = 501;
-                    const message = {message: `${error}`};
-                    res.end(JSON.stringify(message));
-                    log(error);
-                }
-                log(stdout);
-                wifis = parseWifi(stdout);
+            // childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
+            //     if (error) {
+            //         res.statusCode = 501;
+            //         const message = {message: `${error}`};
+            //         res.end(JSON.stringify(message));
+            //         log(error);
+            //     }
+            //     log(stdout);
+            //     wifis = parseWifi(stdout);
 
-                const result: Object = {
-                    items: wifis
-                };
-                res.end(JSON.stringify(result));
-            });
-
+            //     const result: Object = {
+            //         items: wifis
+            //     };
+            //     res.end(JSON.stringify(result));
+            // });
+            const result = {
+                items
+            };
+            res.end(JSON.stringify(result));
         })
         .put((req: any, res: http.ServerResponse) => {
             res.setHeader('Content-Type', 'application/json');
@@ -138,58 +140,24 @@ module.exports = (edgeId: string) => {
         });
     function parseWifi(wifi_string: string): any[] {
         log(`unparsed_string: ${wifi_string}`);
-
-        const wifis: any[] = [];
-        wifi_string = wifi_string.replace('\n', '');
-        log(`string: ${wifi_string}`);
-        const parsedWifi: string[] = wifi_string.split('');
-        let counter = 0;
-        let counter2 = -1;
-        let counter3 = 0;
-        let counter4 = 0;
-        let doConcat = true;
-        let name = '';
-        let mode = '';
-        // log('parsedWifi: '+parsedWifi);
-        for (const c in parsedWifi) {
-
-            // log('isVariable: ' + isVariable);
-            // log('Character: ' + parsedWifi[c]);
-            doConcat = true;
-            if (parsedWifi[c] === '[') {
-                doConcat = false;
-                counter2++;
-                counter4++;
-            }
-            if (parsedWifi[c] === ']') {
-                doConcat = false;
-                if (counter4 % 3 === 0) {
-                    // log('name: ' + name);
-                    // log('mode: ' + mode);
-                    name = name.trim();
-                    mode = mode.trim();
-                    wifis[counter3] = {
-                        SSID: name,
-                        MODE: mode
-                    };
-                    name = '';
-                    mode = '';
-                    counter3++;
-                }
-
-                counter++;
-            }
-            // log('mode: ' + mode + ' ' + counter4);
-            // log('name: ' + name + ' ' + counter2);
-            if (doConcat && (counter2 % 3 === 0 || counter2 === 0)) {
-                name += parsedWifi[c];
-            }
-            if (doConcat && counter4 % 3 === 0) {
-                mode += parsedWifi[c];
-            }
-        }
-        log(JSON.stringify(wifis));
-        return wifis;
+        const items = wifi_string
+            .trim() // remove trailing whitespaces and \n at end of string
+            .split('\n') // break out each output into its own line
+            .map(line => line.trim().slice(1, line.length - 1).split('][')) // return an array of things inside [...]
+            .reduce((wifis: Object[], line: string[]) => {
+                const item = {
+                    SSID: '',
+                    CIPHER: '',
+                    AUTH_SUITE: ''
+                };
+                item.SSID = line[0];
+                item.CIPHER = line[1];
+                item.AUTH_SUITE = line[2];
+                wifis.push(item);
+                return wifis;
+            }, []);
+        log(`items: ${JSON.stringify(items, null, 2)}`);
+        return items;
     }
     function createWap(SSID: string) {
         const childProcess = require('child_process');
