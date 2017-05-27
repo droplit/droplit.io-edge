@@ -193,14 +193,8 @@ export class VoyagerClient extends events.EventEmitter {
         });
     }
     setAway(value: boolean) {
-        let away: number;
-        if (value) {
-            away = Away['away'];
-        } else {
-            away = Away['home'];
-        }
-        this.setting('away', away).then(result => {
-        });
+        const away = value ? Away['away'] : Away['home'];
+        this.setting('away', away).then(result => { });
     }
     // getAirFilter(callback: any) {
     //     this.alert(localId).then((result) => {
@@ -392,12 +386,10 @@ export class VoyagerClient extends events.EventEmitter {
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body);
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body),
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     reject(error);
@@ -412,12 +404,10 @@ export class VoyagerClient extends events.EventEmitter {
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body).sensors;
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body).sensors,
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     console.log(error);
@@ -433,12 +423,10 @@ export class VoyagerClient extends events.EventEmitter {
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body);
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body),
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     console.log(error);
@@ -667,12 +655,10 @@ export class VoyagerClient extends events.EventEmitter {
         }, (error, response, body) => {
             this.device.deferred = true;
             if (!error) {
-                const res: Response = { status: response.statusCode };
-                if (body === '') {
-                    res.body = null;
-                } else {
-                    res.body = JSON.parse(body);
-                }
+                const res: Response = {
+                    body: body === '' ? null : JSON.parse(body),
+                    status: response.statusCode
+                };
                 callback(res);
             }
         });
