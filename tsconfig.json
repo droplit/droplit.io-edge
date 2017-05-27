@@ -14,5 +14,8 @@
     "include": [
         "typings/index.d.ts",
         "projects/**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }
