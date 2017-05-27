@@ -35,7 +35,7 @@ export class Discoverer extends events.EventEmitter {
             }
 
             // let ipMatch = 'http://' + headers.LOCATION.match(ipRegEx)[1] + '/';
-            const ipMatch = 'http://' + rinfo.address + '/';
+            const ipMatch = `http://${rinfo.address}/`;
 
             const identifier = idMatch[1];
             if (identifier in this.found) {

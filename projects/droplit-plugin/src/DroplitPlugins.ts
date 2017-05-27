@@ -329,7 +329,7 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
      *
      * @abstract
      */
-    public abstract discover(): void
+    public abstract discover(): void;
 
     /**
      * Start tracking the specified device
@@ -379,7 +379,7 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
      * @abstract
      * @param {string} idenrifier (description)
      */
-    public abstract dropDevice(localId: string): boolean
+    public abstract dropDevice(localId: string): boolean;
 
     /**
      * Events

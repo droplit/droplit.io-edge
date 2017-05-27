@@ -388,7 +388,7 @@ export class VoyagerClient extends events.EventEmitter {
         // console.log('ip:', this.device.address);
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/info'
+                url: `${this.device.address}query/info`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
@@ -408,7 +408,7 @@ export class VoyagerClient extends events.EventEmitter {
     sensor(): Promise<Response> {
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/sensors'
+                url: `${this.device.address}query/sensors`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
@@ -429,7 +429,7 @@ export class VoyagerClient extends events.EventEmitter {
     alert(): Promise<Response> {
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/alerts'
+                url: `${this.device.address}query/alerts`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
@@ -613,7 +613,7 @@ export class VoyagerClient extends events.EventEmitter {
     }
     controlPost(object: any) {
         return new Promise<Response>((resolve, reject) => {
-            request.post(this.device.address + 'control',
+            request.post(`${this.device.address}control`,
                 { form: object },
                 (error, response, body) => {
                     this.device.deferred = true;
@@ -639,7 +639,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             const object: any = {};
             object[property] = value;
-            request.post(this.device.address + 'settings',
+            request.post(`${this.device.address}settings`,
                 { form: object },
                 (error, response, body) => {
                     this.device.deferred = true;
