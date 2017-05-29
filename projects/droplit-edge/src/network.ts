@@ -26,7 +26,7 @@ module.exports = (edgeId: string) => {
         router(request, response, require('finalhandler')(request, response));
     });
     log(SSID);
-    createWap(SSID);
+    // createWap(SSID);
     server.listen(PORT, () => {
         log('Edge Server Listening on Port:', PORT);
     });
