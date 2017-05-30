@@ -39,7 +39,7 @@
     "retry": "^0.9.0",
     "router": "^1.3.0",
     "ws": "^1.1.0",
-    "droplit-plugin": "../droplit-plugin"
+    "droplit-plugin": "../../projects/droplit-plugin"
   },
   "devDependencies": {
     "strong-service-install": "^2.0.3"
