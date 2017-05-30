@@ -4,6 +4,7 @@ import * as debug from 'debug';         // import npm module
 import * as DP from 'droplit-plugin';   // import npm linked module
 import * as plugin from './plugin';     // import local module
 import Transport from './transport';    // import local module, used as the websocket connectivity layer between cloud and edge router.
+import { Network } from './network';
 // Import types
 
 import {
@@ -87,7 +88,7 @@ if (settings.diagnostics && settings.diagnostics.enabled)
 
 log(`config: ${localSettings.config}`);
 if (localSettings.config && localSettings.config.runHttpServer) {
-    require('./network')(macAddress);
+    Network(macAddress);
 }
 
 

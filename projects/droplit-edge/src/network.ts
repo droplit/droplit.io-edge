@@ -1,18 +1,19 @@
 import * as http from 'http';
 import * as debug from 'debug';
-const router = require('router')();
+export const router = require('router')();
 const bodyParser = require('body-parser');
 const log = debug('droplit:network');
 const localSettings = require('../localsettings.json');
 let PORT: number;
 let server: http.Server;
 let SSID: string;
-interface WifiObject {
+export interface WifiObject {
     SSID: string;
     CIPHER: string;
     AUTH_SUITE: string;
 }
-module.exports = (edgeId: string) => {
+export const Network = (edgeId: string) => {
+    let command = '';
     SSID = edgeId.replace(new RegExp('[:-]+', 'g'), '');
     PORT = 81;
     if (localSettings.config && localSettings.config.portOverride) {
@@ -26,7 +27,9 @@ module.exports = (edgeId: string) => {
         router(request, response, require('finalhandler')(request, response));
     });
     log(SSID);
-    createWap(SSID);
+    createWap(SSID)
+        .then(() => log(`AP ${SSID} Created`))
+        .catch(() => log('failed to create AP'));
     server.listen(PORT, () => {
         log('Edge Server Listening on Port:', PORT);
     });
@@ -51,32 +54,37 @@ module.exports = (edgeId: string) => {
         .put((req: any, res: http.ServerResponse) => {
             res.setHeader('Content-Type', 'application/json');
             res.statusCode = 200;
-            let command = '';
             // const childProcess = require('child_process');
             log(`request body: ${JSON.stringify((<any>req).body, null, 2)}`);
             if (req.body && req.body.SSID) {
-                scanWifi().then((theWifis: WifiObject[]) => theWifis.forEach(wifi => {
-                    log(`wifi ${JSON.stringify(wifi, null, 2)}`);
-                    if (wifi.SSID === req.body.SSID) {
-                        if (wifi.AUTH_SUITE) {
-                            switch (wifi.AUTH_SUITE) {
-                                case 'PSK':
-                                    command = `connectWiFi ${req.body.SSID} psk-mixed ${req.body.PASS}`;
-                                    break;
-                                case 'WPA':
-                                    command = `connectWiFi ${req.body.SSID} wpa-mixed ${req.body.PASS}`;
-                                default:
-                                    command = `connectWiFi ${req.body.SSID} ${wifi.AUTH_SUITE} ${req.body.PASS}`;
-                                    break;
+                scanWifi()
+                    .then((theWifis: WifiObject[]) => theWifis.forEach(wifi => {
+                        log(`wifi ${JSON.stringify(wifi, null, 2)}`);
+                        if (wifi.SSID === req.body.SSID) {
+                            if (wifi.AUTH_SUITE) {
+                                switch (wifi.AUTH_SUITE) {
+                                    case 'PSK':
+                                        command = `connectWiFi ${req.body.SSID} psk-mixed ${req.body.PASS}`;
+                                        break;
+                                    case 'WPA':
+                                        command = `connectWiFi ${req.body.SSID} wpa-mixed ${req.body.PASS}`;
+                                    default:
+                                        command = `connectWiFi ${req.body.SSID} ${wifi.AUTH_SUITE} ${req.body.PASS}`;
+                                        break;
+                                }
+                                connectWifi(command)
+                                    .then(() => res.end())
+                                    .catch(() => res.end());
                             }
-                            connectWifi(command, req, res);
+                            else {
+                                command = `connectWiFi ${req.body.SSID}`;
+                                connectWifi(command)
+                                    .then(() => res.end())
+                                    .catch(() => res.end());
+                            }
                         }
-                        else {
-                            command = `connectWiFi ${req.body.SSID}`;
-                            connectWifi(command, req, res);
-                        }
-                    }
-                })).catch(error => log(error));
+                    }))
+                    .catch(error => log(error));
             }
             else {
                 res.statusCode = 400;
@@ -108,9 +116,18 @@ module.exports = (edgeId: string) => {
         const childProcess = require('child_process');
         const command = `createWAP ${SSID}`;
         log(command);
-        childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-            log(stdout);
+        return new Promise((resolve, reject) => {
+            childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
+                log(stdout);
+                if (!error) {
+                    resolve();
+                } else {
+                    reject();
+                }
+
+            });
         });
+
     }
     function scanWifi() {
         const childProcess = require('child_process');
@@ -126,23 +143,29 @@ module.exports = (edgeId: string) => {
             // resolve(parseWifi('[Stanley Homes Inc][TKIP][PSK]\n[Stanley Homes Inc-guest][OPEN][]\n[Foxconn OEM][OPEN][]\n[droplit][CCMP][PSK]\n[CableWiFi][OPEN][]'));
         });
     }
-    function connectWifi(command: string, req: any, res: http.ServerResponse) {
+    function connectWifi(command: string) {
         const childProcess = require('child_process');
         log(`command: ${command}`);
-        childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-            if (error) {
-                log(error);
-                createWap(SSID);
-                res.statusCode = 500;
-                res.end(error);
-            } else {
-                res.statusCode = 200;
-                const result = {
-                    message: `Connected to AP: ${(<any>req).body.SSID}`
-                };
-                res.end(JSON.stringify(result));
-            }
-            log(stdout);
+        return new Promise((resolve, reject) => {
+            childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
+                if (error) {
+                    log(error);
+                    createWap(SSID)
+                        .then(() => log(`AP ${SSID} Created`))
+                        .catch(() => log('failed to create AP'));
+                    reject(500);
+                } else {
+                    resolve(200);
+                }
+            });
         });
     }
+
+    return {
+        parseWifi,
+        connectWifi,
+        scanWifi,
+        createWap,
+        command
+    };
 };
