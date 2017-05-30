@@ -83,7 +83,7 @@ export class VoyagerPlugin extends droplit.DroplitPlugin {
                 return;
             }
 
-            this.devices[identifier].device.address = 'http://' + address + '/';
+            this.devices[identifier].device.address = `http://${address}/`;
             this.onDeviceInfo({ address, identifier });
         }
     }

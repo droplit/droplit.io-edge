@@ -39,7 +39,7 @@ export const macAddress =                                                    // 
 //     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 // });
 
-declare var Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
+declare const Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
 
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
@@ -90,9 +90,6 @@ log(`config: ${localSettings.config}`);
 if (localSettings.config && localSettings.config.runHttpServer) {
     Network(macAddress);
 }
-
-
-
 
 // Load plugins
 loadPlugins().then(() => {

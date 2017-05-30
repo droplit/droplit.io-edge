@@ -193,14 +193,8 @@ export class VoyagerClient extends events.EventEmitter {
         });
     }
     setAway(value: boolean) {
-        let away: number;
-        if (value) {
-            away = Away['away'];
-        } else {
-            away = Away['home'];
-        }
-        this.setting('away', away).then(result => {
-        });
+        const away = value ? Away['away'] : Away['home'];
+        this.setting('away', away).then(result => { });
     }
     // getAirFilter(callback: any) {
     //     this.alert(localId).then((result) => {
@@ -388,16 +382,14 @@ export class VoyagerClient extends events.EventEmitter {
         // console.log('ip:', this.device.address);
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/info'
+                url: `${this.device.address}query/info`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body);
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body),
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     reject(error);
@@ -408,16 +400,14 @@ export class VoyagerClient extends events.EventEmitter {
     sensor(): Promise<Response> {
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/sensors'
+                url: `${this.device.address}query/sensors`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body).sensors;
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body).sensors,
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     console.log(error);
@@ -429,16 +419,14 @@ export class VoyagerClient extends events.EventEmitter {
     alert(): Promise<Response> {
         return new Promise<Response>((resolve, reject) => {
             request.get({
-                url: this.device.address + 'query/alerts'
+                url: `${this.device.address}query/alerts`
             }, (error, response, body) => {
                 this.device.deferred = true;
                 if (!error) {
-                    const res: Response = { status: response.statusCode };
-                    if (body === '') {
-                        res.body = null;
-                    } else {
-                        res.body = JSON.parse(body);
-                    }
+                    const res: Response = {
+                        body: body === '' ? null : JSON.parse(body),
+                        status: response.statusCode
+                    };
                     resolve(res);
                 } else {
                     console.log(error);
@@ -613,7 +601,7 @@ export class VoyagerClient extends events.EventEmitter {
     }
     controlPost(object: any) {
         return new Promise<Response>((resolve, reject) => {
-            request.post(this.device.address + 'control',
+            request.post(`${this.device.address}control`,
                 { form: object },
                 (error, response, body) => {
                     this.device.deferred = true;
@@ -639,7 +627,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             const object: any = {};
             object[property] = value;
-            request.post(this.device.address + 'settings',
+            request.post(`${this.device.address}settings`,
                 { form: object },
                 (error, response, body) => {
                     this.device.deferred = true;
@@ -667,12 +655,10 @@ export class VoyagerClient extends events.EventEmitter {
         }, (error, response, body) => {
             this.device.deferred = true;
             if (!error) {
-                const res: Response = { status: response.statusCode };
-                if (body === '') {
-                    res.body = null;
-                } else {
-                    res.body = JSON.parse(body);
-                }
+                const res: Response = {
+                    body: body === '' ? null : JSON.parse(body),
+                    status: response.statusCode
+                };
                 callback(res);
             }
         });

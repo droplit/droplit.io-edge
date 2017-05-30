@@ -67,7 +67,7 @@
     "merge2": "^1.0.2",
     "mocha": "^3.4.2",
     "source-map-support": "^0.4.0",
-    "tslint": "5.1.0",
+    "tslint": "5.3.2",
     "typescript": "2.3.1"
   }
 }

@@ -148,7 +148,7 @@ export default class Transport extends EventEmitter {
         if (packet.r === true) {
             // log(`onMessage: request expecting a result`);
             // it's a request expecting a response
-            this.emit('#' + packet.m, packet.d, (response: any): void => {
+            this.emit(`#${packet.m}`, packet.d, (response: any): void => {
                 const responseMessageId = packet.i;
                 const responsePacket: any = { d: response, r: responseMessageId };
                 this._send(JSON.stringify(responsePacket));
@@ -170,7 +170,7 @@ export default class Transport extends EventEmitter {
         } else {
             // log(`onMessage: it's a normal message`);
             // it's a normal message
-            this.emit('#' + packet.m, packet.d);
+            this.emit(`#${packet.m}`, packet.d);
         }
     }
 
