@@ -99,8 +99,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
             propChanges.push(bulb.propertyObject('DimmableSwitch', 'brightness', output.ds_brightness));
             if (bulb.services.some(s => s === 'ColorTemperature')) {
                 propChanges.push(bulb.propertyObject('ColorTemperature', 'temperature', output.temp));
-                propChanges.push(bulb.propertyObject('ColorTemperature', 'tempLowerLimit', output.tempLowerLimit));
-                propChanges.push(bulb.propertyObject('ColorTemperature', 'tempUpperLimit', output.tempUpperLimit));
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'temperatureMin', output.temperatureMin));
+                propChanges.push(bulb.propertyObject('ColorTemperature', 'temperatureMax', output.temperatureMax));
             }
             if (bulb.services.some(s => s === 'LightColor')) {
                 propChanges.push(bulb.propertyObject('LightColor', 'brightness', output.mcl_brightness));
@@ -581,8 +581,8 @@ class LifxBulb extends EventEmitter {
             on: state.power > 0 ? 'on' : 'off',
             sat: state.saturation,
             temp: state.kelvin,
-            tempLowerLimit: TempLower,
-            tempUpperLimit: TempUpper
+            temperatureMin: TempLower,
+            temperatureMax: TempUpper
         };
     }
 

@@ -135,9 +135,9 @@ class HuePlugin extends droplit.DroplitPlugin {
                     if (c.state === 'ct')
                         p.push(data.light.propertyObject('ColorTemperature', 'temperature', output.ct));
                     if (c.state === 'temp_low')
-                        p.push(data.light.propertyObject('ColorTemperature', 'tempLowerLimit', c.value));
+                        p.push(data.light.propertyObject('ColorTemperature', 'temperatureMin', c.value));
                     if (c.state === 'temp_high')
-                        p.push(data.light.propertyObject('ColorTemperature', 'tempUpperLimit', c.value));
+                        p.push(data.light.propertyObject('ColorTemperature', 'temperatureMax', c.value));
                 }
                 if (data.light.services.some(s => s === 'LightColor')) {
                     if (c.state === 'bri')
