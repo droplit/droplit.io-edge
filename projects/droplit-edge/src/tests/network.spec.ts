@@ -63,4 +63,3 @@ describe('connect hub to wifi', () => {
         });
     });
 });
-
