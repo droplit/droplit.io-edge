@@ -61,13 +61,13 @@
     "gulp-sloc": "^1.0.4",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tar": "^1.9.0",
-    "gulp-tslint": "^7.0.1",
+    "gulp-tslint": "8.1.0",
     "gulp-typescript": "^3.1.4",
     "gulp-util": "^3.0.7",
     "merge2": "^1.0.2",
     "mocha": "^3.4.2",
     "source-map-support": "^0.4.0",
-    "tslint": "5.3.2",
+    "tslint": "5.4.2",
     "typescript": "2.3.1"
   }
 }
