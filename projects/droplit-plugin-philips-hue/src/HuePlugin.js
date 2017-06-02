@@ -47,8 +47,8 @@ class HuePlugin extends droplit.DroplitPlugin {
             },
             ColorTemperature: {
                 get_temperature: this.getTemperature,
-                get_tempLowerLimit: this.getTempLowerLimit,
-                get_tempUpperLimit: this.getTempUpperLimit,
+                get_temperatureMin: this.getTempMin,
+                get_temperatureMax: this.getTempMsx,
                 set_temperature: this.setTemperature
             },
             Connectivity: {
@@ -305,7 +305,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         this.getState(localId, 'ct', callback);
     }
 
-    getTempLowerLimit(localId, callback) {
+    getTempMin(localId, callback) {
         const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return callback();
@@ -313,7 +313,7 @@ class HuePlugin extends droplit.DroplitPlugin {
         callback(TempLower);
     }
 
-    getTempUpperLimit(localId, callback) {
+    getTempMsx(localId, callback) {
         const bridge = this._getBridgeByLight(localId);
         if (!bridge)
             return callback();

@@ -64,8 +64,8 @@ class LifxPlugin extends droplit.DroplitPlugin {
             },
             ColorTemperature: {
                 get_temperature: this.getTemperature,
-                get_tempLowerLimit: this.getTempLowerLimit,
-                get_tempUpperLimit: this.getTempUpperLimit,
+                get_temperatureMin: this.getTempMin,
+                get_temperatureMax: this.getTempMax,
                 set_temperature: this.setTemperature
             },
             DimmableSwitch: {
@@ -483,7 +483,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         callback();
     }
 
-    getTempLowerLimit(localId, callback) {
+    getTempMin(localId, callback) {
         const bulb = this.bulbs.get(localId);
         if (bulb) {
             callback(TempLower);
@@ -492,7 +492,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         callback();
     }
 
-    getTempUpperLimit(localId, callback) {
+    getTempMax(localId, callback) {
         const bulb = this.bulbs.get(localId);
         if (bulb) {
             callback(TempLower);
