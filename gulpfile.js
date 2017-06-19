@@ -155,7 +155,7 @@ gulp.task('watch', 'Contiuous build', ['build'], function () {
 gulp.task('tslint', 'Lints all TypeScript source files', function () {
     return gulp.src(wildcharPaths(settings.tsfiles))
         .pipe(G$.tslint({ formatter: 'verbose' }))
-        .pipe(G$.tslint.report());
+        .pipe(G$.tslint.report({ emitError: false }));
 });
 
 // Cleaning
