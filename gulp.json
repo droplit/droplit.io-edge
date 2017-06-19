@@ -1,7 +1,8 @@
 {
     "projectPath": "projects/{project}",
     "clean": [
-        "projects/{project}/lib/**/*"
+        "projects/{project}/lib/**/*",
+        "dist"
     ],
     "deepClean": [
         "projects/{project}/lib/**/*",
