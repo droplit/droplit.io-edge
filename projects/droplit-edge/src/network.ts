@@ -14,25 +14,21 @@ export interface WifiObject {
 }
 export const Network = (edgeId: string) => {
     let command = '';
-    SSID = edgeId.replace(new RegExp('[:-]+', 'g'), '');
+    // SSID = edgeId.replace(new RegExp('[:-]+', 'g'), '');
+    // SSID = 'droplit_hub'
     PORT = 81;
     if (localSettings.config && localSettings.config.portOverride) {
         log(`Starting Edge server on ${localSettings.config.portOverride}`);
         PORT = localSettings.config.portOverride;
     }
-    log(edgeId);
-    log(SSID);
-    SSID = `hub_${SSID.slice(SSID.length - 4, SSID.length)}`;
+
     server = http.createServer((request, response) => {
         router(request, response, require('finalhandler')(request, response));
     });
-    log(SSID);
-    createWap(SSID)
-        .then(() => log(`AP ${SSID} Created`))
-        .catch(() => log('failed to create AP'));
     server.listen(PORT, () => {
         log('Edge Server Listening on Port:', PORT);
     });
+
     router.use(bodyParser.json());
     router.route('/droplit-edge')
         .get((req: any, res: http.ServerResponse) => {
@@ -91,6 +87,7 @@ export const Network = (edgeId: string) => {
                 res.end(JSON.stringify({ message: 'malformed request' }));
             }
         });
+
     function parseWifi(wifi_string: string) {
         log(`unparsed_string: ${wifi_string}`);
         const items = wifi_string
@@ -112,23 +109,25 @@ export const Network = (edgeId: string) => {
         log(`items: ${JSON.stringify(items, null, 2)}`);
         return items;
     }
-    function createWap(SSID: string) {
-        const childProcess = require('child_process');
-        const command = `createWAP ${SSID}`;
-        log(command);
-        return new Promise((resolve, reject) => {
-            childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-                log(stdout);
-                if (!error) {
-                    resolve();
-                } else {
-                    reject();
-                }
 
-            });
-        });
+    // function createWap(SSID: string) {
+    //     const childProcess = require('child_process');
+    //     const command = `createWAP ${SSID}`;
+    //     log(command);
+    //     return new Promise((resolve, reject) => {
+    //         childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
+    //             log(stdout);
+    //             if (!error) {
+    //                 resolve();
+    //             } else {
+    //                 reject();
+    //             }
 
-    }
+    //         });
+    //     });
+
+    // }
+
     function scanWifi() {
         const childProcess = require('child_process');
         return new Promise((resolve, reject) => {
@@ -143,6 +142,7 @@ export const Network = (edgeId: string) => {
             // resolve(parseWifi('[Stanley Homes Inc][TKIP][PSK]\n[Stanley Homes Inc-guest][OPEN][]\n[Foxconn OEM][OPEN][]\n[droplit][CCMP][PSK]\n[CableWiFi][OPEN][]'));
         });
     }
+
     function connectWifi(command: string) {
         const childProcess = require('child_process');
         log(`command: ${command}`);
@@ -150,9 +150,9 @@ export const Network = (edgeId: string) => {
             childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
                 if (error) {
                     log(error);
-                    createWap(SSID)
-                        .then(() => log(`AP ${SSID} Created`))
-                        .catch(() => log('failed to create AP'));
+                    // createWap(SSID)
+                    //     .then(() => log(`AP ${SSID} Created`))
+                    //     .catch(() => log('failed to create AP'));
                     reject(500);
                 } else {
                     resolve(200);
@@ -165,7 +165,6 @@ export const Network = (edgeId: string) => {
         parseWifi,
         connectWifi,
         scanWifi,
-        createWap,
         command
     };
 };
