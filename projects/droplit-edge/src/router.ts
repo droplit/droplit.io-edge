@@ -56,7 +56,6 @@ logv(`AutoDiscoverCadence: ${AutoDiscoverCadence / 1000}s`);
 logv(`GetPropertyTimeout: ${GetPropertyTimeout / 1000}s`);
 logv(`PluginDiscoveryCascade: ${PluginDiscoveryCascade / 1000}s`);
 
-
 export const plugins = new Map();                       // Create hashmap of plugins
 export const transport = new Transport();               // Create a new instance of the transport layer
 

@@ -5,7 +5,6 @@ const net = Network('test');
 
 describe('Wifi List Parser', function () {
     const testString = '[Stanley Homes Inc][TKIP][PSK]\n[Stanley Homes Inc-guest][OPEN][]\n[Foxconn OEM][OPEN][]\n[droplit][CCMP][PSK]\n[CableWiFi][OPEN][]';
-    const naughtyStrings = [];
     const openWrtAuthSuite = ['psk', 'psk-mixed', 'wpa', 'wpa-mixed', ''];
     const items = net.parseWifi(testString);
     console.log(`items ${JSON.stringify(items, null, 2)}`);
@@ -42,7 +41,7 @@ describe('Scan Wifi Command', function () {
 describe('createWap', () => {
     const SSID = 'hub_cadb';
     it('should generate a command like createWap [SSID]', done => {
-        return net.createWap(SSID).then( () => {
+        return (<any>net).createWap(SSID).then( () => {
             assert.ok(true);
             done;
         }).catch( () => {

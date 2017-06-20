@@ -15,7 +15,7 @@ export function instance(pluginName: string): Controller {
         return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName, config);
     } catch (error) {
         // plugin failed to load
-        log(`plugin: ${pluginName} failed to load!`)
+        log(`plugin: ${pluginName} failed to load!`);
         logv(error);
     }
     return undefined;
