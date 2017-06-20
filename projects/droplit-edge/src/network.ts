@@ -6,7 +6,7 @@ const log = debug('droplit:network');
 const localSettings = require('../localsettings.json');
 let PORT: number;
 let server: http.Server;
-let SSID: string;
+// const SSID: string;
 export interface WifiObject {
     SSID: string;
     CIPHER: string;
