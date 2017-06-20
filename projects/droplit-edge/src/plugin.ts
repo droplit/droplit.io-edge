@@ -78,7 +78,7 @@ export class Controller extends EventEmitter {
     }
 
     private discoverCompleteHandler() {
-        // this.emit('discover complete');
+        this.emit('discover complete');
     }
 
     private propertiesChangedHandler(properties: DP.DeviceServiceMember[]) {
