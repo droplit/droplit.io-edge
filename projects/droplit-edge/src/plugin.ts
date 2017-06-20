@@ -4,7 +4,8 @@ import {
     DeviceMessageResponse,
     PluginMessageResponse
 } from './types/types';
-const debug = require('debug')('droplit:plugin');
+const log = require('debug')('droplit:plugin');
+const logv = require('debug')('droplit-v:plugin');
 const pluginMap: { [name: string]: Controller } = {};
 const localSettings = require('../localsettings.json');
 
@@ -14,7 +15,8 @@ export function instance(pluginName: string): Controller {
         return pluginMap[pluginName] = pluginMap[pluginName] || new Controller(pluginName, config);
     } catch (error) {
         // plugin failed to load
-        console.log('error', error);
+        log(`plugin: ${pluginName} failed to load!`)
+        logv(error);
     }
     return undefined;
 }
@@ -151,7 +153,7 @@ export class Controller extends EventEmitter {
 
     // TODO: timestamps assigned here should be optionally assigned at event conception
     private errorFilter(data: any): ErrorEvent {
-        debug('errorFilter', data);
+        log('errorFilter', data);
         // If we are passed an error object, parse it out as
         // JSON.stringify will not normalize the object appropriately.
         if (data instanceof Error)
@@ -168,7 +170,7 @@ export class Controller extends EventEmitter {
     }
 
     private infoFilter(data: any): InfoEvent {
-        debug('infoFilter', data);
+        log('infoFilter', data);
         return {
             data: JSON.stringify(data),
             pluginName: undefined,  // assigned in router

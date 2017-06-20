@@ -25,6 +25,7 @@ import {
 } from './types/types';
 
 const log = debug('droplit:router');                                         // initilize logging module for log levels
+const logv = debug('droplit-v:router');                                      // initilize verbose logging
 const settings = require('../settings.json');                                // Load settings file
 const localSettings = require('../localsettings.json');                      // Load local settings file
 export { Transport };                                                        // export Transport interface
@@ -47,6 +48,14 @@ const AutoDiscoverDelay = 2 * 60 * 1000;
 const AutoDiscoverCadence = 60000;
 // Amount of time (ms) for device to respond
 const GetPropertyTimeout = 3000;
+// Amount of time (ms) to cascade plugin discovery
+const PluginDiscoveryCascade = 2000;
+
+logv(`AutoDiscoverDelay: ${AutoDiscoverDelay / 1000}s`);
+logv(`AutoDiscoverCadence: ${AutoDiscoverCadence / 1000}s`);
+logv(`GetPropertyTimeout: ${GetPropertyTimeout / 1000}s`);
+logv(`PluginDiscoveryCascade: ${PluginDiscoveryCascade / 1000}s`);
+
 
 export const plugins = new Map();                       // Create hashmap of plugins
 export const transport = new Transport();               // Create a new instance of the transport layer
@@ -86,7 +95,7 @@ if (settings.debug && settings.debug.generateHeapDump) {
 if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
 
-log(`config: ${localSettings.config}`);
+log(`config: ${localSettings.config || 'No localSettings.config'}`);
 if (localSettings.config && localSettings.config.runHttpServer) {
     Network(macAddress);
 }
@@ -171,10 +180,8 @@ transport.on('#plugin data', (data: PluginData[], cb: (response: any) => void) =
 // Unimplemented plugin data event
 transport.on('#plugin message', (data: PluginMessage, cb: (response: any) => void) => {
     let results: PluginMessageResponse;
-
     if (data)
         results = sendPluginMessage(data);
-
     if (cb)
         cb(results);
 });
@@ -184,7 +191,6 @@ transport.on('#property get', (data: any, cb: (response: any) => void) => {
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
-
     if (data && cb)
         getProperties(data).then(results => cb(results));
 });
@@ -195,10 +201,8 @@ transport.on('#property set', (data: any, cb: (response: any) => void) => {
     // Wrap single property in an array
     if (!Array.isArray(data) && typeof data === 'object')
         data = [data];
-
     if (data)
         results = setProperties(data);
-
     if (cb)
         cb(results);
 });
@@ -231,9 +235,10 @@ function discoverAll() {
     let timeout = 0;
     plugins.forEach((plugin: any) => {
         setTimeout(plugin => {
+            logv(`Starting discover with plugin: ${plugin.pluginName}`);
             plugin.discover();
         }, timeout, plugin);
-        timeout += 2000;
+        timeout += PluginDiscoveryCascade;
     });
 }
 
@@ -290,6 +295,7 @@ function getProperties(commands: DeviceCommand[]): Promise<GetPropertiesResponse
             message: `The request could not be fufilled or fully fufilled. Command information: ${JSON.stringify(map)} Current results: ${JSON.stringify(results)}`,
             name: `Device Property Get`,
         };
+        logv(failedMessageError.message, failedMessageError.name);
         const timer = setTimeout(() => sendResponse(failedMessageError), GetPropertyTimeout);
 
         // Go through each mapped command and get the results
@@ -405,17 +411,28 @@ function loadPlugin(pluginName: string) {
 
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => basicSend('log error'));
 
-            p.on('discover complete', basicSend('discover complete'));
+            p.on('discover complete', (events: any[]) => {
+                logv(`plugin: ${pluginName} : discover complete`, events);
+                basicSend('discover complete')(events);
+            });
             p.on('log info', (events: any[]) => {
                 events.forEach(event => event.pluginName = p.getName());
+                logv(`plugin: ${pluginName} : log info`, events);
                 basicSend('log info')(events);
             });
             p.on('log error', (events: any[]) => {
                 events.forEach(event => event.pluginName = p.getName());
+                logv(`plugin: ${pluginName} : log error`, events);
                 basicSend('log error')(events);
             });
-            p.on('plugin data', basicSend('plugin data'));
-            p.on('plugin setting', basicSend('plugin setting'));
+            p.on('plugin data', (events: any[]) => {
+                logv(`plugin: ${pluginName} : plugin data`, events);
+                basicSend('plugin data')(events);
+            });
+            p.on('plugin setting', (events: any[]) => {
+                logv(`plugin: ${pluginName} : plugin data`, events);
+                basicSend('plugin setting')(events);
+            });
 
             plugins.set(pluginName, p);
 
@@ -535,6 +552,7 @@ function requestMethods(commands: DeviceCommand[]): Promise<RequestMethodRespons
             message: `The request could not be fufilled or fully fufilled. Command information: ${JSON.stringify(map)} Current results: ${JSON.stringify(results)}`,
             name: `Device Method Request`,
         };
+        logv(failedMessageError.message, failedMessageError.name);
         const timer = setTimeout(() => sendResponse(failedMessageError), GetPropertyTimeout);
 
         // Go through each mapped command and get the results
@@ -653,7 +671,7 @@ function startAutodiscover() {
     // Already auto-discovering
     if (autodiscoverTimer)
         return;
-
+    logv('Starting autodiscover interval...');
     // First auto should be immediate
     discoverAll.bind(this)();
     autodiscoverTimer = setInterval(discoverAll.bind(this), AutoDiscoverCadence);
