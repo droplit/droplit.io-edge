@@ -6,6 +6,13 @@ const EventEmitter = require('events').EventEmitter;
 const os = require('os');
 const lifxPacket = require('./Packet');
 
+const ColorProps = [
+    'ColorTemperature_temperature',
+    'DimmableSwitch_brightness',
+    'LightColor_brightness',
+    'LightColor_hue',
+    'LightColor_saturation'
+];
 const EmptySource = new Buffer([0, 0, 0, 0]);
 const MulticastPort = 56700;
 const StepSize = parseInt(0xFFFF / 10);
@@ -373,6 +380,41 @@ class LifxPlugin extends droplit.DroplitPlugin {
             duration: 0
         });
         this.send(packet, address);
+    }
+
+    setProperties(properties) {
+        const grouped = properties.reduce((p, c) => {
+            if (!p[c.localId])
+                p[c.localId] = {};
+            p[c.localId].localId = c.localId;
+            p[c.localId][`${c.service}_${c.member}`] = c.value;
+            return p;
+        }, {});
+        Object.keys(grouped)
+            .map(localId => grouped[localId])
+            .forEach(group => {
+                if (group.hasOwnProperty('BinarySwitch_switch'))
+                    this.setSwitch(group.localId, group.BinarySwitch_switch);
+
+                if (ColorProps.some(prop => group.hasOwnProperty(prop))) {
+                    const bulb = this.bulbs.get(group.localId);
+                    if (bulb) {
+                        const state = bulb.state;
+                        if (group.hasOwnProperty('ColorTemperature_temperature'))
+                            state.kelvin = group.ColorTemperature_temperature;
+                        if (group.hasOwnProperty('DimmableSwitch_brightness'))
+                            state.brightness = normalize(group.DimmableSwitch_brightness, 0, 100, 0xFFFF);
+                        if (group.hasOwnProperty('LightColor_brightness'))
+                            state.brightness = group.LightColor_brightness;
+                        if (group.hasOwnProperty('LightColor_hue'))
+                            state.hue = group.LightColor_hue;
+                        if (group.hasOwnProperty('LightColor_saturation'))
+                            state.saturation = group.LightColor_saturation;
+
+                        this.setColor(bulb.address, state.hue, state.saturation, state.brightness, state.kelvin);
+                    }
+                }
+            });
     }
 
     // BinarySwitch Implementation
