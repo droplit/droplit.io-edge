@@ -219,6 +219,38 @@ class HuePlugin extends droplit.DroplitPlugin {
         bridge.register();
     }
 
+    setProperties(properties) {
+        const grouped = properties.reduce((p, c) => {
+            if (!p[c.localId])
+                p[c.localId] = {};
+            p[c.localId].localId = c.localId;
+            p[c.localId][`${c.service}_${c.member}`] = c.value;
+            return p;
+        }, {});
+        Object.keys(grouped)
+            .map(localId => grouped[localId])
+            .forEach(group => {
+                const bridge = this._getBridgeByLight(group.localId);
+                if (!bridge)
+                    return;
+                const state = {};
+                if (group.hasOwnProperty('BinarySwitch_switch') && ((group.BinarySwitch_switch === 'on') || (group.BinarySwitch_switch === 'off')))
+                    state.on = group.BinarySwitch_switch === 'on';
+                if (group.hasOwnProperty('ColorTemperature_temperature'))
+                    state.ct = microReciprocal(group.ColorTemperature_temperature);
+                if (group.hasOwnProperty('DimmableSwitch_brightness'))
+                    state.bri = Math.min(Math.max(normalize(group.DimmableSwitch_brightness, 0, 100, 255), 0), 255);
+                if (group.hasOwnProperty('LightColor_brightness'))
+                    state.bri = Math.min(Math.max(normalize(group.LightColor_brightness, 0, 0xffff, 254), 0), 254);
+                if (group.hasOwnProperty('LightColor_hue'))
+                    state.hue = Math.round(+group.LightColor_hue);
+                if (group.hasOwnProperty('LightColor_saturation'))
+                    state.sat = Math.min(Math.max(normalize(group.LightColor_saturation, 0, 0xffff, 254), 0), 254);
+
+                bridge.setState(group.localId, state);
+            });
+    }
+
     // BinarySwitch Implementation
     getSwitch(localId, callback) {
         this.getState(localId, 'on', callback);
