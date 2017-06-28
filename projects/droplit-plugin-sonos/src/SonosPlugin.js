@@ -301,7 +301,11 @@ class SonosPlugin extends droplit.DroplitPlugin {
     }
 
     setMute(localId, value) {
-        if (value.toLowerCase() === 'true')
+        if (typeof value !== 'string' && typeof value !== 'boolean')
+            return;
+
+        const muteValue = typeof value === 'string' ? value.toLowerCase() === 'true' : value;
+        if (muteValue)
             this.mute(localId);
         else
             this.unmute(localId);
