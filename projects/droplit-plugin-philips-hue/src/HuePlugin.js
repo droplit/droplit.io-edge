@@ -6,6 +6,14 @@ const droplit = require('droplit-plugin');
 const EventEmitter = require('events').EventEmitter;
 const request = require('request');
 
+const AvailableMembers = [
+    'BinarySwitch_switch',
+    'ColorTemperature_temperature',
+    'DimmableSwitch_brightness',
+    'LightColor_brightness',
+    'LightColor_hue',
+    'LightColor_saturation'
+];
 const PollInterval = 1000 * 10; // in ms
 const StepSize = 10;
 const TempLower = 2000; // in Kelvins
@@ -220,11 +228,18 @@ class HuePlugin extends droplit.DroplitPlugin {
     }
 
     setProperties(properties) {
-        const grouped = properties.reduce((p, c) => {
+        const supported = Array(properties.length).fill(false);
+        const grouped = properties.reduce((p, c, idx) => {
+            const member = `${c.service}_${c.member}`;
+            const bridge = this._getBridgeByLight(c.localId);
+            if (bridge && AvailableMembers.some(m => m === member))
+                supported[idx] = true;
+
             if (!p[c.localId])
                 p[c.localId] = {};
+
             p[c.localId].localId = c.localId;
-            p[c.localId][`${c.service}_${c.member}`] = c.value;
+            p[c.localId][member] = c.value;
             return p;
         }, {});
         Object.keys(grouped)
@@ -249,6 +264,7 @@ class HuePlugin extends droplit.DroplitPlugin {
 
                 bridge.setState(group.localId, state);
             });
+        return supported;
     }
 
     // BinarySwitch Implementation

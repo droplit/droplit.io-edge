@@ -383,11 +383,19 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 
     setProperties(properties) {
-        const grouped = properties.reduce((p, c) => {
+        const supported = Array(properties.length).fill(false);
+        const grouped = properties.reduce((p, c, idx) => {
+            const member = `${c.service}_${c.member}`;
+            const availableMembers = ColorProps.concat('BinarySwitch_switch');
+            const bulb = this.bulbs.get(c.localId);
+            if (bulb && availableMembers.some(m => m === member))
+                supported[idx] = true;
+
             if (!p[c.localId])
                 p[c.localId] = {};
+
             p[c.localId].localId = c.localId;
-            p[c.localId][`${c.service}_${c.member}`] = c.value;
+            p[c.localId][member] = c.value;
             return p;
         }, {});
         Object.keys(grouped)
@@ -415,6 +423,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     }
                 }
             });
+        return supported;
     }
 
     // BinarySwitch Implementation
