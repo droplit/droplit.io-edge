@@ -95,7 +95,7 @@ if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
 
 log(`config: ${localSettings.config || 'No localSettings.config'}`);
-if (localSettings.config && localSettings.config.runHttpServer) {
+if (localSettings.config && localSettings.config.provisioningServiceEnabled) {
     Network(macAddress);
 }
 

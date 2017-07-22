@@ -25,8 +25,8 @@
         "port": 8888
     },
     "config": {
-        "runHttpServer": false,
-        "portOverride": null,
+        "provisioningServiceEnabled": false,
+        "provisioningServicePort": null,
         "MACAddressOverride": null
     }
 }

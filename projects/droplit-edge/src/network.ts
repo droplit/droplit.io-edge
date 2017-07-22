@@ -17,9 +17,9 @@ export const Network = (edgeId: string) => {
     // SSID = edgeId.replace(new RegExp('[:-]+', 'g'), '');
     // SSID = 'droplit_hub'
     PORT = 81;
-    if (localSettings.config && localSettings.config.portOverride) {
-        log(`Starting Edge server on ${localSettings.config.portOverride}`);
-        PORT = localSettings.config.portOverride;
+    if (localSettings.config && localSettings.config.provisioningServicePort) {
+        log(`Starting Edge server on ${localSettings.config.provisioningServicePort}`);
+        PORT = localSettings.config.provisioningServicePort;
     }
 
     server = http.createServer((request, response) => {
@@ -57,6 +57,7 @@ export const Network = (edgeId: string) => {
                     .then((theWifis: WifiObject[]) => theWifis.forEach(wifi => {
                         log(`wifi ${JSON.stringify(wifi, null, 2)}`);
                         if (wifi.SSID === req.body.SSID) {
+                            res.end();
                             if (wifi.AUTH_SUITE) {
                                 switch (wifi.AUTH_SUITE) {
                                     case 'PSK':
@@ -78,6 +79,9 @@ export const Network = (edgeId: string) => {
                                     .then(() => res.end())
                                     .catch(() => res.end());
                             }
+                        } else {
+                            res.statusCode = 404;
+                            res.end(`Could not connect to ${req.body.SSID}. Network ${req.body.SSID} not found!`);
                         }
                     }))
                     .catch(error => log(error));
