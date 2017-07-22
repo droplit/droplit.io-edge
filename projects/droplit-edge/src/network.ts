@@ -67,13 +67,13 @@ export const Network = (edgeId: string) => {
                                 }
                                 connectWifi(command)
                                     .then(() => res.end())
-                                    .catch((err) => res.end(err));
+                                    .catch(err => res.end(err));
                             }
                             else {
                                 command = `connectWiFi ${req.body.SSID}`;
                                 connectWifi(command)
                                     .then(() => res.end())
-                                    .catch((err) => res.end(err));
+                                    .catch(err => res.end(err));
                             }
                         } else {
                             res.statusCode = 404;
