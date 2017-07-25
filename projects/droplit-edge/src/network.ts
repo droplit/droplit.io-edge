@@ -78,7 +78,7 @@ export const Network = (edgeId: string) => {
                             res.statusCode = 404;
                             res.end(JSON.stringify({ message }));
                             log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
-                            // return Promise.reject(message);
+                            return Promise.reject(message);
                         }
                     })
                     .then(network => {
