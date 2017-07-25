@@ -6,13 +6,26 @@ const log = debug('droplit:network');
 const localSettings = require('../localsettings.json');
 let PORT: number;
 let server: http.Server;
+
+export enum AuthSuite {
+    psk,
+    psk2,
+    'psk-mixed',
+    aes,
+    ccmp,
+    tkip,
+    wpa,
+    wpa2,
+    'wpa-mixed'
+}
+
 export interface WifiObject {
     SSID: string;
     CIPHER: string;
     AUTH_SUITE: string;
 }
+
 export const Network = (edgeId: string) => {
-    let command = '';
     PORT = 81;
     if (localSettings.config && localSettings.config.provisioningServicePort) {
         log(`Starting Edge server on ${localSettings.config.provisioningServicePort}`);
@@ -34,57 +47,55 @@ export const Network = (edgeId: string) => {
             const result = {
                 edgeId
             };
-            log(`REQ:${JSON.stringify(req.headers, null, 2)} RECEIVED`);
+            log(`GET /droplit-edge ${res.statusCode}`);
             res.end(JSON.stringify(result));
         });
     router.route('/droplit-edge/config/wifi')
         .get((req: http.ServerRequest, res: http.ServerResponse) => {
             res.setHeader('Content-Type', 'application/json');
-            res.statusCode = 200;
-            scanWifi().then(items => res.end(JSON.stringify({ items }))).catch(error => res.end(error));
+            scanWifi().then(items => {
+                res.statusCode = 200;
+                res.end(JSON.stringify({ items }));
+                log(`GET /droplit-edge/config/wifi ${res.statusCode}`);
+            }).catch(error => {
+                res.statusCode = 400;
+                res.end(error);
+                log(`GET /droplit-edge/config/wifi ${res.statusCode}`);
+            });
         })
         .put((req: any, res: http.ServerResponse) => {
             res.setHeader('Content-Type', 'application/json');
             res.statusCode = 200;
-            // const childProcess = require('child_process');
             log(`request body: ${JSON.stringify((<any>req).body, null, 2)}`);
             if (req.body && req.body.SSID) {
                 scanWifi()
-                    .then((theWifis: WifiObject[]) => theWifis.forEach(wifi => {
-                        log(`wifi ${JSON.stringify(wifi, null, 2)}`);
-                        if (wifi.SSID === req.body.SSID) {
-                            res.end();
-                            if (wifi.AUTH_SUITE) {
-                                switch (wifi.AUTH_SUITE) {
-                                    case 'PSK':
-                                        command = `connectWiFi ${req.body.SSID} psk-mixed ${req.body.PASS}`;
-                                        break;
-                                    case 'WPA':
-                                        command = `connectWiFi ${req.body.SSID} wpa-mixed ${req.body.PASS}`;
-                                    default:
-                                        command = `connectWiFi ${req.body.SSID} ${wifi.AUTH_SUITE} ${req.body.PASS}`;
-                                        break;
-                                }
-                                connectWifi(command)
-                                    .then(() => res.end())
-                                    .catch((err) => res.end(err));
-                            }
-                            else {
-                                command = `connectWiFi ${req.body.SSID}`;
-                                connectWifi(command)
-                                    .then(() => res.end())
-                                    .catch((err) => res.end(err));
-                            }
+                    .then(networks => {
+                        networks = networks.filter(network => network.SSID === req.body.SSID);
+                        if (networks.length === 1) {
+                            return networks[0];
                         } else {
+                            const message = `Could not connect to ${req.body.SSID}. Network ${req.body.SSID} not found!`;
                             res.statusCode = 404;
-                            res.end(`Could not connect to ${req.body.SSID}. Network ${req.body.SSID} not found!`);
+                            res.end(JSON.stringify({ message }));
+                            log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
+                            // return Promise.reject(message);
                         }
-                    }))
+                    })
+                    .then(network => {
+                        log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
+                        res.end();
+                        const authSuite = req.body.AUTH_SUITE || network.AUTH_SUITE;
+                        if (authSuite) {
+                            connectWiFi(network.SSID, req.body.PASS, <any>AuthSuite[authSuite.toLowerCase()]);
+                        } else {
+                            connectWiFi(network.SSID);
+                        }
+                    })
                     .catch(error => log(error));
-            }
-            else {
+            } else {
                 res.statusCode = 400;
                 res.end(JSON.stringify({ message: 'malformed request' }));
+                log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
             }
         });
 
@@ -95,42 +106,19 @@ export const Network = (edgeId: string) => {
             .split('\n') // break out each output into its own line
             .map(line => line.trim().slice(1, line.length - 1).split('][')) // return an array of things inside [...]
             .reduce((wifis: WifiObject[], line: string[]) => {
-                const item = {
-                    SSID: '',
-                    CIPHER: '',
-                    AUTH_SUITE: ''
-                };
-                item.SSID = line[0];
-                item.CIPHER = line[1];
-                item.AUTH_SUITE = line[2];
-                wifis.push(item);
+                wifis.push({
+                    SSID: line[0],
+                    CIPHER: line[1],
+                    AUTH_SUITE: line[2]
+                });
                 return wifis;
             }, []);
-        log(`items: ${JSON.stringify(items, null, 2)}`);
         return items;
     }
 
-    // function createWap(SSID: string) {
-    //     const childProcess = require('child_process');
-    //     const command = `createWAP ${SSID}`;
-    //     log(command);
-    //     return new Promise((resolve, reject) => {
-    //         childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-    //             log(stdout);
-    //             if (!error) {
-    //                 resolve();
-    //             } else {
-    //                 reject();
-    //             }
-
-    //         });
-    //     });
-
-    // }
-
-    function scanWifi() {
-        const childProcess = require('child_process');
+    function scanWifi(): Promise<WifiObject[]> {
         return new Promise((resolve, reject) => {
+            const childProcess = require('child_process');
             childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
                 if (error) {
                     console.log(error);
@@ -143,25 +131,23 @@ export const Network = (edgeId: string) => {
             });
         });
     }
-    function connectWifi(command: string) {
+    // OpenWRT Scan and Connect WiFi interfaces
+    function connectWiFi(SSID: string, password?: string, authSuite?: AuthSuite) {
         const childProcess = require('child_process');
-        log(`command: ${command}`);
-        return new Promise((resolve, reject) => {
-            childProcess.exec(command, (error: any, stdout: any, stderr: any) => {
-                if (error) {
-                    console.log(error);
-                    resolve(error);
-                } else {
-                    resolve(stdout);
-                }
-            });
+        log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${AuthSuite[<any>authSuite]}` : ''}`);
+        childProcess.exec(`connectWiFi ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
+            if (error || stderr) {
+                console.log('Error:', error || stderr);
+                return false;
+            } else {
+                return true;
+            }
         });
     }
 
     return {
         parseWifi,
-        connectWifi,
-        scanWifi,
-        command
+        connectWiFi,
+        scanWifi
     };
 };
