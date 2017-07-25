@@ -7,8 +7,9 @@ const localSettings = require('../localsettings.json');
 let PORT: number;
 let server: http.Server;
 
+// Initialize with 1 to avoid falsy results
 export enum AuthSuite {
-    psk,
+    psk = 1,
     psk2,
     'psk-mixed',
     aes,
