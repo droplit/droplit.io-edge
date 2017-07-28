@@ -53,7 +53,7 @@ describe('createWap', () => {
 describe('connect hub to wifi', () => {
     const command = '';
     it('should generate a command like connectWiFi [SSID] [AUTH_SUITE] [PASSCODE]', done => {
-        return net.connectWifi(command).then( () => {
+        return net.connectWiFi(command).then( () => {
             assert.ok(true);
             done;
         }).catch( () => {

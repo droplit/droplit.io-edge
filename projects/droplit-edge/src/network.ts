@@ -134,15 +134,16 @@ export const Network = (edgeId: string) => {
     }
     // OpenWRT Scan and Connect WiFi interfaces
     function connectWiFi(SSID: string, password?: string, authSuite?: AuthSuite) {
-        const childProcess = require('child_process');
-        log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${AuthSuite[<any>authSuite]}` : ''}`);
-        childProcess.exec(`connectWiFi ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
-            if (error || stderr) {
-                console.log('Error:', error || stderr);
-                return false;
-            } else {
-                return true;
-            }
+        return new Promise(res => {
+            const childProcess = require('child_process');
+            log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${AuthSuite[<any>authSuite]}` : ''}`);
+            childProcess.exec(`connectWiFi ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
+                if (error || stderr) {
+                    console.log('Error:', error || stderr);
+                    res(false);
+                } else
+                    res(true);
+            });
         });
     }
 
