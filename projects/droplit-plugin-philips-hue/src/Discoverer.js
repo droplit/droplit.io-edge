@@ -33,9 +33,7 @@ class Discoverer extends EventEmitter {
                     let bridgeData;
                     try {
                         bridgeData = JSON.parse(b);
-                    } catch (ex) {
-                        console.log('Expecting JSON on Hue broker endpoint:', b);
-                    }
+                    } catch (doNothing) { } // eslint-disable-line no-empty
                     if (!bridgeData)
                         return;
                     bridgeData.forEach(data => {
