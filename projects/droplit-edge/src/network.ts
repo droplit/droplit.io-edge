@@ -85,7 +85,16 @@ export const Network = (edgeId: string) => {
                     .then(network => {
                         log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
                         res.end();
-                        const authSuite = req.body.AUTH_SUITE || network.AUTH_SUITE;
+                        let authSuite = req.body.AUTH_SUITE;
+                        if (!authSuite) {
+                            if (network.AUTH_SUITE === 'PSK') {
+                                authSuite = 'psk-mixed';
+                            } else if (network.AUTH_SUITE === 'WPA') {
+                                authSuite = 'wpa-mixed';
+                            } else {
+                                authSuite = network.AUTH_SUITE;
+                            }
+                        }
                         if (authSuite) {
                             connectWiFi(network.SSID, req.body.PASS, <any>AuthSuite[authSuite.toLowerCase()]);
                         } else {
