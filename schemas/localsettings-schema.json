@@ -1,0 +1,148 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "description": "JSON Schema for droplit-edge localsettings",
+    "definitions": {
+        "plugins-array": {
+            "type": "array",
+            "items": {
+                "oneOf": [
+                    { "type": "string" },
+                    { "$ref": "#/definitions/plugins-array-item" }
+                ]
+            }
+        },
+        "plugins-array-item": {
+            "description": "Configuration for an individual plugin.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "description": "Set whether the plugin is enabled.",
+                    "type": "boolean",
+                    "default": true
+                },
+                "localServices": {
+                    "description": "List local services that the plugin manages.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "uniqueItems": true
+                },
+                "name": {
+                    "description": "The name of the plugin.",
+                    "type": "string"
+                }
+            },
+            "required": [ "name" ]
+        },
+        "plugins-object": {
+            "description": "Configuration for an individual plugin.",
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "enabled": {
+                        "description": "Set whether the plugin is enabled.",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "localServices": {
+                        "description": "List local services that the plugin manages.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    }
+                }
+            }
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "config": {
+            "description": "Configures miscellaneous capabilities.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "MACAddressOverride": {
+                    "description": "Override the MAC address used as the Edge Id.",
+                    "type": "string"
+                },
+                "provisioningServiceEnabled": {
+                    "description": "Enables the network provisioning service.",
+                    "type": "boolean"
+                },
+                "provisioningServicePort": {
+                    "description": "Set the port used for network provisioning.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65536,
+                    "default": 81
+                }
+            }
+        },
+        "debug": {
+            "description": "Configures debugging options.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "generateHeapDump": {
+                    "description": "Periodically generate a heap dump file.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "diagnostics": {
+            "description": "Configures the diagnostics telnet console.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "description": "Determine whether the console should be enabled or not.",
+                    "type": "boolean"
+                },
+                "port": {
+                    "description": "The port the console is opened on.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65536,
+                    "default": 8888
+                }
+            }
+        },
+        "ecosystemId": {
+            "description": "The Ecosystem associated with this Edge device. May be omitted if Ecosystem is determined via the claims process.",
+            "type": "string"
+        },
+        "plugins": {
+            "oneOf": [
+                { "$ref": "#/definitions/plugins-object" },
+                { "$ref": "#/definitions/plugins-array" }
+            ]
+        },
+        "transport": {
+            "description": "Configures the Edge transport layer.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enableHeartbeat": {
+                    "description": "Whether or not heartbeat should be enabled. This should only ever be disabled for diagnostic purposes.",
+                    "type": "boolean",
+                    "default": true
+                },
+                "host": {
+                    "description": "The host service uri.",
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        }
+    },
+    "default": {},
+    "required": [
+        "transport"
+    ]
+}
