@@ -145,9 +145,9 @@ const packets = {
         shortname: 'stateVersion',
         length: 12,
         fields: [
-            { name: 'vendor', type: type.uint32 },
-            { name: 'product', type: type.uint32 },
-            { name: 'version', type: type.uint32 }
+            { name: 'vendor', type: type.uint32LE },
+            { name: 'product', type: type.uint32LE },
+            { name: 'version', type: type.uint32LE }
         ]
     },
     0x2D: {

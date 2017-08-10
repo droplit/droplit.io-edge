@@ -6,6 +6,16 @@ const EventEmitter = require('events').EventEmitter;
 const os = require('os');
 const lifxPacket = require('./Packet');
 
+const productMap = require('./../products.json');
+const products = productMap
+    .reduce((p, c) => {
+        p[c.vid] = { name: c.name };
+        c.products.forEach(product => {
+            p[c.vid][product.pid] = Object.assign({}, product);
+        });
+        return p;
+    }, {});
+
 const ColorProps = [
     'ColorTemperature_temperature',
     'DimmableSwitch_brightness',
@@ -599,9 +609,7 @@ class LifxBulb extends EventEmitter {
         super();
 
         this.address = address;
-        this.deviceMeta = {
-            manufacturer: 'LIFX'
-        };
+        this.deviceMeta = {};
         this.services = [];
         this.promotedMembers = {
             switch: 'BinarySwitch.switch',
@@ -661,9 +669,17 @@ class LifxBulb extends EventEmitter {
     get version() { return this[_version]; }
     set version(version) {
         this[_version] = version;
-        const isWhite = (version.product === 167772160);
-        this.deviceMeta.modelName = isWhite ? 'LIFX White' : 'LIFX';
-        this.deviceMeta.modelNumber = version.product;
+
+        const hasVendor = products.hasOwnProperty(version.vendor);
+        if (hasVendor)
+            this.deviceMeta.manufacturer = products[version.vendor].name;
+        const hasProduct = hasVendor && products[version.vendor].hasOwnProperty(version.product);
+        if (hasProduct) {
+            this.deviceMeta.modelName = products[version.vendor][version.product].name;
+            this.deviceMeta.modelNumber = version.version;
+        }
+
+        const isWhite = hasProduct && products[version.vendor][version.product].features.color !== true;
         this.services = isWhite ?
             ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature'] :
             ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature'];
