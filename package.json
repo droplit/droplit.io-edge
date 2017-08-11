@@ -1,6 +1,6 @@
 {
   "name": "droplit.io-edge",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Instant Cloud Control for smart devices",
   "main": "index.js",
   "scripts": {
