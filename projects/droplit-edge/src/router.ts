@@ -332,7 +332,9 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     if (command.deviceId === '.') command.localId = command.deviceId;
     const deviceInfo = cache.getDeviceByDeviceId(command.deviceId);
     // HACK: Allows easier testing via wscat
-    const localId = command.localId || deviceInfo.localId;
+    const localId = command.localId || (deviceInfo ? deviceInfo.localId : null);
+    if (!localId) // HACK: This is here to help debug the circumstances under which there is no localId.
+        log(`WARNING: Cannot find localId for command: ${command}`);
     const results = {
         localId,
         address: deviceInfo ? deviceInfo.address : null,
