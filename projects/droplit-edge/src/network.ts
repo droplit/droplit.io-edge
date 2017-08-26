@@ -146,7 +146,7 @@ export const Network = (edgeId: string) => {
         return new Promise(res => {
             const childProcess = require('child_process');
             log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${AuthSuite[<any>authSuite]}` : ''}`);
-            childProcess.exec(`connectWiFi ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
+            childProcess.exec(`clientMode ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
                 if (error || stderr) {
                     console.log('Error:', error || stderr);
                     res(false);
