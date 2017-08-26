@@ -21,9 +21,13 @@ export enum AuthSuite {
 }
 
 export interface WifiObject {
-    SSID: string;
-    CIPHER: string;
-    AUTH_SUITE: string;
+    address: string;
+    essid: string;
+    mode: string;
+    channel: string;
+    signal: string;
+    quality: string;
+    encryption: string;
 }
 
 export const Network = (edgeId: string) => {
@@ -71,12 +75,12 @@ export const Network = (edgeId: string) => {
             if (req.body && req.body.SSID) {
                 scanWifi()
                     .then(networks => {
-                        networks = networks.filter(network => network.SSID === req.body.SSID);
+                        networks = networks.filter(network => network.essid === req.body.SSID);
                         if (networks.length === 1) {
                             return networks[0];
                         } else {
                             const message = `Could not connect to ${req.body.SSID}. Network ${req.body.SSID} not found!`;
-                            res.statusCode = 404;
+                            res.statusCode = 400;
                             res.end(JSON.stringify({ message }));
                             log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
                             return Promise.reject(message);
@@ -109,38 +113,21 @@ export const Network = (edgeId: string) => {
             }
         });
 
-    function parseWifi(wifi_string: string) {
-        log(`unparsed_string: ${wifi_string}`);
-        const items = wifi_string
-            .trim() // remove trailing whitespaces and \n at end of string
-            .split('\n') // break out each output into its own line
-            .map(line => line.trim().slice(1, line.length - 1).split('][')) // return an array of things inside [...]
-            .reduce((wifis: WifiObject[], line: string[]) => {
-                wifis.push({
-                    SSID: line[0],
-                    CIPHER: line[1],
-                    AUTH_SUITE: line[2]
-                });
-                return wifis;
-            }, []);
-        return items;
-    }
-
     function scanWifi(): Promise<WifiObject[]> {
         return new Promise((resolve, reject) => {
-            const childProcess = require('child_process');
-            childProcess.exec('scanWifi', (error: any, stdout: any, stderr: any) => {
-                if (error) {
-                    console.log(error);
-                    reject(error);
-                }
-                else {
-                    const items = parseWifi(stdout);
+            try {
+                let network = require("/usr/bin/scanWifi.js");
+                network.scanWifi((items: WifiObject[]) => {
                     resolve(items);
-                }
-            });
+                });
+            }
+            catch (error) {
+                console.log(error);
+                reject(error);
+            }
         });
     }
+
     // OpenWRT Scan and Connect WiFi interfaces
     function connectWiFi(SSID: string, password?: string, authSuite?: AuthSuite) {
         return new Promise(res => {
@@ -157,7 +144,6 @@ export const Network = (edgeId: string) => {
     }
 
     return {
-        parseWifi,
         connectWiFi,
         scanWifi
     };
