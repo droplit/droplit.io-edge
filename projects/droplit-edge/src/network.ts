@@ -7,19 +7,6 @@ const localSettings = require('../localsettings.json');
 let PORT: number;
 let server: http.Server;
 
-// Initialize with 1 to avoid falsy results
-export enum AuthSuite {
-    psk = 1,
-    psk2,
-    'psk-mixed',
-    aes,
-    ccmp,
-    tkip,
-    wpa,
-    wpa2,
-    'wpa-mixed'
-}
-
 export interface WifiObject {
     address: string;
     essid: string;
@@ -28,6 +15,7 @@ export interface WifiObject {
     signal: string;
     quality: string;
     encryption: string;
+    uci: string;
 }
 
 export const Network = (edgeId: string) => {
@@ -89,18 +77,11 @@ export const Network = (edgeId: string) => {
                     .then(network => {
                         log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
                         res.end();
+                        // https://wiki.openwrt.org/doc/uci/wireless#common_interface_options
+                        // https://wiki.openwrt.org/doc/uci/wireless#wpa_modes
                         let authSuite = req.body.AUTH_SUITE;
-                        if (!authSuite) {
-                            if (network.AUTH_SUITE === 'PSK') {
-                                authSuite = 'psk-mixed';
-                            } else if (network.AUTH_SUITE === 'WPA') {
-                                authSuite = 'wpa-mixed';
-                            } else {
-                                authSuite = network.AUTH_SUITE;
-                            }
-                        }
                         if (authSuite) {
-                            connectWiFi(network.SSID, req.body.PASS, <any>AuthSuite[authSuite.toLowerCase()]);
+                            connectWiFi(network.SSID, req.body.PASS, authSuite.toLowerCase());
                         } else {
                             connectWiFi(network.SSID);
                         }
@@ -129,11 +110,11 @@ export const Network = (edgeId: string) => {
     }
 
     // OpenWRT Scan and Connect WiFi interfaces
-    function connectWiFi(SSID: string, password?: string, authSuite?: AuthSuite) {
+    function connectWiFi(SSID: string, password?: string, authSuite?: string) {
         return new Promise(res => {
             const childProcess = require('child_process');
-            log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${AuthSuite[<any>authSuite]}` : ''}`);
-            childProcess.exec(`clientMode ${SSID}${authSuite ? ` ${AuthSuite[<any>authSuite]}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
+            log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${authSuite}` : ''}`);
+            childProcess.exec(`clientMode ${SSID}${authSuite ? ` ${authSuite}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
                 if (error || stderr) {
                     console.log('Error:', error || stderr);
                     res(false);
