@@ -74,16 +74,16 @@ export const Network = (edgeId: string) => {
                             return Promise.reject(message);
                         }
                     })
-                    .then(network => {
+                    .then(() => {
                         log(`PUT /droplit-edge/config/wifi ${res.statusCode}`);
                         res.end();
                         // https://wiki.openwrt.org/doc/uci/wireless#common_interface_options
                         // https://wiki.openwrt.org/doc/uci/wireless#wpa_modes
                         let authSuite = req.body.AUTH_SUITE;
                         if (authSuite) {
-                            connectWiFi(network.SSID, req.body.PASS, authSuite.toLowerCase());
+                            connectWiFi(req.body.SSID, req.body.PASS, authSuite.toLowerCase());
                         } else {
-                            connectWiFi(network.SSID);
+                            connectWiFi(req.body.SSID);
                         }
                     })
                     .catch(error => log(error));
