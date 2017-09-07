@@ -79,12 +79,7 @@ export const Network = (edgeId: string) => {
                         res.end();
                         // https://wiki.openwrt.org/doc/uci/wireless#common_interface_options
                         // https://wiki.openwrt.org/doc/uci/wireless#wpa_modes
-                        let authSuite = req.body.AUTH_SUITE;
-                        if (authSuite) {
-                            connectWiFi(req.body.SSID, req.body.PASS, authSuite.toLowerCase());
-                        } else {
-                            connectWiFi(req.body.SSID);
-                        }
+                        connectWiFi(req.body.SSID, req.body.PASS, req.body.AUTH_SUITE);
                     })
                     .catch(error => log(error));
             } else {
@@ -97,8 +92,9 @@ export const Network = (edgeId: string) => {
     function scanWifi(): Promise<WifiObject[]> {
         return new Promise((resolve, reject) => {
             try {
-                let network = require("/usr/bin/scanWifi.js");
+                const network = require('/usr/bin/scanWifi.js');
                 network.scanWifi((items: WifiObject[]) => {
+                    log(items);
                     resolve(items);
                 });
             }
@@ -114,12 +110,19 @@ export const Network = (edgeId: string) => {
         return new Promise(res => {
             const childProcess = require('child_process');
             log(`Connecting to ${SSID}${authSuite ? ` with Auth Suite ${authSuite}` : ''}`);
-            childProcess.exec(`clientMode ${SSID}${authSuite ? ` ${authSuite}` : ''}${password ? ` ${password}` : ''}`, (error: any, stdout: any, stderr: any) => {
-                if (error || stderr) {
-                    console.log('Error:', error || stderr);
-                    res(false);
-                } else
-                    res(true);
+
+            const command = childProcess.spawn('clientMode', authSuite ? [SSID, authSuite, password] : [SSID]);
+            command.stdout.on('data', (data: any) => {
+                log(`stdout: ${data}`);
+            });
+
+            command.stderr.on('data', (data: any) => {
+                log(`stderr: ${data}`);
+            });
+
+            command.on('close', (code: any) => {
+                log(`child process exited with code ${code}`);
+                res(true);
             });
         });
     }
