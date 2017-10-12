@@ -3,6 +3,7 @@ import * as cache from './cache';
 import * as WebSocket from 'ws';
 
 import net = require('net');
+import process = require('process');
 import readline = require('readline');
 
 const log = debug('droplit:diagnostics');
@@ -77,6 +78,11 @@ module.exports = (router: any) => {
                 desc: 'Show local settings.',
                 exec: () =>
                     socket.write(`  ${JSON.stringify(settings)}\n\r`)
+            },
+            memory: {
+                desc: 'Show memory usage.',
+                exec: () =>
+                    socket.write(`  ${JSON.stringify(process.memoryUsage())}\n\r`)
             },
             pmsg: {
                 desc: 'Send a message to a specified plugin. Command format: `pmsg <plugin> <message>`.',

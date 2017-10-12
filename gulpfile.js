@@ -10,7 +10,7 @@ const merge = require('merge2');
 const path = require('path');
 
 // load gulp plugins
-var jeditor = require("gulp-json-editor");
+const jeditor = require('gulp-json-editor');
 const G$ = require('gulp-load-plugins')({ lazy: true });
 const chalk = G$.util.colors;
 
@@ -64,16 +64,21 @@ function plumberErrorHandler(err) {
 }
 
 const exec = require('child_process').exec;
+
 function runCommand(command, options, callback) {
-    exec(command, options, function (error, stdout, stderr) {
-        console.log(`${path.resolve(options.cwd || '.')} ${command}`);
-        console.log(stdout);
-        console.log(stderr);
-        if (error !== null) {
-            console.log('exec error: ', error);
-        }
-        callback();
-    });
+    try {
+        exec(command, options, function (error, stdout, stderr) {
+            console.log(`${path.resolve(options.cwd || '.')} ${command}`);
+            console.log(stdout);
+            console.log(stderr);
+            if (error !== null) {
+                console.log('exec error: ', error);
+            }
+            callback();
+        });
+    } catch (ex) {
+        console.log('rc ex', ex);
+    }
 }
 
 /*
@@ -201,22 +206,22 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
     runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('stats', 'Get lines of code', function (project) {
     console.log(project);
@@ -228,10 +233,10 @@ gulp.task('stats', 'Get lines of code', function (project) {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('size', 'Get size of code', function (project) {
     console.log(project);
@@ -243,10 +248,10 @@ gulp.task('size', 'Get size of code', function (project) {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 // Deploying
 
@@ -258,7 +263,7 @@ function getPackageName(packagePath) {
 gulp.task('package', false, function () {
     const packageFileName = `${getPackageName(settings.edgeDir)}.tar`;
     return gulp.src(settings.packageFiles, { follow: true })
-        .pipe(gulp.dest(`dist/droplit-edge`))
+        .pipe(gulp.dest('dist/droplit-edge'))
         .pipe(G$.debug({ title: 'package:' }))
         .pipe(G$.tar(packageFileName))
         .pipe(G$.gzip())
@@ -308,8 +313,10 @@ gulp.task('pre-install-dist', false, function () {
 });
 
 gulp.task('install-dist', false, function (callback) {
-
-    runCommand('npm install', { cwd: 'temp/droplit-edge' }, callback)
+    runCommand('npm install', { cwd: 'temp/droplit-edge' }, () => {
+        console.log('done');
+        callback();
+    });
 });
 
 gulp.task('build-dist', false, function (callback) {
