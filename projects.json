@@ -4,13 +4,13 @@
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-philips-hue": {
-        "dependencies": [ "droplit-plugin" ]
+        "dependencies": [ "droplit-plugin", "request-lite" ]
     },
     "droplit-plugin-sonos": {
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-wemo": {
-        "dependencies": [ "droplit-plugin" ]
+        "dependencies": [ "droplit-plugin", "request-lite" ]
     },
     "droplit-plugin-js-example": {
         "dependencies": [ "droplit-plugin" ]
@@ -19,7 +19,7 @@
         "dependencies": [ "droplit-plugin" ]
     },
     "droplit-plugin-voyager": {
-        "dependencies": [ "droplit-plugin" ]
+        "dependencies": [ "droplit-plugin", "request-lite" ]
     },
     "droplit-plugin-local-ts-example": {
         "dependencies": [ "droplit-plugin" ]
@@ -44,6 +44,9 @@
             "droplit-plugin-gpio",
             "droplit-plugin-test"
         ]
+    },
+    "request-lite": {
+        "dependencies": []
     },
     "load-test": {
         "dependencies": [

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const Discoverer = require('./Discoverer');
 const droplit = require('droplit-plugin');
 const EventEmitter = require('events').EventEmitter;
-const request = require('request');
+const request = require('request-lite');
 
 const AvailableMembers = [
     'BinarySwitch_switch',
@@ -403,7 +403,6 @@ class HuePlugin extends droplit.DroplitPlugin {
         const temperature = microReciprocal(value);
         bridge.setState(localId, { ct: temperature });
     }
-
 }
 
 const AppName = 'droplit#edge';

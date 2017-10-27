@@ -3,7 +3,7 @@
 const EventEmitter = require('events').EventEmitter;
 const http = require('http');
 const os = require('os');
-const request = require('request');
+const request = require('request-lite');
 const util = require('util');
 const xml = require('xml2js');
 

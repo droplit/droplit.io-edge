@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events').EventEmitter;
-const request = require('request');
+const request = require('request-lite');
 const ssdp = require('node-ssdp').Client;
 const url = require('url');
 const xml = require('xml2js');

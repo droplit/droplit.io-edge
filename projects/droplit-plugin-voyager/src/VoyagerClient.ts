@@ -1,5 +1,5 @@
 import * as events from 'events';
-import * as request from 'request';
+const request = require('request-lite');
 
 export interface Response {
     status: number;
@@ -383,7 +383,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             request.get({
                 url: `${this.device.address}query/info`
-            }, (error, response, body) => {
+            }, (error: any, response: any, body: any) => {
                 this.device.deferred = true;
                 if (!error) {
                     const res: Response = {
@@ -401,7 +401,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             request.get({
                 url: `${this.device.address}query/sensors`
-            }, (error, response, body) => {
+            }, (error: any, response: any, body: any) => {
                 this.device.deferred = true;
                 if (!error) {
                     const res: Response = {
@@ -420,7 +420,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             request.get({
                 url: `${this.device.address}query/alerts`
-            }, (error, response, body) => {
+            }, (error: any, response: any, body: any) => {
                 this.device.deferred = true;
                 if (!error) {
                     const res: Response = {
@@ -603,7 +603,7 @@ export class VoyagerClient extends events.EventEmitter {
         return new Promise<Response>((resolve, reject) => {
             request.post(`${this.device.address}control`,
                 { form: object },
-                (error, response, body) => {
+                (error: any, response: any, body: any) => {
                     this.device.deferred = true;
                     if (!error) {
                         const res: Response = { status: response.statusCode };
@@ -629,7 +629,7 @@ export class VoyagerClient extends events.EventEmitter {
             object[property] = value;
             request.post(`${this.device.address}settings`,
                 { form: object },
-                (error, response, body) => {
+                (error: any, response: any, body: any) => {
                     this.device.deferred = true;
                     if (!error) {
                         const res: Response = { status: response.statusCode };
@@ -652,7 +652,7 @@ export class VoyagerClient extends events.EventEmitter {
     info(callback: any) {
         request.get({
             url: this.device.address
-        }, (error, response, body) => {
+        }, (error: any, response: any, body: any) => {
             this.device.deferred = true;
             if (!error) {
                 const res: Response = {
