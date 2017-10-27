@@ -20,14 +20,11 @@ In order to run the Droplit.io Edge software, you must:
 Currently we support these platforms:
 
 * Raspberry Pi 3 (Raspbian Lite 2016-05-27)
-
-Platforms with limited support:
-
 * Openwrt 
-* DDWRT
 * Windows 10 on desktop
-* macOS 10.11.6
-* Debian 8 on desktop
+* macOS 10.12.X
+* Debian 8 +
+* Ubuntu 12 +
 
 Platforms with known issues:
 
@@ -77,7 +74,7 @@ For instructions on installing NodeJS, see [https://docs.droplit.io/docs/install
 run: 
 
 ```
-npm install -g typescript gulp typings
+npm install -g typescript gulp
 ```
 
 ## Downloading Droplit.io Edge
