@@ -127,10 +127,14 @@ Request.prototype.onRequestResponse = function (response) {
             } catch (ex) { } // eslint-disable-line no-empty
         }
 
-        this.callback(null, response, response.body);
+        if (this.callback)
+            this.callback(null, response, response.body);
     });
 
-    response.on('error', err => this.callback(err));
+    response.on('error', err => {
+        if (this.callback)
+            this.callback(err);
+    });
 };
 
 Request.prototype.start = function () {

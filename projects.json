@@ -6,6 +6,9 @@
     "droplit-plugin-philips-hue": {
         "dependencies": [ "droplit-plugin", "request-lite" ]
     },
+    "droplit-plugin-aurora-nanoleaf": {
+        "dependencies": [ "droplit-plugin", "request-lite" ]
+    },
     "droplit-plugin-sonos": {
         "dependencies": [ "droplit-plugin" ]
     },
@@ -34,6 +37,7 @@
         "dependencies": [
             "droplit-plugin",
             "droplit-plugin-lifx",
+            "droplit-plugin-aurora-nanoleaf",
             "droplit-plugin-philips-hue",
             "droplit-plugin-sonos",
             "droplit-plugin-wemo",
