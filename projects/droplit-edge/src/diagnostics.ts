@@ -97,6 +97,12 @@ module.exports = (router: any) => {
                                         output += `    ${v.value.join('\n\r    ')}\n\r`;
                                     else
                                         output += '    (none)\n\r';
+                                } else if (typeof v === 'object') {
+                                    output += '  {\n\r';
+                                    output += Object.keys(v)
+                                        .map(name => `    ${name}: ${JSON.stringify(v[name])}`)
+                                        .join('\n\r');
+                                    output += '\n\r  }\n\r';
                                 } else
                                     output = `  ${value.join('\n\r  ')}\n\r`;
                             });
