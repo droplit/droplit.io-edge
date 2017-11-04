@@ -46,7 +46,8 @@
             "droplit-plugin-voyager",
             "droplit-plugin-local-ts-example",
             "droplit-plugin-gpio",
-            "droplit-plugin-test"
+            "droplit-plugin-test",
+            "request-lite"
         ]
     },
     "request-lite": {
