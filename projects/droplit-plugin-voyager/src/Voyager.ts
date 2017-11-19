@@ -1,6 +1,6 @@
 import * as droplit from '../../droplit-plugin';
-import {Discoverer} from './Discoverer';
-import {VoyagerClient} from './VoyagerClient';
+import { Discoverer } from './Discoverer';
+import { VoyagerClient } from './VoyagerClient';
 
 export interface Response {
     status: number;

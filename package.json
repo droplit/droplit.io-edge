@@ -60,7 +60,7 @@
     "gulp-sloc": "^1.0.4",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tar": "^1.9.0",
-    "gulp-tslint": "8.1.0",
+    "gulp-tslint": "8.1.2",
     "gulp-typescript": "^3.1.4",
     "gulp-util": "^3.0.7",
     "merge2": "^1.0.2",

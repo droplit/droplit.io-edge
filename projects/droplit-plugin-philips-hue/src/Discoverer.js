@@ -1,7 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events').EventEmitter;
-const request = require('request');
+const request = require('request-lite');
 const ssdp = require('node-ssdp').Client;
 const url = require('url');
 const xml = require('xml2js');
@@ -26,7 +26,7 @@ class Discoverer extends EventEmitter {
             if (!this.checkBroker)
                 return;
 
-            request('http://www.meethue.com/api/nupnp', (e, r, b) => {
+            request('https://www.meethue.com/api/nupnp', (e, r, b) => {
                 if (e)
                     return;
                 if (b) {

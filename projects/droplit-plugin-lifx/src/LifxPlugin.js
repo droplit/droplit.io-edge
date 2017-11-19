@@ -166,8 +166,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
                     if (packet.payload.service === 1 && packet.payload.port > 0) {
-                        if (!this.gateways.has(rinfo.address)) {
-                            const gateway = {
+                        let gateway = this.gateways.get(address);
+                        if (!gateway) {
+                            gateway = {
                                 ip: rinfo.address,
                                 port: packet.payload.port,
                                 site: packet.preamble.site,
@@ -175,11 +176,12 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 protocol: packet.preamble.protocol,
                                 address: packet.preamble.target.toString('hex')
                             };
-                            this.gateways.set(rinfo.address, gateway);
+                            this.gateways.set(address, gateway);
 
                             if (sourceMatch && this.sequence[packet.preamble.sequence])
                                 this.send(lifxPacket.getVersion(), packet.preamble.target);
-                        }
+                        } else if (gateway.ip !== rinfo.address)
+                            gateway.ip = rinfo.address; // IP address has changed
                     }
                     this.cache(address);
                     break;

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const Discoverer = require('./Discoverer');
 const droplit = require('droplit-plugin');
 const EventEmitter = require('events').EventEmitter;
-const request = require('request');
+const request = require('request-lite');
 
 const AvailableMembers = [
     'BinarySwitch_switch',
@@ -207,15 +207,33 @@ class HuePlugin extends droplit.DroplitPlugin {
     }
 
     pluginMessage(message, callback) {
-        if (message === 'devices' && this.config.diagnostics) {
-            const bridges = Array.from(this.bridges.keys())
-                .map(bridge => ({
-                    key: bridge,
-                    value: Array.from(this.bridges.get(bridge).lights.keys())
+        if (!this.config.diagnostics)
+            return false;
+
+        if (message === 'bridges') {
+            const bridges = Array
+                .from(this.bridges.keys())
+                .map(name => {
+                    const bridge = this.bridges.get(name);
+                    return {
+                        address: bridge.address,
+                        identifier: bridge.identifier,
+                        registered: bridge.registered
+                    };
+                });
+            callback(bridges);
+            return true;
+        } else if (message === 'devices') {
+            const bridges = Array
+                .from(this.bridges.keys())
+                .map(name => ({
+                    key: name,
+                    value: Array.from(this.bridges.get(name).lights.keys())
                 }));
             callback(bridges);
             return true;
         }
+
         return false;
     }
 
@@ -403,7 +421,6 @@ class HuePlugin extends droplit.DroplitPlugin {
         const temperature = microReciprocal(value);
         bridge.setState(localId, { ct: temperature });
     }
-
 }
 
 const AppName = 'droplit#edge';
