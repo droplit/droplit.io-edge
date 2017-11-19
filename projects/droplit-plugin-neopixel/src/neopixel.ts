@@ -11,6 +11,14 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
                 set_switch: this.setSwitch,
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
+            },
+             LightColor: {
+                get_brightness: this.getMclBrightness,
+                get_hue: this.getHue,
+                get_saturation: this.getSaturation,
+                set_brightness: this.setMclBrightness,
+                set_hue: this.setHue,
+                set_saturation: this.setSaturation
             }
         };
         this.init();
@@ -63,14 +71,11 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
 
     // BinarySwitch Implementation
     getSwitch(localId: string, callback: any) {
-        // return this.strip
-        callback();
+        
     }
 
     setSwitch(localId: string, value: any, index: string) {
-        if (value !== 'on' && value !== 'off')
-
-            return true;
+       
     }
 
     switchOff() {
@@ -84,6 +89,95 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         this.strip.turnOn();
         return true;
     }
+
+    getMclBrightness(localId, callback) {
+    }
+
+    getHue(localId, callback) {
+    }
+
+    getSaturation(localId, callback) {
+    }
+
+    getTemperature(localId, callback) {
+    }
+
+    getTempMin(localId, callback) {
+       
+    }
+
+    getTempMsx(localId, callback) {
+       
+    }
+
+    private hue: number;
+    private saturation: number;
+    private value: number;
+
+    setHue(localId, value) {
+        this.hue = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        let pixels = new Array(this.strip.pixels.length);
+        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        for(let i = 0; i < pixels.length; i++){
+            pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
+        }
+        this.strip.library.render(pixels);
+    }
+
+    setMclBrightness(localId, value) {
+        this.value = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+         let pixels = new Array(this.strip.pixels.length);
+        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        for(let i = 0; i < pixels.length; i++){
+            pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
+        }
+        this.strip.library.render(pixels);
+    }
+
+    setSaturation(localId, value) {
+        this.saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        let pixels = new Array(this.strip.pixels.length);
+        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        for(let i = 0; i < pixels.length; i++){
+            pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
+        }
+        this.strip.library.render(pixels);
+    }
+}
+
+
+function hsvToRgb(hue, saturation, value) {
+    const c = value * saturation;
+    const h = hue / 60;
+    const x = c * (1 - Math.abs((h % 2) - 1));
+    const m = value - c;
+
+    let tmp;
+    if (h >= 0 && h < 1)
+        tmp = { r: c, g: x, b: 0 };
+    else if (h >= 1 && h < 2)
+        tmp = { r: x, g: c, b: 0 };
+    else if (h >= 2 && h < 3)
+        tmp = { r: 0, g: c, b: x };
+    else if (h >= 3 && h < 4)
+        tmp = { r: 0, g: x, b: c };
+    else if (h >= 4 && h < 5)
+        tmp = { r: x, g: 0, b: c };
+    else if (h >= 5 && h <= 6)
+        tmp = { r: c, g: 0, b: x };
+    else
+        tmp = { r: 0, g: 0, b: 0 };
+
+    return {
+        red: parseInt(255 * (tmp.r + m)),
+        green: parseInt(255 * (tmp.g + m)),
+        blue: parseInt(255 * (tmp.b + m))
+    };
+}
+
+function normalize(value, min, max, mult) {
+    mult = mult || 100;
+    return Math.round(((value - min) / (max - min)) * mult);
 }
 
 
