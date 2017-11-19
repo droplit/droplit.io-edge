@@ -2,7 +2,8 @@ import { EventEmitter } from 'events';
 import * as DP from 'droplit-plugin';
 import {
     DeviceMessageResponse,
-    PluginMessageResponse
+    PluginMessageResponse,
+    PluginSetting
 } from './types/types';
 const log = require('debug')('droplit:plugin');
 const logv = require('debug')('droplit-v:plugin');
@@ -139,6 +140,10 @@ export class Controller extends EventEmitter {
 
     public deviceMessage(localId: string, data: any, callback?: (response: any) => void): DeviceMessageResponse {
         return this.pluginInstance.deviceMessage(localId, data, callback);
+    }
+
+    public setSetting(setting: PluginSetting): void {
+        this.pluginInstance.setSetting(setting);
     }
 
     private deviceInfoFilter(event: DP.DeviceInfo): DP.DeviceInfo {

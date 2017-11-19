@@ -364,20 +364,20 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
 function loadPlugin(pluginName: string) {
     return new Promise<any>((resolve, reject) => {
         setImmediate(() => {
-            const p = plugin.instance(pluginName);
-            if (!p)
+            const pluginController = plugin.instance(pluginName);
+            if (!pluginController)
                 return resolve();
 
             log(`${pluginName} loaded`);
 
-            p.on('device info', (deviceInfo: DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) => {
+            pluginController.on('device info', (deviceInfo: DeviceInfo, callback?: (deviceInfo: DP.DeviceInfo) => {}) => {
                 deviceInfo.pluginName = pluginName;
                 cache.setDeviceInfo(deviceInfo);
                 log(`info < ${deviceInfo.pluginName}:${deviceInfo.localId}`);
                 transport.sendRequestReliable('device info', deviceInfo, (response, err) => deviceInfoResponseHandler(response, err, deviceInfo, callback));
             });
 
-            p.on('event raised', (events: EventRaised[]) => {
+            pluginController.on('event raised', (events: EventRaised[]) => {
                 events = Array.isArray(events) ? events : [events];
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
@@ -392,7 +392,7 @@ function loadPlugin(pluginName: string) {
                 transport.send('event raised', events, err => { });
             });
 
-            p.on('property changed', (properties: any[]) => {
+            pluginController.on('property changed', (properties: any[]) => {
                 properties = Array.isArray(properties) ? properties : [properties];
                 properties.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
@@ -412,30 +412,30 @@ function loadPlugin(pluginName: string) {
 
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => basicSend('log error'));
 
-            p.on('discover complete', (events: any[]) => {
+            pluginController.on('discover complete', (events: any[]) => {
                 logv(`plugin: ${pluginName} : discover complete`, events);
                 basicSend('discover complete')(events);
             });
-            p.on('log info', (events: any[]) => {
-                events.forEach(event => event.pluginName = p.getName());
+            pluginController.on('log info', (events: any[]) => {
+                events.forEach(event => event.pluginName = pluginController.getName());
                 logv(`plugin: ${pluginName} : log info`, events);
                 basicSend('log info')(events);
             });
-            p.on('log error', (events: any[]) => {
-                events.forEach(event => event.pluginName = p.getName());
+            pluginController.on('log error', (events: any[]) => {
+                events.forEach(event => event.pluginName = pluginController.getName());
                 logv(`plugin: ${pluginName} : log error`, events);
                 basicSend('log error')(events);
             });
-            p.on('plugin data', (events: any[]) => {
+            pluginController.on('plugin data', (events: any[]) => {
                 logv(`plugin: ${pluginName} : plugin data`, events);
                 basicSend('plugin data')(events);
             });
-            p.on('plugin setting', (events: any[]) => {
-                logv(`plugin: ${pluginName} : plugin data`, events);
-                basicSend('plugin setting')(events);
+            pluginController.on('plugin setting', (event: any) => {
+                pluginController.setSetting(event);
+                logv(`plugin: ${pluginName} : plugin data`, event);
+                // basicSend('plugin setting')(event);
             });
-
-            plugins.set(pluginName, p);
+            plugins.set(pluginName, pluginController);
 
             resolve();
         });
@@ -465,6 +465,7 @@ function loadPlugins() {
         }
 
         const plugins: string[] = [];
+        const pluginSettings: PluginSetting[] = [];
         const localDeviceInfo: DP.DeviceInfo = {
             localId: '.',
             services: [],
@@ -506,6 +507,15 @@ function loadPlugins() {
             Object.keys(settings.plugins).forEach(plugin => {
                 if (settings.plugins[plugin].enabled === false)
                     return;
+                if (settings.plugins[plugin].settings) {
+                    Object.keys(settings.plugins[plugin].settings).forEach(key => {
+                        pluginSettings.push({
+                            plugin,
+                            key,
+                            value: settings.plugins[plugin].settings[key]
+                        });
+                    });
+                }
                 plugins.push(plugin);
                 if (Array.isArray(settings.plugins[plugin].localServices)) {
                     (settings.plugins[plugin].localServices as [any]).forEach(ls => {
@@ -525,7 +535,7 @@ function loadPlugins() {
             log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
             transport.sendRequestReliable('device info', localDeviceInfo, (response, err) => deviceInfoResponseHandler(response, err, localDeviceInfo));
         }
-
+        
         const promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
         const all = promises.reduce((p, c) =>
             p.then(() =>
@@ -533,8 +543,10 @@ function loadPlugins() {
                     c().then(res).catch(rej)
                 )
             ), Promise.resolve<any>(undefined));
-
-        all.then(() => resolve());
+        all.then(() => {
+            setPluginSetting(pluginSettings);
+            resolve();
+        });
     });
 }
 

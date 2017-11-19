@@ -15,6 +15,12 @@
         },
         "droplit-plugin-wemo": {
             "enabled": true
+        },
+        "droplit-plugin-neopixel": {
+            "enabled": false,
+            "settings": {
+                "numLeds": 1
+            }
         }
     },
     "debug": {

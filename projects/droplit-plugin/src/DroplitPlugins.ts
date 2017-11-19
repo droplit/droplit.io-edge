@@ -351,6 +351,10 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
         return false;
     }
 
+    public setSetting(setting: any) {
+
+    }
+
     /**
      * Device message from upstream
      *
