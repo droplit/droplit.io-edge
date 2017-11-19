@@ -2,7 +2,7 @@ import * as droplit from 'droplit-plugin';
 export class NeopixelPlugin extends droplit.DroplitPlugin {
     private numLeds: number;
     private strip: PiStrip;
-    private services: any;
+    services: any;
     constructor() {
         super();
         this.services = {
@@ -38,7 +38,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
                     }
                 } else {
                     for (let i = 0; i < pixels.length; i++) {
-                        if (i == index) {
+                        if (i === index) {
                             pixels[i] = this.rgb2Int(red, green, blue);
                         } else {
                             pixels[i] = this.rgb2Int(this.strip.pixels[i].red, this.strip.pixels[i].green, this.strip.pixels[i].blue);
@@ -69,6 +69,13 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         this.reload();
     }
 
+    discover() {
+
+    }
+
+    dropDevice(localId: string) {
+        return false;
+    }
     // BinarySwitch Implementation
     getSwitch(localId: string, callback: any) {
 
@@ -78,10 +85,10 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
 
     }
 
-    switchOff(localId, value, callback, index) {
+    switchOff(localId: string, value: any, callback: any, index: number) {
         const pixels = new Array(this.strip.pixels.length);
         for (let i = 0; i < pixels.length; i++) {
-            if (i == index) {
+            if (i === index) {
                 pixels[i] = this.rgb2Int(0, 0, 0);
                 this.strip.pixels[i] = { red: 0, green: 0, blue: 0 };
             } else {
@@ -92,10 +99,10 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    switchOn(localId, value, callback, index) {
+    switchOn(localId: string, value: any, callback: any, index: number) {
         const pixels = new Array(this.strip.pixels.length);
         for (let i = 0; i < pixels.length; i++) {
-            if (i == index) {
+            if (i === index) {
                 pixels[i] = this.rgb2Int(255, 255, 255);
                 this.strip.pixels[i] = { red: 255, green: 255, blue: 255 };
             } else {
@@ -106,23 +113,23 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         return true;
     }
 
-    getMclBrightness(localId, callback) {
+    getMclBrightness(localId: string, value: any, callback: any, index: number) {
     }
 
-    getHue(localId, callback) {
+    getHue(localId: string, value: any, callback: any, index: number) {
     }
 
-    getSaturation(localId, callback) {
+    getSaturation(localId: string, value: any, callback: any, index: number) {
     }
 
-    getTemperature(localId, callback) {
+    getTemperature(localId: string, value: any, callback: any, index: number) {
     }
 
-    getTempMin(localId, callback) {
+    getTempMin(localId: string, value: any, callback: any, index: number) {
 
     }
 
-    getTempMsx(localId, callback) {
+    getTempMsx(localId: string, value: any, callback: any, index: number) {
 
     }
 
@@ -130,30 +137,30 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     private saturation: number;
     private value: number;
 
-    setHue(localId, value) {
+    setHue(localId: string, value: any, callback: any, index: number) {
         this.hue = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-        let pixels = new Array(this.strip.pixels.length);
-        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        const pixels = new Array(this.strip.pixels.length);
+        const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
         this.strip.library.render(pixels);
     }
 
-    setMclBrightness(localId, value) {
+    setMclBrightness(localId: string, value: any, callback: any, index: number) {
         this.value = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-        let pixels = new Array(this.strip.pixels.length);
-        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        const pixels = new Array(this.strip.pixels.length);
+        const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
         this.strip.library.render(pixels);
     }
 
-    setSaturation(localId, value) {
+    setSaturation(localId: string, value: any, callback: any, index: number) {
         this.saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-        let pixels = new Array(this.strip.pixels.length);
-        let color = hsvToRgb(this.hue, this.saturation, this.value);
+        const pixels = new Array(this.strip.pixels.length);
+        const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
@@ -161,8 +168,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     }
 }
 
-
-function hsvToRgb(hue, saturation, value) {
+function hsvToRgb(hue: number, saturation: number, value: number) {
     const c = value * saturation;
     const h = hue / 60;
     const x = c * (1 - Math.abs((h % 2) - 1));
@@ -185,17 +191,16 @@ function hsvToRgb(hue, saturation, value) {
         tmp = { r: 0, g: 0, b: 0 };
 
     return {
-        red: parseInt(255 * (tmp.r + m)),
-        green: parseInt(255 * (tmp.g + m)),
-        blue: parseInt(255 * (tmp.b + m))
+        red: Math.round(255 * (tmp.r + m)),
+        green: Math.round(255 * (tmp.g + m)),
+        blue: Math.round(255 * (tmp.b + m))
     };
 }
 
-function normalize(value, min, max, mult) {
+function normalize(value: number, min: number, max: number, mult: number) {
     mult = mult || 100;
     return Math.round(((value - min) / (max - min)) * mult);
 }
-
 
 enum Strip {
     ws2811 = 'WS2811',
@@ -207,7 +212,7 @@ enum Strip {
     sk9288 = 'SK9288',
     lpd8803 = 'LPD8803',
     lpd8806 = 'LPD8806'
-};
+}
 
 enum Direction {
     forward,
