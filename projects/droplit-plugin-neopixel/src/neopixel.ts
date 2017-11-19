@@ -12,7 +12,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
                 switchOff: this.switchOff,
                 switchOn: this.switchOn
             },
-             LightColor: {
+            LightColor: {
                 get_brightness: this.getMclBrightness,
                 get_hue: this.getHue,
                 get_saturation: this.getSaturation,
@@ -71,22 +71,38 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
 
     // BinarySwitch Implementation
     getSwitch(localId: string, callback: any) {
-        
+
     }
 
     setSwitch(localId: string, value: any, index: string) {
-       
+
     }
 
-    switchOff() {
-        console.log('switchOff');
-        this.strip.turnOff();
+    switchOff(localId, value, callback, index) {
+        const pixels = new Array(this.strip.pixels.length);
+        for (let i = 0; i < pixels.length; i++) {
+            if (i == index) {
+                pixels[i] = this.rgb2Int(0, 0, 0);
+                this.strip.pixels[i] = { red: 0, green: 0, blue: 0 };
+            } else {
+                pixels[i] = this.rgb2Int(this.strip.pixels[i].red, this.strip.pixels[i].green, this.strip.pixels[i].blue);
+            }
+        }
+        this.strip.library.render(pixels);
         return true;
     }
 
-    switchOn() {
-        console.log('switchOn');
-        this.strip.turnOn();
+    switchOn(localId, value, callback, index) {
+        const pixels = new Array(this.strip.pixels.length);
+        for (let i = 0; i < pixels.length; i++) {
+            if (i == index) {
+                pixels[i] = this.rgb2Int(255, 255, 255);
+                this.strip.pixels[i] = { red: 255, green: 255, blue: 255 };
+            } else {
+                pixels[i] = this.rgb2Int(this.strip.pixels[i].red, this.strip.pixels[i].green, this.strip.pixels[i].blue);
+            }
+        }
+        this.strip.library.render(pixels);
         return true;
     }
 
@@ -103,11 +119,11 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     }
 
     getTempMin(localId, callback) {
-       
+
     }
 
     getTempMsx(localId, callback) {
-       
+
     }
 
     private hue: number;
@@ -118,7 +134,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         this.hue = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         let pixels = new Array(this.strip.pixels.length);
         let color = hsvToRgb(this.hue, this.saturation, this.value);
-        for(let i = 0; i < pixels.length; i++){
+        for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
         this.strip.library.render(pixels);
@@ -126,9 +142,9 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
 
     setMclBrightness(localId, value) {
         this.value = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
-         let pixels = new Array(this.strip.pixels.length);
+        let pixels = new Array(this.strip.pixels.length);
         let color = hsvToRgb(this.hue, this.saturation, this.value);
-        for(let i = 0; i < pixels.length; i++){
+        for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
         this.strip.library.render(pixels);
@@ -138,7 +154,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
         this.saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         let pixels = new Array(this.strip.pixels.length);
         let color = hsvToRgb(this.hue, this.saturation, this.value);
-        for(let i = 0; i < pixels.length; i++){
+        for (let i = 0; i < pixels.length; i++) {
             pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         }
         this.strip.library.render(pixels);
