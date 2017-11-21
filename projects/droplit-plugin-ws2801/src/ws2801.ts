@@ -311,10 +311,35 @@ function hsvToRgb(hue: number, saturation: number, value: number) {
         tmp = { r: 0, g: 0, b: 0 };
 
     return {
-        red: Math.round(255 * (tmp.r + m)),
-        green: Math.round(255 * (tmp.g + m)),
-        blue: Math.round(255 * (tmp.b + m))
+        red: parseInt(255 * (tmp.r + m)),
+        green: parseInt(255 * (tmp.g + m)),
+        blue: parseInt(255 * (tmp.b + m))
     };
+}
+
+function rgbToHsv(red: number, green: number, blue: number) {
+    const b = blue / 255;
+    const g = green / 255;
+    const r = red / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const c = max - min;
+
+    let tmp = 0;
+    if (c === 0)
+        tmp = 0;
+    else if (max === r)
+        tmp = ((g - b) / c) % 6;
+    else if (max === g)
+        tmp = ((b - r) / c) + 2;
+    else
+        tmp = ((r - g) / c) + 4;
+
+    const hue = tmp * 60;
+    const value = max;
+    const sat = c === 0 ? 0 : c / value;
+
+    return { hue, sat, value };
 }
 
 function normalize(value: number, min: number, max: number, mult: number) {
