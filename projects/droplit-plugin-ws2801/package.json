@@ -1,0 +1,28 @@
+{
+    "name": "droplit-plugin-ws2801",
+    "description": "Droplit Edge WS2801 LED Strip Plugin",
+    "author": "Droplit, Inc.",
+    "version": "0.1.0",
+    "private": false,
+    "contributors": [
+        {
+            "name": "Sabbir Baser",
+            "email": "sabbir@droplit.io"
+        },
+        {
+            "name": "Chris Woodle",
+            "email": "chris@droplit.io"
+        }
+    ],
+    "main": "index.js",
+    "eslintConfig": {
+        "env": {
+            "es6": true,
+            "node": true
+        }
+    },
+    "dependencies": {
+        "droplit-plugin": "../droplit-plugin",
+        "rpi-ws2801": "0.0.4"
+    }
+}

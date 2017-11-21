@@ -535,7 +535,7 @@ function loadPlugins() {
             log(`local info < ${localDeviceInfo.services}:${localDeviceInfo.localId}`);
             transport.sendRequestReliable('device info', localDeviceInfo, (response, err) => deviceInfoResponseHandler(response, err, localDeviceInfo));
         }
-        
+
         const promises = plugins.map(name => (): Promise<any> => loadPlugin(name));
         const all = promises.reduce((p, c) =>
             p.then(() =>

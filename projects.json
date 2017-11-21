@@ -36,6 +36,9 @@
     "droplit-plugin-neopixel": {
         "dependencies": [ "droplit-plugin" ]
     },
+    "droplit-plugin-ws2801": {
+        "dependencies": [ "droplit-plugin" ]
+    },
     "droplit-edge": {
         "dependencies": [
             "droplit-plugin",
@@ -51,6 +54,7 @@
             "droplit-plugin-gpio",
             "droplit-plugin-test",
             "droplit-plugin-neopixel",
+            "droplit-plugin-ws2801",
             "request-lite"
         ]
     },
