@@ -31,7 +31,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
                 this.strip.library.init(this.numLeds);
             });
             this.strip.configureSet((red, green, blue, index?) => {
-                const pixels = new Array(this.strip.pixels.length);
+                const pixels = [];
                 if (index === undefined) {
                     for (let i = 0; i < pixels.length; i++) {
                         pixels[i] = this.rgb2Int(red, green, blue);
@@ -202,17 +202,17 @@ function normalize(value: number, min: number, max: number, mult: number) {
     return Math.round(((value - min) / (max - min)) * mult);
 }
 
-enum Strip {
-    ws2811 = 'WS2811',
-    ws2812 = 'WS2812',
-    sk6812 = 'SK6812',
-    ws2813 = 'WS2813',
-    ws2801 = 'WS2801',
-    apa102 = 'APA102',
-    sk9288 = 'SK9288',
-    lpd8803 = 'LPD8803',
-    lpd8806 = 'LPD8806'
-}
+// enum Strip {
+//     ws2811 = 'WS2811',
+//     ws2812 = 'WS2812',
+//     sk6812 = 'SK6812',
+//     ws2813 = 'WS2813',
+//     ws2801 = 'WS2801',
+//     apa102 = 'APA102',
+//     sk9288 = 'SK9288',
+//     lpd8803 = 'LPD8803',
+//     lpd8806 = 'LPD8806'
+// }
 
 enum Direction {
     forward,
