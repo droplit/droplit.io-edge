@@ -1,0 +1,28 @@
+{
+    "name": "droplit-plugin-apa102c",
+    "description": "Droplit Edge APA102C LED Strip Plugin",
+    "author": "Droplit, Inc.",
+    "version": "0.1.0",
+    "private": false,
+    "contributors": [
+        {
+            "name": "Sabbir Baser",
+            "email": "sabbir@droplit.io"
+        },
+        {
+            "name": "Chris Woodle",
+            "email": "chris@droplit.io"
+        }
+    ],
+    "main": "index.js",
+    "eslintConfig": {
+        "env": {
+            "es6": true,
+            "node": true
+        }
+    },
+    "dependencies": {
+        "droplit-plugin": "../droplit-plugin",
+        "rpio": "^0.9.19"
+    }
+}

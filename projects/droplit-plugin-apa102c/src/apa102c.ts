@@ -7,9 +7,10 @@ export interface ValueIndex {
     index: number;
 }
 
-export class Ws2801 extends droplit.DroplitPlugin {
+export class Apa102c extends droplit.DroplitPlugin {
     private numLeds: number;
     private strip: PiStrip;
+    private buffer: Buffer;
     services: any;
     constructor(settings: any) {
         super();
@@ -40,24 +41,29 @@ export class Ws2801 extends droplit.DroplitPlugin {
 
     private init() {
         if (this.numLeds) {
-            this.strip = new PiStrip(this.numLeds, 'rpi-ws2801');
+            this.strip = new PiStrip(this.numLeds, 'rpio');
             this.strip.initialize(() => {
-                this.strip.library.connect(this.numLeds);
-            });
-            this.strip.configureSet((red, green, blue, index?) => {
-                index || index === 0 ? sendBuffer.apply(this) : this.strip.library.fill(red, blue, green);
-                function sendBuffer() {
-                    const buf = new Buffer(this.strip.pixels.length * 3);
-                    let pixelCounter = 0;
-                    for (let ii = 0; ii < this.strip.pixels.length * 3; ii = ii + 3) {
-                        buf[ii] = this.strip.pixels[pixelCounter].red;
-                        buf[ii + 1] = this.strip.pixels[pixelCounter].blue;
-                        buf[ii + 2] = this.strip.pixels[pixelCounter].green;
-                        pixelCounter++;
-                    }
-                    this.strip.library.sendRgbBuffer(buf);
+                this.strip.library.init({ mapping: 'gpio' });
+                this.strip.library.init({ gpiomem: false });
+                const bufferSize = (this.numLeds * 4) + 8;
+                this.buffer = new Buffer(bufferSize);
+                for (let ii = 0; ii < bufferSize; ii++) {
+                    this.buffer[ii] = 0x00;
                 }
+                this.strip.library.spiBegin();
+                this.strip.library.spiSetClockDivider(128);
             });
+            this.strip.update = (colors: Colors[] = [], keepInterval?: boolean) => {
+                for (let ii = 0; ii < Math.min(this.numLeds, colors.length); ii++) {
+                    const currentPixel = 4 + (ii * 4);
+                    // brightness default 255
+                    this.buffer[currentPixel] = 255;
+                    this.buffer[currentPixel + 1] = colors[ii].blue;
+                    this.buffer[currentPixel + 2] = colors[ii].green;
+                    this.buffer[currentPixel + 3] = colors[ii].red;
+                }
+                this.strip.library.spiWrite(this.buffer, (this.numLeds * 4) + 8);
+            };
             this.onDeviceInfo(
                 {
                     localId: '.',
@@ -78,7 +84,7 @@ export class Ws2801 extends droplit.DroplitPlugin {
                 this.reload();
                 break;
             default:
-                console.log('Unknown setting');
+                console.log('Unknown setting:', setting.key);
         }
     }
 
@@ -142,7 +148,6 @@ export class Ws2801 extends droplit.DroplitPlugin {
     }
 
     setDSBrightness(localId: string, valueIndexes: ValueIndex[]) {
-        console.log('in dsBrightness - localId:', localId, 'valueIndexes:', valueIndexes);
         valueIndexes.forEach(valueIndex => {
             this.strip.pixels[valueIndex.index] = { red: valueIndex.value, green: valueIndex.value, blue: valueIndex.value };
         });
@@ -302,64 +307,64 @@ export class Ws2801 extends droplit.DroplitPlugin {
     }
 }
 
-// function hsvToRgb(hue: number, saturation: number, value: number) {
-//     const c = value * saturation;
-//     const h = hue / 60;
-//     const x = c * (1 - Math.abs((h % 2) - 1));
-//     const m = value - c;
+function hsvToRgb(hue: number, saturation: number, value: number) {
+    const c = value * saturation;
+    const h = hue / 60;
+    const x = c * (1 - Math.abs((h % 2) - 1));
+    const m = value - c;
 
-//     let tmp;
-//     if (h >= 0 && h < 1)
-//         tmp = { r: c, g: x, b: 0 };
-//     else if (h >= 1 && h < 2)
-//         tmp = { r: x, g: c, b: 0 };
-//     else if (h >= 2 && h < 3)
-//         tmp = { r: 0, g: c, b: x };
-//     else if (h >= 3 && h < 4)
-//         tmp = { r: 0, g: x, b: c };
-//     else if (h >= 4 && h < 5)
-//         tmp = { r: x, g: 0, b: c };
-//     else if (h >= 5 && h <= 6)
-//         tmp = { r: c, g: 0, b: x };
-//     else
-//         tmp = { r: 0, g: 0, b: 0 };
+    let tmp;
+    if (h >= 0 && h < 1)
+        tmp = { r: c, g: x, b: 0 };
+    else if (h >= 1 && h < 2)
+        tmp = { r: x, g: c, b: 0 };
+    else if (h >= 2 && h < 3)
+        tmp = { r: 0, g: c, b: x };
+    else if (h >= 3 && h < 4)
+        tmp = { r: 0, g: x, b: c };
+    else if (h >= 4 && h < 5)
+        tmp = { r: x, g: 0, b: c };
+    else if (h >= 5 && h <= 6)
+        tmp = { r: c, g: 0, b: x };
+    else
+        tmp = { r: 0, g: 0, b: 0 };
 
-//     return {
-//         red: parseInt(255 * (tmp.r + m)),
-//         green: parseInt(255 * (tmp.g + m)),
-//         blue: parseInt(255 * (tmp.b + m))
-//     };
-// }
+    return {
+        red: parseInt(255 * (tmp.r + m)),
+        green: parseInt(255 * (tmp.g + m)),
+        blue: parseInt(255 * (tmp.b + m))
+    };
+}
 
-// function rgbToHsv(red: number, green: number, blue: number) {
-//     const b = blue / 255;
-//     const g = green / 255;
-//     const r = red / 255;
-//     const max = Math.max(r, g, b);
-//     const min = Math.min(r, g, b);
-//     const c = max - min;
+function rgbToHsv(red: number, green: number, blue: number) {
+    const b = blue / 255;
+    const g = green / 255;
+    const r = red / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const c = max - min;
 
-//     let tmp = 0;
-//     if (c === 0)
-//         tmp = 0;
-//     else if (max === r)
-//         tmp = ((g - b) / c) % 6;
-//     else if (max === g)
-//         tmp = ((b - r) / c) + 2;
-//     else
-//         tmp = ((r - g) / c) + 4;
+    let tmp = 0;
+    if (c === 0)
+        tmp = 0;
+    else if (max === r)
+        tmp = ((g - b) / c) % 6;
+    else if (max === g)
+        tmp = ((b - r) / c) + 2;
+    else
+        tmp = ((r - g) / c) + 4;
 
-//     const hue = tmp * 60;
-//     const value = max;
-//     const sat = c === 0 ? 0 : c / value;
+    const hue = tmp * 60;
+    const value = max;
+    const sat = c === 0 ? 0 : c / value;
 
-//     return { hue, sat, value };
-// }
+    return { hue, sat, value };
+}
 
-// function normalize(value: number, min: number, max: number, mult: number) {
-//     mult = mult || 100;
-//     return Math.round(((value - min) / (max - min)) * mult);
-// }
+function normalize(value: number, min: number, max: number, mult: number) {
+    mult = mult || 100;
+    return Math.round(((value - min) / (max - min)) * mult);
+}
 
 enum Direction {
     forward,
@@ -460,8 +465,8 @@ class PiStrip {
     update(colors: Colors[] = [], keepInterval?: boolean) {
         for (let ii = 0; ii < Math.min(this.length, colors.length); ii++) {
             this.pixels[ii] = colors[ii];
+            this.set(this.pixels[ii].red, this.pixels[ii].green, this.pixels[ii].blue, ii);
         }
-        this.set(this.pixels[0].red, this.pixels[0].green, this.pixels[0].blue, 0);
         if (!keepInterval) {
             this.clearRoutines();
         }
