@@ -75,10 +75,19 @@ class WemoPlugin extends droplit.DroplitPlugin {
     }
 
     pluginMessage(message, callback) {
-        if (message === 'devices' && this.config.diagnostics) {
+        if (!this.config.diagnostics)
+            return false;
+
+        if (message === 'devices') {
             callback(Array.from(this.devices.keys()));
             return true;
         }
+
+        if (message === 'help') {
+            callback(['help', 'devices']);
+            return true;
+        }
+
         return false;
     }
 

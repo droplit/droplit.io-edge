@@ -326,21 +326,34 @@ class LifxPlugin extends droplit.DroplitPlugin {
     }
 
     pluginMessage(message, callback) {
-        if (this.config.diagnostics) {
-            if (message === 'devices') {
-                callback(Array.from(this.bulbs.keys()));
-                return true;
-            }
-            if (message === 'info') {
-                callback([
-                    `bulbs: ${Array.from(this.bulbs.keys()).join(', ')}`,
-                    `gateways: ${Array.from(this.gateways.keys()).join(', ')}`,
-                    `current sequence: ${this.sequencer}`,
-                    `source: ${Array.from(this.source.values()).join('.')}`
-                ]);
-                return true;
-            }
+        if (!this.config.diagnostics)
+            return false;
+
+        if (message === 'bulbs') {
+            callback(Array.from(this.bulbs.values()).map(b => b.discoverObject()));
+            return true;
         }
+
+        if (message === 'devices') {
+            callback(Array.from(this.bulbs.keys()));
+            return true;
+        }
+
+        if (message === 'help') {
+            callback(['help', 'devices', 'info']);
+            return true;
+        }
+
+        if (message === 'info') {
+            callback([
+                `bulbs: ${Array.from(this.bulbs.keys()).join(', ')}`,
+                `gateways: ${Array.from(this.gateways.values()).map(g => `${g.address} (${g.ip}:${g.port})`).join(', ')}`,
+                `current sequence: ${this.sequencer}`,
+                `source: ${Array.from(this.source.values()).join('.')}`
+            ]);
+            return true;
+        }
+
         return false;
     }
 

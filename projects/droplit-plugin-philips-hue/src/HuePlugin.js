@@ -223,14 +223,21 @@ class HuePlugin extends droplit.DroplitPlugin {
                 });
             callback(bridges);
             return true;
-        } else if (message === 'devices') {
-            const bridges = Array
+        }
+
+        if (message === 'devices') {
+            const devices = Array
                 .from(this.bridges.keys())
-                .map(name => ({
-                    key: name,
-                    value: Array.from(this.bridges.get(name).lights.keys())
-                }));
-            callback(bridges);
+                .reduce((p, c) => {
+                    p[c] = Array.from(this.bridges.get(c).lights.keys());
+                    return p;
+                }, {});
+            callback(devices);
+            return true;
+        }
+
+        if (message === 'help') {
+            callback(['help', 'bridges', 'devices']);
             return true;
         }
 

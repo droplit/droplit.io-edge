@@ -5,6 +5,7 @@ import * as WebSocket from 'ws';
 import net = require('net');
 import process = require('process');
 import readline = require('readline');
+import { isPrimitive } from 'util';
 
 const log = debug('droplit:diagnostics');
 const settings = require('../localsettings.json');
@@ -41,6 +42,16 @@ module.exports = (router: any) => {
         socket.write('Edge Diagnostics console\n\r');
 
         const commands: any = {
+            cache: {
+                desc: 'Get the cached device data',
+                exec: (id: string) => {
+                    const device = cache.getDeviceByDeviceId(id);
+                    if (!device)
+                        return socket.write(`  Device ${id} not found.\n\r`);
+
+                    writeObject(socket, device, 2);
+                }
+            },
             crash: {
                 desc: 'Throw an error.',
                 exec: () => {
@@ -55,7 +66,7 @@ module.exports = (router: any) => {
                         if (discovered.length > 0) {
                             socket.write(`  ${plugin.pluginName}\n\r`);
                             discovered.forEach(device =>
-                                socket.write(`    ${device.deviceId}\n\r`));
+                                socket.write(`    ${device.deviceId} (${device.localId})\n\r`));
                         }
                     })
             },
@@ -74,11 +85,6 @@ module.exports = (router: any) => {
                             socket.write(`    ${command.desc}\n\r`);
                     })
             },
-            local: {
-                desc: 'Show local settings.',
-                exec: () =>
-                    socket.write(`  ${JSON.stringify(settings)}\n\r`)
-            },
             memory: {
                 desc: 'Show memory usage.',
                 exec: () =>
@@ -88,30 +94,7 @@ module.exports = (router: any) => {
                 desc: 'Send a message to a specified plugin. Command format: `pmsg <plugin> <message>`.',
                 exec: (plugin: string, message: string) =>
                     router.sendPluginMessage({ plugin, message }, (value: any) => {
-                        if (Array.isArray(value)) {
-                            let output = '';
-                            value.forEach(v => {
-                                if (v.key && typeof v.key === 'string' && v.value && Array.isArray(v.value)) {
-                                    output += `  ${v.key}\n\r`;
-                                    if (v.value.length > 0)
-                                        output += `    ${v.value.join('\n\r    ')}\n\r`;
-                                    else
-                                        output += '    (none)\n\r';
-                                } else if (typeof v === 'object') {
-                                    output += '  {\n\r';
-                                    output += Object.keys(v)
-                                        .map(name => `    ${name}: ${JSON.stringify(v[name])}`)
-                                        .join('\n\r');
-                                    output += '\n\r  }\n\r';
-                                } else
-                                    output = `  ${value.join('\n\r  ')}\n\r`;
-                            });
-                            socket.write(output);
-                        }
-                        else if (typeof value === 'string')
-                            socket.write(value);
-                        else
-                            socket.write(value.toString());
+                        writeObject(socket, value, 2);
                     })
             },
             ping: {
@@ -133,6 +116,11 @@ module.exports = (router: any) => {
                 desc: 'List loaded plugins.',
                 exec: () =>
                     socket.write(`  ${(Array as any).from(router.plugins.keys()).join('\n\r  ')}\n\r`)
+            },
+            settings: {
+                desc: 'Show local settings.',
+                exec: () =>
+                    socket.write(`  ${JSON.stringify(settings)}\n\r`)
             },
             socket: {
                 desc: 'Display the state of the transport web socket.',
@@ -172,6 +160,43 @@ module.exports = (router: any) => {
             if (i !== -1) {
                 sockets.splice(i, 1);
                 log('disconnected');
+            }
+        });
+    }
+
+    function writeObject(socket: net.Socket, obj: any, tab: number, insertInitPad = true) {
+        const pad = (c: number, i: number) => (insertInitPad || (i !== 0)) ? Array(c + 1).join(' ') : '';
+        if (Array.isArray(obj)) {
+            obj.forEach((v, idx) => {
+                if (isPrimitive(v))
+                    socket.write(`${pad(tab, idx)}- ${v}\n\r`);
+                else {
+                    socket.write(`${pad(tab, idx)}- `);
+                    writeObject(socket, v, tab + 2, false);
+                }
+            });
+            return;
+        }
+
+        Object.keys(obj).forEach((k, idx) => {
+            const value = (<any>obj)[k];
+            if (isPrimitive(value)) {
+                socket.write(`${pad(tab, idx)}${k}: ${(<any>obj)[k]}\n\r`);
+            } else if (Array.isArray(value)) {
+                socket.write(`${pad(tab, idx)}${k}:\n\r`);
+                value.forEach(v => {
+                    if (isPrimitive(v))
+                        socket.write(`${pad(tab + 2, idx)}- ${v}\n\r`);
+                    else {
+                        socket.write(`${pad(tab, idx)}- `);
+                        writeObject(socket, v, tab + 2, false);
+                    }
+                });
+            } else if (typeof value === 'object') {
+                socket.write(`${pad(tab, idx)}${k}:\n\r`);
+                writeObject(socket, value, tab + 2);
+            } else {
+                socket.write(`${pad(tab, idx)}${k}: ${(<any>obj)[k]}\n\r`);
             }
         });
     }
