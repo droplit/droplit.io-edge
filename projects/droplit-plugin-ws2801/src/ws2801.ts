@@ -302,64 +302,64 @@ export class Ws2801 extends droplit.DroplitPlugin {
     }
 }
 
-function hsvToRgb(hue: number, saturation: number, value: number) {
-    const c = value * saturation;
-    const h = hue / 60;
-    const x = c * (1 - Math.abs((h % 2) - 1));
-    const m = value - c;
+// function hsvToRgb(hue: number, saturation: number, value: number) {
+//     const c = value * saturation;
+//     const h = hue / 60;
+//     const x = c * (1 - Math.abs((h % 2) - 1));
+//     const m = value - c;
 
-    let tmp;
-    if (h >= 0 && h < 1)
-        tmp = { r: c, g: x, b: 0 };
-    else if (h >= 1 && h < 2)
-        tmp = { r: x, g: c, b: 0 };
-    else if (h >= 2 && h < 3)
-        tmp = { r: 0, g: c, b: x };
-    else if (h >= 3 && h < 4)
-        tmp = { r: 0, g: x, b: c };
-    else if (h >= 4 && h < 5)
-        tmp = { r: x, g: 0, b: c };
-    else if (h >= 5 && h <= 6)
-        tmp = { r: c, g: 0, b: x };
-    else
-        tmp = { r: 0, g: 0, b: 0 };
+//     let tmp;
+//     if (h >= 0 && h < 1)
+//         tmp = { r: c, g: x, b: 0 };
+//     else if (h >= 1 && h < 2)
+//         tmp = { r: x, g: c, b: 0 };
+//     else if (h >= 2 && h < 3)
+//         tmp = { r: 0, g: c, b: x };
+//     else if (h >= 3 && h < 4)
+//         tmp = { r: 0, g: x, b: c };
+//     else if (h >= 4 && h < 5)
+//         tmp = { r: x, g: 0, b: c };
+//     else if (h >= 5 && h <= 6)
+//         tmp = { r: c, g: 0, b: x };
+//     else
+//         tmp = { r: 0, g: 0, b: 0 };
 
-    return {
-        red: parseInt(255 * (tmp.r + m)),
-        green: parseInt(255 * (tmp.g + m)),
-        blue: parseInt(255 * (tmp.b + m))
-    };
-}
+//     return {
+//         red: parseInt(255 * (tmp.r + m)),
+//         green: parseInt(255 * (tmp.g + m)),
+//         blue: parseInt(255 * (tmp.b + m))
+//     };
+// }
 
-function rgbToHsv(red: number, green: number, blue: number) {
-    const b = blue / 255;
-    const g = green / 255;
-    const r = red / 255;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const c = max - min;
+// function rgbToHsv(red: number, green: number, blue: number) {
+//     const b = blue / 255;
+//     const g = green / 255;
+//     const r = red / 255;
+//     const max = Math.max(r, g, b);
+//     const min = Math.min(r, g, b);
+//     const c = max - min;
 
-    let tmp = 0;
-    if (c === 0)
-        tmp = 0;
-    else if (max === r)
-        tmp = ((g - b) / c) % 6;
-    else if (max === g)
-        tmp = ((b - r) / c) + 2;
-    else
-        tmp = ((r - g) / c) + 4;
+//     let tmp = 0;
+//     if (c === 0)
+//         tmp = 0;
+//     else if (max === r)
+//         tmp = ((g - b) / c) % 6;
+//     else if (max === g)
+//         tmp = ((b - r) / c) + 2;
+//     else
+//         tmp = ((r - g) / c) + 4;
 
-    const hue = tmp * 60;
-    const value = max;
-    const sat = c === 0 ? 0 : c / value;
+//     const hue = tmp * 60;
+//     const value = max;
+//     const sat = c === 0 ? 0 : c / value;
 
-    return { hue, sat, value };
-}
+//     return { hue, sat, value };
+// }
 
-function normalize(value: number, min: number, max: number, mult: number) {
-    mult = mult || 100;
-    return Math.round(((value - min) / (max - min)) * mult);
-}
+// function normalize(value: number, min: number, max: number, mult: number) {
+//     mult = mult || 100;
+//     return Math.round(((value - min) / (max - min)) * mult);
+// }
 
 enum Direction {
     forward,
