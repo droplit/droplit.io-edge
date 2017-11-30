@@ -1,5 +1,8 @@
 {
     "droplit-plugin": {},
+    "droplit-plugin-apa102c": {
+        "dependencies": [ "droplit-plugin" ]
+    },
     "droplit-plugin-lifx": {
         "dependencies": [ "droplit-plugin" ]
     },
@@ -42,6 +45,7 @@
     "droplit-edge": {
         "dependencies": [
             "droplit-plugin",
+            "droplit-plugin-apa102c",
             "droplit-plugin-lifx",
             "droplit-plugin-aurora-nanoleaf",
             "droplit-plugin-philips-hue",
