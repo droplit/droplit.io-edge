@@ -54,7 +54,10 @@ class WemoPlugin extends droplit.DroplitPlugin {
             if (!client)
                 return;
             client.address = address;
-            this.onDeviceInfo({ address, identifier });
+            this.onDeviceInfo({
+                address,
+                localId: identifier
+            });
         }
     }
 

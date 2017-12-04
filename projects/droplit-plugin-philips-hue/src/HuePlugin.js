@@ -119,7 +119,10 @@ class HuePlugin extends droplit.DroplitPlugin {
             if (!bridge)
                 return;
             bridge.address = address;
-            this.onDeviceInfo({ address, identifier });
+            this.onDeviceInfo({
+                address,
+                localId: identifier
+            });
         }
 
         function onUsername(bridge) {

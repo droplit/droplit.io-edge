@@ -94,7 +94,10 @@ class Nanoleaf extends droplit.DroplitPlugin {
                 return;
 
             controller.host = address;
-            this.onDeviceInfo({ address, identifier });
+            this.onDeviceInfo({
+                address,
+                localId: identifier
+            });
         }
 
         function onRegistered(controller) {
