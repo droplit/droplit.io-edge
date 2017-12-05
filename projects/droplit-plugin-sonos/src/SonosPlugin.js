@@ -50,6 +50,9 @@ class SonosPlugin extends droplit.DroplitPlugin {
                 get_nextArtist: this.getNextArtist,
                 get_nextTrackName: this.getNextTrackName,
                 get_trackName: this.getTrackName
+            },
+            MediaSource: {
+                setSource: this.setSource
             }
         };
         /* es-lint-enable camelcase */
@@ -121,7 +124,7 @@ class SonosPlugin extends droplit.DroplitPlugin {
                     deviceMeta: {
                         customName: player.roomName
                     },
-                    services: [ 'AudioOutput', 'BinarySwitch', 'Indicator', 'MediaControl', 'MediaInfo' ],
+                    services: [ 'AudioOutput', 'BinarySwitch', 'Indicator', 'MediaControl', 'MediaInfo', 'MediaSource' ],
                     promotedMembers: {
                         blink: 'Indicator.blink',
                         switch: 'BinarySwitch.switch',
@@ -485,6 +488,17 @@ class SonosPlugin extends droplit.DroplitPlugin {
         if (!player)
             return;
         callback(player.state.currentTrack.title);
+    }
+
+    // MediaSource
+    setSource(localId, uri) {
+        const player = this.getCoordinator(localId);
+        if (!player)
+            return;
+
+        player.setAVTransport(uri).then(() => {
+            player.play();
+        });
     }
 }
 
