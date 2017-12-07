@@ -1,3 +1,5 @@
+'use strict';
+
 /*
     Super light-weight request client built from modification of the request module (https://github.com/request/request).
 
