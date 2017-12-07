@@ -334,7 +334,7 @@ function getServiceMember(command: DeviceCommand): DP.DeviceServiceMember {
     // HACK: Allows easier testing via wscat
     const localId = command.localId || (deviceInfo ? deviceInfo.localId : null);
     if (!localId) // HACK: This is here to help debug the circumstances under which there is no localId.
-        log(`WARNING: Cannot find localId for command: ${command}`);
+        log(`WARNING: Cannot find localId for command: ${JSON.stringify(command)}`);
     const results = {
         localId,
         address: deviceInfo ? deviceInfo.address : null,
@@ -381,12 +381,12 @@ function loadPlugin(pluginName: string) {
                 events = Array.isArray(events) ? events : [events];
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
-                    if (d && d.pluginName) {
-                        log(`event < ${d.pluginName}:${d.localId}`);
+                    const message = (d && d.pluginName) ? `event < ${d.pluginName}:${d.localId}` :
+                                    d ? `event < unknown:${d.localId}` :
+                                    `event < unknown`;
+                    log(message);
+                    if (d && d.pluginName)
                         c.pluginName = d.pluginName;
-                    }
-                    else
-                        log(`event < unknown:${d.localId}`);
                     return p.concat([c]);
                 }, []);
                 transport.send('event raised', events, err => { });
