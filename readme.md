@@ -38,8 +38,12 @@ Devices are integrated through plugins in Droplit.io Edge. The currently integra
 * Belkin WeMo devices
 * Sonos Wireless Speaker
 * LIFX smart bulbs
+* Nanoleaf Aurora
 * Venstar Voyager
 * Raspberry Pi GPIO
+* Raspberry Pi + NeoPixel LEDs
+* Raspberry Pi + ws2801 LEDs
+* Raspberry Pi + apa102c LEDs
 
 More platforms will be integrated in the future. PR's welcome.
 
