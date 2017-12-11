@@ -2,7 +2,7 @@
   "name": "droplit-plugin",
   "description": "Base class for developing droplit.io Edge Plugins",
   "author": "Droplit, Inc.",
-  "version": "2.0.4",
+  "version": "2.0.6",
   "private": false,
   "contributors": [
     {
