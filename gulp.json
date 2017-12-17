@@ -5,8 +5,8 @@
         "dist"
     ],
     "deepClean": [
-        "projects/{project}/lib/**/*",
-        "projects/{project}/node_modules/**/*"
+        "projects/{project}/lib",
+        "projects/{project}/node_modules"
     ],
     "prep": [
         "projects/{project}/node_modules/**/*.md",
