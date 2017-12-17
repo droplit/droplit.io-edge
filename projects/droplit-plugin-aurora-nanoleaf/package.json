@@ -1,26 +1,26 @@
 {
-    "name": "droplit-plugin-aurora-nanoleaf",
-    "description": "Droplit Edge Auroro Nanoleaf plugin",
-    "author": "Droplit, Inc.",
-    "version": "0.1.0",
-    "private": false,
-    "contributors": [
-      {
-        "name": "Nik Doukellis",
-        "email": "nik@droplit.io"
-      }
-    ],
-    "main": "index.js",
-    "eslintConfig": {
-      "env": {
-        "es6": true,
-        "node": true
-      }
-    },
-    "dependencies": {
-      "node-ssdp": "^2.7.1",
-      "xml2js": "^0.4.16",
-      "droplit-plugin": "../droplit-plugin",
-      "request-lite": "../request-lite"
+  "name": "droplit-plugin-aurora-nanoleaf",
+  "description": "Droplit Edge Auroro Nanoleaf plugin",
+  "author": "Droplit, Inc.",
+  "version": "0.1.0",
+  "private": false,
+  "contributors": [
+    {
+      "name": "Nik Doukellis",
+      "email": "nik@droplit.io"
     }
+  ],
+  "main": "index.js",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    }
+  },
+  "dependencies": {
+    "node-ssdp": "^2.7.1",
+    "xml2js": "^0.4.16",
+    "droplit-plugin": "../droplit-plugin",
+    "request-lite": "../request-lite"
   }
+}
