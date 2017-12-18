@@ -68,7 +68,7 @@ const exec = require('child_process').exec;
 function runCommand(command, options, callback) {
     try {
         exec(command, options, function (error, stdout, stderr) {
-            console.log(`${path.resolve(options.cwd || '.')} ${command}`);
+            console.log(`${path.resolve(options.cwd || '.')} ${chalk.cyan(command)}`);
             console.log(stdout);
             console.log(stderr);
             if (error !== null) {
@@ -84,12 +84,20 @@ function runCommand(command, options, callback) {
 /*
  * {cmd: "", cwd: ""}
  */
-function runCommands(commands, callback) {
-    async.eachSeries(commands, function (command, done) {
-        runCommand(command.cmd, { cwd: command.cwd }, done);
-    }, function () {
-        callback();
-    });
+function runCommands(commands, parallel, callback) {
+    if (parallel === true) {
+        async.each(commands, function (command, done) {
+            runCommand(command.cmd, { cwd: command.cwd }, done);
+        }, function () {
+            callback();
+        });
+    } else {
+        async.eachSeries(commands, function (command, done) {
+            runCommand(command.cmd, { cwd: command.cwd }, done);
+        }, function () {
+            callback();
+        });
+    }
 }
 
 // Setup
@@ -110,7 +118,7 @@ gulp.task('install', 'Install all npm modules', function (callback) {
     projectNames.forEach(name => {
         commands.push({ cmd: 'npm install', cwd: `projects/${name}` });
     });
-    runCommands(commands, callback);
+    runCommands(commands, truncate, callback);
 });
 
 // npm link
@@ -124,23 +132,24 @@ gulp.task('unlink', 'Unlink dependencies on local disk', function (callback) {
 });
 
 function linker(mode, callback) {
-    const linkedDeps = {};
-    const commands = [];
-    projectNames.forEach(proj => {
-        if (projects[proj].dependencies) {
-            projects[proj].dependencies.forEach(dep => {
-                if (!linkedDeps[dep]) {
-                    commands.push({ cmd: `npm ${mode ? 'link' : 'unlink'} --no-bin-links`, cwd: `projects/${dep}` });
-                    linkedDeps[dep] = true;
-                }
-                if (mode) {
-                    const packageName = require(`./projects/${dep}/package.json`).name;
-                    commands.push({ cmd: `npm ${mode ? 'link' : 'unlink'} ${packageName} --no-bin-links`, cwd: `projects/${proj}` });
-                }
-            });
-        }
+    const linkCommands = [];
+    const packageLinkCommands = [];
+    projectNames.forEach(project => {
+        linkCommands.push({ cmd: `npm ${mode ? 'link' : 'unlink'} --no-bin-links`, cwd: `projects/${project}` });
     });
-    runCommands(commands, callback);
+    if (mode) {
+        projectNames.forEach(project => {
+            if (projects[project].dependencies) {
+                projects[project].dependencies.forEach(dep => {
+                    const packageName = require(`./projects/${dep}/package.json`).name;
+                    packageLinkCommands.push({ cmd: `npm ${mode ? 'link' : 'unlink'} ${packageName} --no-bin-links`, cwd: `projects/${project}` });
+                });
+            }
+        });
+    }
+    runCommands(linkCommands, true, () => {
+        runCommands(packageLinkCommands, true, callback)
+    });
     // info about "--no-bin-links" : see http://stackoverflow.com/questions/17990647/npm-install-errors-with-error-enoent-chmod
 }
 
@@ -206,22 +215,22 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
     runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
         callback();
     });
 }, {
-    options: {
-        pack: 'Package name',
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            pack: 'Package name',
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('stats', 'Get lines of code', function (project) {
     console.log(project);
@@ -233,10 +242,10 @@ gulp.task('stats', 'Get lines of code', function (project) {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 gulp.task('size', 'Get size of code', function (project) {
     console.log(project);
@@ -248,10 +257,10 @@ gulp.task('size', 'Get size of code', function (project) {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-    options: {
-        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-    }
-});
+        options: {
+            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+        }
+    });
 
 // Deploying
 
