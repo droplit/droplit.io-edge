@@ -118,7 +118,7 @@ gulp.task('install', 'Install all npm modules', function (callback) {
     projectNames.forEach(name => {
         commands.push({ cmd: 'npm install', cwd: `projects/${name}` });
     });
-    runCommands(commands, truncate, callback);
+    runCommands(commands, true, callback);
 });
 
 // npm link
