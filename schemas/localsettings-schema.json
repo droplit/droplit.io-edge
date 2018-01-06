@@ -117,6 +117,22 @@
             "description": "The Ecosystem associated with this Edge device. May be omitted if Ecosystem is determined via the claims process.",
             "type": "string"
         },
+        "router": {
+            "description": "Configures the Edge router layer.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "autodiscover": {
+                    "description": "Whether or not autodiscover should be enabled.",
+                    "type": "boolean"
+                },
+                "autodiscoverCadence": {
+                    "description": "The amount of time (in ms) between discovery invocations.",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
         "plugins": {
             "oneOf": [
                 { "$ref": "#/definitions/plugins-object" },

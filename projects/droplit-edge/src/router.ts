@@ -42,10 +42,20 @@ export const macAddress =                                                    // 
 
 declare const Map: any; // Work-around typescript not knowing Map when it exists for the JS runtime
 
+export const plugins = new Map();                       // Create hashmap of plugins
+export const transport = new Transport();               // Create a new instance of the transport layer
+
+let autodiscoverTimer: number;                          // Device auto discovery timer
+let hasConnected = false;                               // Has Transport layer connected, used first time connection
+
+// overwrite settings with local settings
+Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
+
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
 // Amount of time (ms) between discovery attempts
-const AutoDiscoverCadence = 60000;
+const AutoDiscoverCadence = (settings.router && settings.router.autodiscoverCadence) ?
+    settings.router.autodiscoverCadence : 60000;
 // Amount of time (ms) for device to respond
 const GetPropertyTimeout = 3000;
 // Amount of time (ms) to cascade plugin discovery
@@ -55,15 +65,6 @@ logv(`AutoDiscoverDelay: ${AutoDiscoverDelay / 1000}s`);
 logv(`AutoDiscoverCadence: ${AutoDiscoverCadence / 1000}s`);
 logv(`GetPropertyTimeout: ${GetPropertyTimeout / 1000}s`);
 logv(`PluginDiscoveryCascade: ${PluginDiscoveryCascade / 1000}s`);
-
-export const plugins = new Map();                       // Create hashmap of plugins
-export const transport = new Transport();               // Create a new instance of the transport layer
-
-let autodiscoverTimer: number;                          // Device auto discovery timer
-let hasConnected = false;                               // Has Transport layer connected, used first time connection
-
-// overwrite settings with local settings
-Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
 
 // log select settings
 log(`using setting host: ${settings.transport.host}`);
