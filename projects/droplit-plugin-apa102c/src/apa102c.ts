@@ -323,7 +323,7 @@ class PiStrip {
     pixels: Colors[] = [{ red: 0, green: 0, blue: 0 }];
     intervals: any[] = [];
     library: any;
-    set: (red: number, green: number, blue: number, index?: number) => void;
+    set: (red: number, green: number, blue: number, index?: number) => void; // tslint:disable-line no-reserved-keywords
     send: () => void | undefined;
     preferSet = true;
 
@@ -355,12 +355,9 @@ class PiStrip {
     }
 
     clearRoutines() {
-        if (this.intervals) {
-            for (let interval of this.intervals) {
-                interval = null;
+        if (this.intervals)
+            while (this.intervals.length > 0)
                 clearInterval(this.intervals.pop());
-            }
-        }
     }
 
     initialize(initializer?: () => void) {
@@ -532,7 +529,7 @@ class PiStrip {
         this.intervals.push(setInterval(() => {
             if (canContinue) {
                 if (random) {
-                    selector = Math.floor(Math.random() * colors.length);
+                    selector = Math.floor(Math.random() * colors.length); // tslint:disable-line insecure-random
                 } else {
                     if (selector === colors.length - 1) {
                         selector = 0;

@@ -11,7 +11,7 @@ export class TestPlugin extends droplit.DroplitPlugin {
     // virtual device tracking
     private deviceConnected: { [localId: string]: boolean } = {};
 
-    private services: any;
+    protected services: any;
 
     constructor() {
         super();

@@ -51,7 +51,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     }
 
     private rgb2Int(r: number, g: number, b: number) {
-        return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+        return ((r & 0xFF) << 16) + ((g & 0xFF) << 8) + (b & 0xFF);
     }
 
     private reload() {
@@ -138,7 +138,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     private value: number;
 
     setHue(localId: string, value: any, callback: any, index: number) {
-        this.hue = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        this.hue = Math.min(Math.max(normalize(value, 0, 0xFFFF, 254), 0), 254);
         const pixels = new Array(this.strip.pixels.length);
         const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
@@ -148,7 +148,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     }
 
     setMclBrightness(localId: string, value: any, callback: any, index: number) {
-        this.value = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        this.value = Math.min(Math.max(normalize(value, 0, 0xFFFF, 254), 0), 254);
         const pixels = new Array(this.strip.pixels.length);
         const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
@@ -158,7 +158,7 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
     }
 
     setSaturation(localId: string, value: any, callback: any, index: number) {
-        this.saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
+        this.saturation = Math.min(Math.max(normalize(value, 0, 0xFFFF, 254), 0), 254);
         const pixels = new Array(this.strip.pixels.length);
         const color = hsvToRgb(this.hue, this.saturation, this.value);
         for (let i = 0; i < pixels.length; i++) {
@@ -230,7 +230,7 @@ class PiStrip {
     pixels: Colors[] = [{ red: 0, green: 0, blue: 0 }];
     intervals: any[] = [];
     library: any;
-    set: (red: number, green: number, blue: number, index?: number) => void;
+    set: (red: number, green: number, blue: number, index?: number) => void; // tslint:disable-line no-reserved-keywords
     send: () => void | undefined;
     preferSet = true;
 
@@ -262,12 +262,9 @@ class PiStrip {
     }
 
     clearRoutines() {
-        if (this.intervals) {
-            for (let interval of this.intervals) {
-                interval = null;
+        if (this.intervals)
+            while (this.intervals.length > 0)
                 clearInterval(this.intervals.pop());
-            }
-        }
     }
 
     initialize(initializer?: () => void) {
@@ -439,7 +436,7 @@ class PiStrip {
         this.intervals.push(setInterval(() => {
             if (canContinue) {
                 if (random) {
-                    selector = Math.floor(Math.random() * colors.length);
+                    selector = Math.floor(Math.random() * colors.length); // tslint:disable-line insecure-random
                 } else {
                     if (selector === colors.length - 1) {
                         selector = 0;

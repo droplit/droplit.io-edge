@@ -55,7 +55,6 @@ export default class Transport extends EventEmitter {
 
     // timeout
     private messageTimeout = 5000;
-    private messageTimer: NodeJS.Timer;
 
     // request-response mapping
     private responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
@@ -64,7 +63,7 @@ export default class Transport extends EventEmitter {
     constructor() {
         super();
         EventEmitter.call(this);
-        this.messageTimer = setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
+        setInterval((<() => void>this.digestCycle.bind(this)), this.messageTimeout);
     }
 
     public getReadyState() {
