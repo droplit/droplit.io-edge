@@ -38,11 +38,9 @@ export class NeopixelPlugin extends droplit.DroplitPlugin {
                     }
                 } else {
                     for (let i = 0; i < pixels.length; i++) {
-                        if (i === index) {
-                            pixels[i] = this.rgb2Int(red, green, blue);
-                        } else {
-                            pixels[i] = this.rgb2Int(this.strip.pixels[i].red, this.strip.pixels[i].green, this.strip.pixels[i].blue);
-                        }
+                        pixels[i] = (i === index) ?
+                            this.rgb2Int(red, green, blue) :
+                            this.rgb2Int(this.strip.pixels[i].red, this.strip.pixels[i].green, this.strip.pixels[i].blue);
                     }
                 }
                 this.strip.library.render(pixels);

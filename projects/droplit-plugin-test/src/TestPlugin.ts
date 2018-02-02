@@ -6,10 +6,10 @@ export class TestPlugin extends droplit.DroplitPlugin {
     private connectActive = false;
 
     // virtual device states
-    private devices: any = {};
+    private readonly devices: any = {};
 
     // virtual device tracking
-    private deviceConnected: { [localId: string]: boolean } = {};
+    private readonly deviceConnected: { [localId: string]: boolean } = {};
 
     protected services: any;
 

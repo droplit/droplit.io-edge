@@ -41,8 +41,8 @@ export interface ErrorEvent {
  */
 
 export class Controller extends EventEmitter {
-    private pluginInstance: DP.DroplitPlugin;
-    private pluginName: string;
+    private readonly pluginInstance: DP.DroplitPlugin;
+    private readonly pluginName: string;
 
     constructor(pluginName: string, settings?: any) {
         super();

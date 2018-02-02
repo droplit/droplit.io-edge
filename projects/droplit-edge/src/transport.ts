@@ -41,7 +41,7 @@ export default class Transport extends EventEmitter {
     private ws: WebSocket;
     private settings: any;
     private transportId: number;
-    private connectOperation = retry.operation({
+    private readonly connectOperation = retry.operation({
         // retries: Infinity,
         factor: 1.5,
         minTimeout: 500,
@@ -54,11 +54,11 @@ export default class Transport extends EventEmitter {
     private connectedCallback: (connected: boolean) => void;
 
     // timeout
-    private messageTimeout = 5000;
+    private readonly messageTimeout = 5000;
 
     // request-response mapping
-    private responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
-    private reliableResponseMap: { [id: string]: (response: string, err?: Error) => void } = {};
+    private readonly responseMap: { [id: string]: (response: string, err?: Error) => void } = {};
+    private readonly reliableResponseMap: { [id: string]: (response: string, err?: Error) => void } = {};
 
     constructor() {
         super();
@@ -258,7 +258,7 @@ export default class Transport extends EventEmitter {
         });
     }
 
-    private sendBuffer: any[] = [];
+    private readonly sendBuffer: any[] = [];
 
     private queue(packet: any) {
         this.sendBuffer.push(packet);
@@ -371,7 +371,7 @@ export default class Transport extends EventEmitter {
         this.prevMessageId = this.messageIdSeed;
     }
 
-    private heartbeatPacket = JSON.stringify({ t: 'hb' });
+    private readonly heartbeatPacket = JSON.stringify({ t: 'hb' });
 
     private sendHeartbeat() {
         this.emit('attemptHB');
@@ -391,7 +391,7 @@ export default class Transport extends EventEmitter {
 
     // Heartbeat
 
-    private heartbeatInterval = 2000;
+    private readonly heartbeatInterval = 2000;
     private heartbeatTimer: NodeJS.Timer;
 
     private startHeartbeat() {
