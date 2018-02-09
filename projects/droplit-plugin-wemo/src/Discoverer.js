@@ -27,10 +27,10 @@ class Discoverer extends EventEmitter {
                             return;
                         const valid = [
                             /urn:Belkin:device:CoffeeMaker:1/g, // Mr. Coffee
-                            /urn:Belkin:device:controllee:1/g,  // Switch
-                            /urn:Belkin:device:insight:1/g,     // Insight
+                            /urn:Belkin:device:controllee:1/g, // Switch
+                            /urn:Belkin:device:insight:1/g, // Insight
                             /urn:Belkin:device:lightswitch:1/g, // LightSwitch
-                            /urn:Belkin:device:sensor:1/g       // Motion Sensor
+                            /urn:Belkin:device:sensor:1/g // Motion Sensor
                         ];
                         if (valid.some(pattern => pattern.test(b))) {
                             this.found.get(identifier).info = result;
@@ -56,7 +56,8 @@ class Discoverer extends EventEmitter {
 
             const identifier = match[1];
             if (this.found.has(identifier)) {
-                if (this.found.get(identifier).location.hostname === rinfo.address)
+                const existing = this.found.get(identifier).location;
+                if ((existing.hostname === rinfo.address) && (existing.port === rinfo.port))
                     return;
                 // Wemo has changed IP address since last discovery
                 this.found.get(identifier).location = url.parse(headers.LOCATION);
