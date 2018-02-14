@@ -1,8 +1,15 @@
 import Transport from '../transport';
 import * as debug from 'debug';
 import * as chalk from 'chalk';
+import * as fs from 'fs';
+import * as path from 'path';
 
-let localSettings = require('../localsettings.json');
+const DROPLIT_ROOT = '.droplit.io';
+if (fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true) {
+    var localSettings = require('../localsettings.json');
+} else {
+    var localSettings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
 
 let log = debug('droplit:load-test-connections');
 
@@ -55,6 +62,20 @@ function start() {
         }
     });
 
+}
+
+function droplitDir() {
+    var homeFolder;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
 }
 
 function startConnection(edgeId: string, iteration: number, callback: (connected: boolean) => void) {

@@ -3,6 +3,8 @@ import * as cache from './cache';       // import local module
 import * as debug from 'debug';         // import npm module
 import * as DP from 'droplit-plugin';   // import npm linked module
 import * as plugin from './plugin';     // import local module
+import * as fs from 'fs';
+import * as path from 'path';
 import Transport from './transport';    // import local module, used as the websocket connectivity layer between cloud and edge router.
 import { Network } from './network';
 // Import types
@@ -27,7 +29,13 @@ import {
 const log = debug('droplit:router');                                         // initilize logging module for log levels
 const logv = debug('droplit-v:router');                                      // initilize verbose logging
 const settings = require('../settings.json');                                // Load settings file
-const localSettings = require('../localsettings.json');                      // Load local settings file
+const DROPLIT_ROOT = '.droplit.io';
+if (fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true) {
+    var localSettings = require('../localsettings.json');
+} else {
+    var localSettings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
+
 export { Transport };                                                        // export Transport interface
 export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
@@ -596,6 +604,20 @@ function requestMethods(commands: DeviceCommand[]): Promise<RequestMethodRespons
             resolve(results);
         }
     });
+}
+
+function droplitDir() {
+    var homeFolder;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
 }
 
 function sendDeviceMessage(message: DeviceMessage): DeviceMessageResponse {

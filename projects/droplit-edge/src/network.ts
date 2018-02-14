@@ -1,9 +1,16 @@
 import * as http from 'http';
 import * as debug from 'debug';
+import * as fs from 'fs';
+import * as path from 'path';
 export const router = require('router')();
 const bodyParser = require('body-parser');
 const log = debug('droplit:network');
-const localSettings = require('../localsettings.json');
+const DROPLIT_ROOT = '.droplit.io';
+if (fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true) {
+    var localSettings = require('../localsettings.json');
+} else {
+    var localSettings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
 let PORT: number;
 let server: http.Server;
 
@@ -21,6 +28,20 @@ export interface IwInfoObject {
 // For UCI options, see:
 // https://wiki.openwrt.org/doc/uci/wireless#common_interface_options
 // https://wiki.openwrt.org/doc/uci/wireless#wpa_modes
+
+function droplitDir() {
+    var homeFolder;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
+}
 
 export interface IwObject {
     encryption: boolean;
