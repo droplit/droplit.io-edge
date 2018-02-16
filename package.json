@@ -40,6 +40,9 @@
     "gulp-nodemon": "^2.2.1",
     "source-map-support": "^0.4.0"
   },
+  "bin": {
+    "droplitedge": "./bin/droplit-edge.js"
+  },
   "devDependencies": {
     "@types/node": "^6.0.58",
     "async": "^1.5.2",
@@ -68,5 +71,17 @@
     "source-map-support": "^0.4.0",
     "tslint": "5.4.2",
     "typescript": "2.4.1"
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/droplit/droplit.io-edge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/droplit/droplit.io-edge/issues"
+  },
+  "homepage": "https://github.com/droplit/droplit.io-edge#readme"
 }

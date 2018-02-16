@@ -5,10 +5,33 @@ import {
     PluginMessageResponse,
     PluginSetting
 } from './types/types';
+import * as fs from 'fs';
+import * as path from 'path';
 const log = require('debug')('droplit:plugin');
 const logv = require('debug')('droplit-v:plugin');
 const pluginMap: { [name: string]: Controller } = {};
-const localSettings = require('../localsettings.json');
+
+const DROPLIT_ROOT = '.droplit.io';
+
+if (fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true) {
+    var localSettings = require('../localsettings.json');
+} else {
+    var localSettings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
+
+function droplitDir() {
+    var homeFolder;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
+}
 
 export function instance(pluginName: string): Controller {
     try {
@@ -52,8 +75,13 @@ export class Controller extends EventEmitter {
     }
 
     private loadPlugin(pluginName: string, settings?: any): DP.DroplitPlugin {
-        const p = require(pluginName);
-        return new p(settings);
+        if (fs.existsSync(path.join(__dirname, '../node_modules', pluginName)) === true) {
+            const p = require(pluginName);
+            return new p(settings);
+        } else {
+            const p = require(path.join('../../', pluginName));
+            return new p(settings);
+        }
     }
 
     private initPlugin() {

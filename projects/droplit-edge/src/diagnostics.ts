@@ -1,14 +1,22 @@
 import * as debug from 'debug';
 import * as cache from './cache';
 import * as WebSocket from 'ws';
-
+import * as fs from 'fs';
+import * as path from 'path';
 import net = require('net');
 import process = require('process');
 import readline = require('readline');
 import { isPrimitive } from 'util';
 
 const log = debug('droplit:diagnostics');
-const settings = require('../localsettings.json');
+const DROPLIT_ROOT = '.droplit.io';
+if (fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true) {
+    var settings = require('../localsettings.json');
+} else {
+    var settings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
+
+
 
 let port = 8888;
 const sockets: net.Socket[] = [];
@@ -21,6 +29,7 @@ const dxData = {
 
 if (settings.diagnostics && settings.diagnostics.port)
     port = settings.diagnostics.port;
+
 
 module.exports = (router: any) => {
     const server = net.createServer(connection);
@@ -201,3 +210,17 @@ module.exports = (router: any) => {
         });
     }
 };
+
+function droplitDir() {
+    var homeFolder;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
+}

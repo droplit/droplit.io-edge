@@ -8,6 +8,8 @@ const async = require('async');
 const del = require('del');
 const merge = require('merge2');
 const path = require('path');
+var fs = require('fs');
+const DROPLIT_ROOT = '.droplit.io';
 
 // load gulp plugins
 const jeditor = require('gulp-json-editor');
@@ -47,6 +49,20 @@ function wildcharPaths(globArray) {
         }
     });
     return expandedGlob;
+}
+
+function droplitDir() {
+    var homeFolder = false;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
 }
 
 function mapPaths(globArray, project) {
@@ -286,7 +302,11 @@ gulp.task('clean-temp', false, function () {
 gulp.task('setup-package', false, function () {
     return gulp.src('./temp/droplit-edge/package.json')
         .pipe(jeditor(function (json) {
-            const localConfig = require('./temp/droplit-edge/localsettings.json');
+            if(fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true){
+                const localConfig = require('../localsettings.json');
+            } else {
+                const localConfig = require(path.join(droplitDir(), 'localsettings.json'));  
+            }
             if (Array.isArray(localConfig.plugins))
                 localConfig.plugins.forEach(plugin => {
                     if (typeof plugin === 'string') {

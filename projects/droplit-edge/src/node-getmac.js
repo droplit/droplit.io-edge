@@ -1,5 +1,13 @@
 // Forked from https://www.npmjs.com/package/node-getmac
-var localSettings = require('../localsettings.json');
+var fs = require('fs');
+var path = require('path');
+const DROPLIT_ROOT = '.droplit.io';
+
+if(fs.existsSync(path.join('projects', 'droplit-edge', 'localsettings.json')) == true){
+    var localSettings = require('../localsettings.json');
+} else {
+    var localSettings = require(path.join(droplitDir(), 'localsettings.json'));  
+}
 var execSync = require('child_process').execSync;
 var platform = process.platform;
 
@@ -31,3 +39,17 @@ module.exports = (function () {
         return '';
     }
 })();
+
+function droplitDir() {
+    var homeFolder = false;
+    if (process.env.HOME !== undefined) {
+        homeFolder = path.join(process.env.HOME, DROPLIT_ROOT);
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        homeFolder = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH, DROPLIT_ROOT);
+    }
+    if (!homeFolder) {
+        fs.mkdirSync(homeFolder, 502); // 0766
+    }
+    return homeFolder;
+}
