@@ -67,6 +67,10 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+                "LinuxNetInterfaceOverride": {
+                    "description": "Override the Linux network interface",
+                    "type": "string"
+                },
                 "MACAddressOverride": {
                     "description": "Override the MAC address used as the Edge Id.",
                     "type": "string"
