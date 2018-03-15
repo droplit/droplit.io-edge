@@ -95,7 +95,7 @@ if (settings.debug && settings.debug.generateHeapDump) {
 if (settings.diagnostics && settings.diagnostics.enabled)
     require('./diagnostics')(this);
 
-log(`config: ${localSettings.config || 'No localSettings.config'}`);
+log(`config: ${JSON.stringify(localSettings.config) || 'No localSettings.config'}`);
 if (localSettings.config && localSettings.config.provisioningServiceEnabled) {
     Network(macAddress);
 }
