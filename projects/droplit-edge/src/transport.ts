@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 const retry = require('retry');
 import * as debug from 'debug';
 import * as async from 'async';
@@ -149,7 +149,7 @@ export default class Transport extends EventEmitter {
             // it's a request expecting a response
             this.emit(`#${packet.m}`, packet.d, (response: any): void => {
                 const responseMessageId = packet.i;
-                const responsePacket: any = { d: response, r: responseMessageId };
+                const responsePacket = { d: response, r: responseMessageId };
                 this._send(JSON.stringify(responsePacket));
             });
         } else if (typeof (packet.r) === 'string') {
@@ -205,12 +205,12 @@ export default class Transport extends EventEmitter {
     }
 
     public send(message: string, data?: any, cb?: (err: Error) => void) {
-        const packet: any = { m: message, d: data, i: this.getNextMessageId() };
+        const packet = { m: message, d: data, i: this.getNextMessageId() };
         this._send(JSON.stringify(packet), cb);
     }
 
     public sendReliable(message: string, data?: any) {
-        const packet: any = { m: message, d: data, i: this.getNextMessageId() };
+        const packet = { m: message, d: data, i: this.getNextMessageId() };
 
         // If the connection is known to be closed, queue rather than fail
         if (!this.isOpen) {
@@ -226,7 +226,7 @@ export default class Transport extends EventEmitter {
     }
 
     public sendRequest(message: string, data: any, cb: (response: string, err: Error) => void) {
-        const packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        const packet = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.responseMap[packet.i] = cb;
         this._send(JSON.stringify(packet), err => {
             // only happens if there was an error, so presumably the callback won't be called from a valid response
@@ -239,7 +239,7 @@ export default class Transport extends EventEmitter {
     }
 
     public sendRequestReliable(message: string, data: any, cb: (response: string, err: Error) => void) {
-        const packet: any = { m: message, d: data, i: this.getNextMessageId(), r: true };
+        const packet = { m: message, d: data, i: this.getNextMessageId(), r: true };
         this.reliableResponseMap[packet.i] = cb;
 
         // If the connection is known to be closed, queue rather than fail

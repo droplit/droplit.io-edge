@@ -3,9 +3,11 @@ import * as cache from './cache';
 import * as WebSocket from 'ws';
 
 import net = require('net');
-import process = require('process');
 import readline = require('readline');
 import { isPrimitive } from 'util';
+
+type Command = { desc: string; exec: (...args: any[]) => void };
+type StringIndexor<T> = { [k: string]: T };
 
 const log = debug('droplit:diagnostics');
 const settings = require('../localsettings.json');
@@ -38,10 +40,10 @@ module.exports = (router: any) => {
 
         socket.setEncoding('utf8');
 
-        const rl = readline.createInterface(<any>socket, socket);
+        const rl = readline.createInterface(socket, socket);
         socket.write('Edge Diagnostics console\n\r');
 
-        const commands: any = {
+        const commands: StringIndexor<Command> = {
             cache: {
                 desc: 'Get the cached device data',
                 exec: (id: string) => {
@@ -128,11 +130,11 @@ module.exports = (router: any) => {
                     const readyState = router.transport.getReadyState();
                     const state =
                         (readyState === undefined) ? 'undefined' :
-                        (readyState === WebSocket.CLOSED) ? 'closed' :
-                        (readyState === WebSocket.CLOSING) ? 'closing' :
-                        (readyState === WebSocket.CONNECTING) ? 'connecting' :
-                        (readyState === WebSocket.OPEN) ? 'open' :
-                        'unknown';
+                            (readyState === WebSocket.CLOSED) ? 'closed' :
+                                (readyState === WebSocket.CLOSING) ? 'closing' :
+                                    (readyState === WebSocket.CONNECTING) ? 'connecting' :
+                                        (readyState === WebSocket.OPEN) ? 'open' :
+                                            'unknown';
                     socket.write(`  current time:           ${new Date().toISOString()}\n\r`);
                     socket.write(`  last connected at:      ${dxData.connected ? dxData.connected.toISOString() : null}\n\r`);
                     socket.write(`  last heartbeat attempt: ${dxData.lastHeartbeatAttempt ? dxData.lastHeartbeatAttempt.toISOString() : null}\n\r`);
@@ -179,9 +181,9 @@ module.exports = (router: any) => {
         }
 
         Object.keys(obj).forEach((k, idx) => {
-            const value = (<any>obj)[k];
+            const value = obj[k];
             if (isPrimitive(value)) {
-                socket.write(`${pad(tab, idx)}${k}: ${(<any>obj)[k]}\n\r`);
+                socket.write(`${pad(tab, idx)}${k}: ${obj[k]}\n\r`);
             } else if (Array.isArray(value)) {
                 socket.write(`${pad(tab, idx)}${k}:\n\r`);
                 value.forEach(v => {
@@ -196,7 +198,7 @@ module.exports = (router: any) => {
                 socket.write(`${pad(tab, idx)}${k}:\n\r`);
                 writeObject(socket, value, tab + 2);
             } else {
-                socket.write(`${pad(tab, idx)}${k}: ${(<any>obj)[k]}\n\r`);
+                socket.write(`${pad(tab, idx)}${k}: ${obj[k]}\n\r`);
             }
         });
     }

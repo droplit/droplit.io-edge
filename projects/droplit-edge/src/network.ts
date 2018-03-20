@@ -76,7 +76,7 @@ export const Network = (edgeId: string) => {
 
     function setWifi(req: any, res: http.ServerResponse) {
         res.setHeader('Content-Type', 'application/json');
-        log(`request body: ${JSON.stringify((<any>req).body, null, 2)}`);
+        log(`request body: ${JSON.stringify(req.body, null, 2)}`);
 
         if (!req.body || !req.body.ssid) {
             res.statusCode = 400;
@@ -108,7 +108,7 @@ export const Network = (edgeId: string) => {
         log(`Entering client mode...`);
         clientMode('temp').then(() => {
             log(`Attempting to scan while in client mode...`);
-            let uci: any = null;
+            let uci: string = null;
             iwinfoScan()
                 .then(networks => {
                     networks = networks.filter(network => network.ssid === req.body.ssid);

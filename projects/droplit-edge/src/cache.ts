@@ -1,5 +1,5 @@
 import * as DP from 'droplit-plugin';
-import {DeviceInfo} from './types/types';
+import { DeviceInfo } from './types/types';
 
 const deviceCache_local: { [localId: string]: DP.DeviceInfo } = {};
 const deviceCache_global: { [deviceId: string]: DeviceInfo } = {};

@@ -29,7 +29,7 @@ const logv = debug('droplit-v:router');                                      // 
 const settings = require('../settings.json');                                // Load settings file
 const localSettings = require('../localsettings.json');                      // Load local settings file
 export { Transport };                                                        // export Transport interface
-export const macAddress =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
+export const macAddress: string =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
         require('./node-getmac').trim() ||
         undefined;
@@ -103,7 +103,7 @@ if (localSettings.config && localSettings.config.provisioningServiceEnabled) {
 // Load plugins
 loadPlugins().then(() => {
     // Initialize the transport
-    const headers: { [k: string]: any } = { 'x-edge-id': macAddress };
+    const headers: { [k: string]: string } = { 'x-edge-id': macAddress };
     if (settings.ecosystemId) {
         headers['x-ecosystem-id'] = settings.ecosystemId;
     }
@@ -233,7 +233,7 @@ function callMethods(commands: DeviceCommand[]): CallMethodResponse {
 // Tells plugins to start discovering devices, staggers them by 2000 ms
 function discoverAll() {
     let timeout = 0;
-    plugins.forEach((plugin: any) => {
+    plugins.forEach((plugin: plugin.Controller) => {
         setTimeout(plugin => {
             logv(`Starting discover with plugin: ${plugin.pluginName}`);
             plugin.discover();
@@ -363,7 +363,7 @@ function groupByPlugin(commands: DeviceCommand[]): { [pluginName: string]: DP.De
 }
 
 function loadPlugin(pluginName: string) {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         setImmediate(() => {
             const pluginController = plugin.instance(pluginName);
             if (!pluginController)
@@ -383,8 +383,8 @@ function loadPlugin(pluginName: string) {
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
                     const message = (d && d.pluginName) ? `event < ${d.pluginName}:${d.localId}` :
-                                    d ? `event < unknown:${d.localId}` :
-                                    `event < unknown`;
+                        d ? `event < unknown:${d.localId}` :
+                            `event < unknown`;
                     log(message);
                     if (d && d.pluginName)
                         c.pluginName = d.pluginName;
@@ -543,7 +543,7 @@ function loadPlugins() {
                 new Promise((res, rej) =>
                     c().then(res).catch(rej)
                 )
-            ), Promise.resolve<any>(undefined));
+            ), Promise.resolve(undefined));
         all.then(() => {
             setPluginSetting(pluginSettings);
             resolve();
