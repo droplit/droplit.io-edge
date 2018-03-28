@@ -29,18 +29,11 @@ const install = done => {
             })
     )(done);
 };
-install.description = 'Install all npm modules';
-gulp.task(install);
 
 /* npm link */
-
 const link = done => { linker(true, done); };
-link.description = 'Link dependencies on local disk';
-gulp.task(link);
 
 const unlink = done => { linker(false, done); };
-unlink.description = 'Unlink dependencies on local disk';
-gulp.task(unlink);
 
 const linker = (mode, done) => {
     const projectLinks = projectNames.map(project => {
@@ -57,7 +50,7 @@ const linker = (mode, done) => {
             .filter(p => projects[p].hasOwnProperty('dependencies'))
             .reduce((p, c) =>
                 p.concat(...projects[c].dependencies.map(dependency => {
-                    const { name } = require(`./projects/${dependency}/package.json`);
+                    const { name } = require(`./projects/${dependency}/package.json`); // eslint-disable-line global-require
                     const run = cb =>
                         runCommand(`npm link ${name} --no-bin-links`, { cwd: `projects/${c}` }, cb);
                     run.displayName = `link:${name}->${c}`;
@@ -73,31 +66,17 @@ const linker = (mode, done) => {
 
 /* Cleaning */
 const clean = () => del(expandGlobs(settings.clean));
-clean.description = 'Cleans the generated files from lib directory';
-gulp.task(clean);
 
-const deepclean = () => del(expandGlobs(settings.deepClean));
-deepclean.description = 'Cleans the generated files from lib directory and all node_modules';
-gulp.task(deepclean);
-
-/* npm setup */
-const setup = gulp.series('install', 'link');
-setup.description = 'Install all modules and link projects';
-gulp.task('setup', setup);
-
-const teardown = gulp.series('unlink', 'deepclean');
-teardown.description = 'Clean all and unlink projects';
-gulp.task('teardown', teardown);
+const deepClean = () => del(expandGlobs(settings.deepClean));
 
 /* Building */
 const tslint = () =>
     gulp.src(wildcardPaths(settings.tsfiles))
         .pipe(G$.tslint({ formatter: 'verbose' }))
         .pipe(G$.tslint.report({ emitError: false }));
-tslint.description = 'Lints all TypeScript source files';
-gulp.task(tslint);
 
 /* Transpiling */
+const tsProjects = {};
 projectNames.forEach(project => {
     const tsProj = () => {
         const tsResult = gulp.src(mapPaths(settings.tsfiles, project))
@@ -117,25 +96,13 @@ projectNames.forEach(project => {
             gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest))
         ]);
     };
-    tsProj.description = `Transpile ${colors.green(project)}`;
-    gulp.task(`ts-${project}`, tsProj);
+    tsProjects[project] = tsProj;
 });
 
-const tsAll = done => gulp.series(projectNames.map(name => `ts-${name}`))(done);
-tsAll.description = 'Transpile all projects';
-gulp.task('ts-all', tsAll);
-
-/* Build */
-const build = done => gulp.series(gulp.parallel('tslint', 'clean'), 'ts-all')(done);
-build.description = 'Compiles all TypeScript source files and updates module references';
-gulp.task('build', build);
-
-const watch = gulp.series('build', () => {
+const watch = () => {
     projectNames.forEach(project =>
         gulp.watch(mapPaths(Array.prototype.concat(settings.tsfiles, settings.jsFiles), project), gulp.parallel(`ts-${project}`)));
-});
-watch.description = 'Contiuous build';
-gulp.task('watch', watch);
+};
 
 /* Debug */
 const debug = () => {
@@ -149,45 +116,28 @@ const debug = () => {
         ignore: `projects/${project}/src`
     });
 };
-build.description = 'Debug droplit-edge';
-gulp.task('debug', debug);
 
 /* Dependencies */
-const installFlags = {
-    '--pack': 'Package name',
-    '--project': `Project name: (ex. ${colors.green(projectNames[0])})`
-};
-
-const npmInstall = parameterized((done, params) => {
+const npmInstall = (done, params) => {
     if (!params.pack || !params.project) {
         console.error('Must specify a package and project');
         return done();
     }
 
     runCommand(`npm install --save ${params.pack}`, { cwd: mapPath(settings.projectPath, params.project) }, done);
-});
-npmInstall.description = `Install and save a ${colors.cyan('pack')}age to a ${colors.cyan('project')}`;
-npmInstall.flags = installFlags;
-gulp.task('npm-i', npmInstall);
+};
 
-const npmUninstall = parameterized((done, params) => {
+const npmUninstall = (done, params) => {
     if (!params.pack || !params.project) {
         console.error('Must specify a package and project');
         return done();
     }
 
     runCommand(`npm uninstall --save ${params.pack}`, { cwd: mapPath(settings.projectPath, params.project) }, done);
-});
-npmUninstall.description = `Uninstall and save a ${colors.cyan('pack')}age to a ${colors.cyan('project')}`;
-npmUninstall.flags = installFlags;
-gulp.task('npm-u', npmUninstall);
-
-/* Code analysis */
-const projFlags = {
-    '--project': `Project name: (ex. ${colors.green(projectNames[0])}}`
 };
 
-const stats = parameterized((done, params) => {
+/* Code analysis */
+const stats = (done, params) => {
     if (params.project) {
         console.log(`Source Lines of Code: ${colors.green(params.project)}`);
         return gulp.src(mapPaths(settings.sloc_project, params.project)).pipe(G$.sloc({ tolerant: true }));
@@ -195,12 +145,9 @@ const stats = parameterized((done, params) => {
 
     console.log(`Source Lines of Code: ${colors.white('ALL')}`);
     return gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
-});
-stats.description = 'Get lines of code';
-stats.flags = projFlags;
-gulp.task('stats', stats);
+};
 
-const size = parameterized((done, params) => {
+const size = (done, params) => {
     if (params.project) {
         console.log(`Source Lines of Code: ${colors.green(params.project)}`);
         return gulp.src(mapPaths(settings.runtimeFiles, params.project)).pipe(G$.size({ showFiles: true }));
@@ -208,24 +155,19 @@ const size = parameterized((done, params) => {
 
     console.log(`Source Lines of Code: ${colors.white('ALL')}`);
     return gulp.src(expandGlobs(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
-});
-size.description = 'Get size of code';
-size.flags = projFlags;
-gulp.task('size', size);
+};
 
 /* Deployment */
 const cleanDist = () => del('dist');
-cleanDist.displayName = 'clean-dist';
 
 const moveTemp = () =>
     gulp.src(settings.edgeFiles, { follow: true })
         .pipe(gulp.dest('temp/droplit-edge'));
-moveTemp.displayName = 'move-temp';
 
 const setupPackage = () =>
     gulp.src('./temp/droplit-edge/package.json')
         .pipe(jeditor(json => {
-            const localConfig = require('./temp/droplit-edge/localsettings.json');
+            const localConfig = require('./temp/droplit-edge/localsettings.json'); // eslint-disable-line global-require
             if (Array.isArray(localConfig.plugins))
                 localConfig.plugins.forEach(plugin => {
                     if (typeof plugin === 'string') {
@@ -244,13 +186,10 @@ const setupPackage = () =>
             return json;
         }))
         .pipe(gulp.dest('temp/droplit-edge/'));
-setupPackage.displayName = 'setup-package';
 
 const preInstallDist = () => del('temp/droplit-edge/node_modules');
-preInstallDist.displayName = 'pre-install-dist';
 
 const installDist = done => runCommand('npm install', { cwd: 'temp/droplit-edge' }, done);
-installDist.displayName = 'install-dist';
 
 const packageTask = () => {
     const packageFileName = `${getPackageName(settings.edgeDir)}.tar`;
@@ -261,24 +200,14 @@ const packageTask = () => {
         .pipe(G$.gzip())
         .pipe(gulp.dest('dist'));
 };
-packageTask.displayName = 'package';
 
 const cleanTemp = () => del('temp');
-cleanTemp.displayName = 'clean-temp';
-
-const buildDist = done => gulp.series(cleanDist, 'build', 'unlink', moveTemp, setupPackage, preInstallDist, installDist, packageTask, cleanTemp)(done);
-buildDist.displayName = 'build-dist';
-
-const deploy = gulp.series('setup', buildDist);
-deploy.description = 'Glob the Droplit Edge for embedding';
-gulp.task('deploy', deploy);
 
 /* Testing for improving package */
 const prep = () => del(expandGlobs(settings.prep));
-gulp.task('prep', prep);
 
 /* Version bumb */
-const bump = parameterized((done, params) => {
+const bump = (done, params) => {
     if (!params.project) {
         console.error(`${colors.red('No project specified!')}`);
         return done();
@@ -295,15 +224,89 @@ const bump = parameterized((done, params) => {
     return gulp.src('./package.json', { cwd })
         .pipe(G$.bump({ typeName }))
         .pipe(gulp.dest('./', { cwd }));
+};
+
+/* Configure tasks */
+gulp.task('install', install);
+gulp.task('install').description = 'Install all npm modules';
+
+gulp.task('link', link);
+gulp.task('link').description = 'Link dependencies on local disk';
+
+gulp.task('unlink', unlink);
+gulp.task('unlink').description = 'Unlink dependencies on local disk';
+
+gulp.task('clean', clean);
+gulp.task('clean').description = 'Cleans the generated files from lib directory';
+
+gulp.task('deep-clean', deepClean);
+gulp.task('deep-clean').description = 'Cleans the generated files from lib directory and all node_modules';
+
+gulp.task('setup', gulp.series('install', 'link'));
+gulp.task('setup').description = 'Install all modules and link projects';
+
+gulp.task('teardown', gulp.series('unlink', 'deep-clean'));
+gulp.task('teardown').description = 'Clean all and unlink projects';
+
+gulp.task('tslint', tslint);
+gulp.task('tslint').description = 'Lints all TypeScript source files';
+
+// Make project specific tasks
+Object.keys(tsProjects).forEach(project => {
+    gulp.task(`ts-${project}`, tsProjects[project]);
+    gulp.task(`ts-${project}`).description = `Transpile ${colors.green(project)}`;
 });
-bump.description = 'Version bump a project';
-bump.flags = {
+
+gulp.task('ts-all', gulp.series(projectNames.map(name => `ts-${name}`)));
+gulp.task('ts-all').description = 'Transpile all projects';
+
+gulp.task('build', gulp.series(gulp.parallel('tslint', 'clean'), 'ts-all'));
+gulp.task('build').description = 'Compiles all TypeScript source files and updates module references';
+
+gulp.task('watch', gulp.series('build', watch));
+gulp.task('watch').description = 'Contiuous build';
+
+gulp.task('debug', debug);
+gulp.task('debug').description = 'Debug droplit-edge';
+
+const installFlags = {
+    '--pack': 'Package name',
+    '--project': `Project name: (ex. ${colors.green(projectNames[0])})`
+};
+
+gulp.task('npm-i', parameterized(npmInstall));
+gulp.task('npm-i').description = `Install and save a ${colors.cyan('pack')}age to a ${colors.cyan('project')}`;
+gulp.task('npm-i').flags = installFlags;
+
+gulp.task('npm-u', parameterized(npmUninstall));
+gulp.task('npm-u').description = `Uninstall and save a ${colors.cyan('pack')}age to a ${colors.cyan('project')}`;
+gulp.task('npm-u').flags = installFlags;
+
+const projFlags = { '--project': `Project name: (ex. ${colors.green(projectNames[0])}}` };
+
+gulp.task('stats', parameterized(stats));
+gulp.task('stats').description = 'Get lines of code';
+gulp.task('stats').flags = projFlags;
+
+gulp.task('size', parameterized(size));
+gulp.task('size').description = 'Get physical size of code';
+gulp.task('size').flags = projFlags;
+
+gulp.task('deploy', gulp.series('setup', cleanDist, 'build', 'unlink', moveTemp, setupPackage, preInstallDist, installDist, packageTask, cleanTemp));
+gulp.task('deploy').description = 'Glob the Droplit Edge for embedding';
+
+gulp.task('prep', prep);
+
+gulp.task('bump', parameterized(bump));
+gulp.task('bump').description = 'Version bump a project';
+gulp.task('bump').flags = {
     '--major': 'when you make incompatible API changes',
     '--minor': 'when you add functionality in a backwards-compatible manner',
     '--patch': 'when you make backwards-compatible bug fixes',
     '--project': `Project name: (ex. ${colors.green(projectNames[0])})`
 };
-gulp.task('bump', bump);
+
+gulp.task('default', done => runCommand('gulp --tasks', { cwd: './' }, done));
 
 /* Auxiliary functions */
 function expandGlobs(globs) {
@@ -314,7 +317,7 @@ function expandGlobs(globs) {
 }
 
 function getPackageName(packagePath) {
-    const packageFile = require(path.join(path.resolve(packagePath), 'package.json'));
+    const packageFile = require(path.join(path.resolve(packagePath), 'package.json')); // eslint-disable-line global-require
     return `${packageFile.name}_${packageFile.version}`;
 }
 
@@ -345,5 +348,3 @@ function wildcardPaths(globs) {
     return globs.reduce((p, c) =>
         p.concat((c.indexOf(PROJECT_VAR) > 0) ? c.replace(PROJECT_VAR, '*') : c), []);
 }
-
-gulp.task('default', done => runCommand('gulp --tasks', { cwd: './' }, done));
