@@ -53,6 +53,8 @@ Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
 
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
+// Determine if auto discover should run
+const AutoDiscover = (settings.router && settings.router.autodiscover) ? settings.router.autodiscover : true;
 // Amount of time (ms) between discovery attempts
 const AutoDiscoverCadence = (settings.router && settings.router.autodiscoverCadence) ?
     settings.router.autodiscoverCadence : 60000;
@@ -114,7 +116,7 @@ loadPlugins().then(() => {
 transport.once('connected', () => {
     hasConnected = true;
     discoverAll();
-    if (settings.router.autodiscover)
+    if (AutoDiscover)
         setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
 });
 
@@ -383,8 +385,8 @@ function loadPlugin(pluginName: string) {
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
                     const message = (d && d.pluginName) ? `event < ${d.pluginName}:${d.localId}` :
-                        d ? `event < unknown:${d.localId}` :
-                            `event < unknown`;
+                                    d ? `event < unknown:${d.localId}` :
+                                    `event < unknown`;
                     log(message);
                     if (d && d.pluginName)
                         c.pluginName = d.pluginName;
