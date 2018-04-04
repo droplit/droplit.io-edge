@@ -43,10 +43,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
         this.gateways = new Map();
         this._deviceCache = new Map();
 
-        // Start at 1; 0 is for non-sequenced packets
-        this.sequencer = 1;
-        this.sequence = {};
-
+        this.sequencer = new LifxSequencer();
         this.source = EmptySource;
 
         this.setSource = () => {
@@ -58,14 +55,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
         };
 
         this.setSource();
-
-        // Packet types that should be sequenced
-        this.packetMap = {
-            0x65: { state: 'lightState' },                      // getLight
-            0x66: { get: 'getLight', state: 'lightState' },     // setColor
-            0x74: { state: 'statePower' },                      // getLightPower
-            0x75: { get: 'getLightPower', state: 'statePower' } // setLightPower
-        };
 
         this.udpClient = dgram.createSocket('udp4');
         this.udpClient.on('error', udpError.bind(this));
@@ -177,9 +166,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 address: packet.preamble.target.toString('hex')
                             };
                             this.gateways.set(address, gateway);
-
-                            if (sourceMatch && this.sequence[packet.preamble.sequence])
-                                this.send(lifxPacket.getVersion(), packet.preamble.target);
                         } else if (gateway.ip !== rinfo.address)
                             gateway.ip = rinfo.address; // IP address has changed
                     }
@@ -216,14 +202,13 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         power: packet.payload.power
                     };
 
-                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
-                        const seqData = this.sequence[packet.preamble.sequence];
-
-                        // This packet is in response to an explicit get request
-                        if (seqData.callback && seqData.state)
-                            seqData.callback(bulb.outputState(state)[seqData.state]);
-
-                        delete this.sequence[packet.preamble.sequence];
+                    if (sourceMatch && this.sequencer.hasItems(packet.preamble.sequence, 'lightState')) {
+                        const queue = this.sequencer.dequeue(packet.preamble.sequence, 'lightState');
+                        if (queue)
+                            queue
+                                .filter(item => item.callback && item.state)
+                                .forEach(item =>
+                                    item.callback(bulb.outputState(state)[item.state]));
                     }
 
                     if (bulb.ready)
@@ -244,12 +229,13 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     const bulb = this.bulbs.get(address);
 
                     // This packet is in response to an explicit get request
-                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
-                        const seqData = this.sequence[packet.preamble.sequence];
-                        if (seqData.callback)
-                            seqData.callback(bulb.outputState({ power: packet.payload.level }).on);
-
-                        delete this.sequence[packet.preamble.sequence];
+                    if (sourceMatch && this.sequencer.hasItems(packet.preamble.sequence, 'statePower')) {
+                        const queue = this.sequencer.dequeue(packet.preamble.sequence, 'statePower');
+                        if (queue)
+                            queue
+                                .filter(item => item.callback)
+                                .forEach(item =>
+                                    item.callback(bulb.outputState({ power: packet.payload.level }).on));
                     }
 
                     if (bulb.ready && (packet.payload.level !== bulb.state.power))
@@ -264,10 +250,17 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 }
                 case 'acknowledgement': {
                     // Call the get for a set we explicitly asked for an acknowledgement on
-                    if (sourceMatch && this.sequence[packet.preamble.sequence]) {
-                        const data = this.sequence[packet.preamble.sequence].map;
-                        setTimeout(() => this.send(lifxPacket[data.get](), packet.preamble.target), 250);
-                        delete this.sequence[packet.preamble.sequence];
+                    if (sourceMatch && this.sequencer.hasItems(packet.preamble.sequence, 'statePower')) {
+                        const queue = this.sequencer.dequeue(packet.preamble.sequence, 'statePower');
+                        if (queue) {
+                            let timeout = 250;
+                            queue
+                                .filter(item => item.map.get)
+                                .forEach(item => {
+                                    setTimeout(() => this.send(lifxPacket[item.map.get](), packet.preamble.target), timeout);
+                                    timeout += 250;
+                                });
+                        }
                     }
                     this.cache(address);
                     break;
@@ -296,12 +289,10 @@ class LifxPlugin extends droplit.DroplitPlugin {
         if (this.source.equals(EmptySource))
             this.setSource();
 
-        if (this.sequencer === 0xFF)
-            this.sequencer = 0;
-        this.sequence[this.sequencer] = {};
+        const sequence = this.sequencer.getId();
         const packet = lifxPacket.getService({
             source: this.source,
-            sequence: this.sequencer++
+            sequence
         });
         // Discovery is done through UDP broadcast to port 56700
         this.udpClient.send(packet, 0, packet.length, MulticastPort, '255.255.255.255', () => { });
@@ -348,7 +339,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             callback([
                 `bulbs: ${Array.from(this.bulbs.keys()).join(', ')}`,
                 `gateways: ${Array.from(this.gateways.values()).map(g => `${g.address} (${g.ip}:${g.port})`).join(', ')}`,
-                `current sequence: ${this.sequencer}`,
+                `current sequence: ${this.sequencer.id}`,
                 `source: ${Array.from(this.source.values()).join('.')}`
             ]);
             return true;
@@ -373,19 +364,13 @@ class LifxPlugin extends droplit.DroplitPlugin {
             address.copy(packet, 8);
 
         // Add sequence to all outbound packets
-        if (this.sequencer === 0xFF)
-            this.sequencer = 0;
-        const sequenceId = this.sequencer++;
+        const sequenceId = this.sequencer.getId();
         packet[23] = sequenceId;
 
         // If packet type is in map, we want to do something special with the response that has the same sequence id
         const type = packet.readUInt16LE(32);
-        if (this.packetMap[type])
-            this.sequence[sequenceId] = {
-                callback,
-                map: this.packetMap[type],
-                state
-            };
+        if (this.sequencer.packetMap[type])
+            this.sequencer.queue(sequenceId, type, state, callback);
 
         for (const gateway of this.gateways.values()) {
             if (gateway.address === address.toString('hex')) {
@@ -703,6 +688,72 @@ class LifxBulb extends EventEmitter {
             this[_ready] = true;
             this.emit('ready', this);
         }
+    }
+}
+
+class LifxSequencer {
+    constructor() {
+        this.id = 1;
+        this.queues = {};
+
+        this.packetMap = {
+            0x65: { // getLight
+                state: 'lightState'
+            },
+            0x66: { // setColor
+                get: 'getLight',
+                state: 'lightState'
+            },
+            0x74: { // getLightPower
+                state: 'statePower'
+            },
+            0x75: { // setLightPower
+                get: 'getLightPower',
+                state: 'statePower'
+            }
+        };
+    }
+
+    dequeue(id, type) {
+        if (!this.queues[id])
+            return false;
+        const queue = this.queues[id][type];
+
+        delete this.queues[id][type];
+        if (Object.keys(this.queues[id]).length === 0)
+            delete this.queues[id];
+
+        return queue;
+    }
+
+    getId() {
+        if (this.id > 0xFF)
+            this.id = 1;
+        return this.id++;
+    }
+
+    hasItems(id, type) {
+        if (!this.queues[id])
+            return false;
+        return this.queues[id][type];
+    }
+
+    queue(id, type, state, callback) {
+        if (!this.queues[id])
+            this.queues[id] = {};
+
+        const mappedType = this.packetMap[type];
+        if (!mappedType)
+            return;
+
+        if (!this.queues[id][mappedType.state])
+            this.queues[id][mappedType.state] = [];
+
+        this.queues[id][mappedType.state].push({
+            callback,
+            map: this.packetMap[type],
+            state
+        });
     }
 }
 
