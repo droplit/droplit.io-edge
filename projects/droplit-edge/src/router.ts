@@ -49,7 +49,7 @@ if (localSettings.debug && localSettings.debug.logToFile && localSettings.debug.
             access.write.apply(access, arguments);
             fn.apply(process.stderr, arguments);
         };
-        /* tslint:disable no-function-expression */
+        /* tslint:enable no-function-expression */
     } else {
         log('log file path does not exist:', logPath);
     }
