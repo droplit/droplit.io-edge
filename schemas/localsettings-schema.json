@@ -96,6 +96,15 @@
                 "generateHeapDump": {
                     "description": "Periodically generate a heap dump file.",
                     "type": "boolean"
+                },
+                "logToFile": {
+                    "description": "Whether to log out to a file.",
+                    "type": "boolean",
+                    "default": true
+                },
+                "logPath": {
+                    "description": "The file path to the file log.",
+                    "type": "string"
                 }
             }
         },

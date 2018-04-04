@@ -30,10 +30,10 @@ const settings = require('../settings.json');                                // 
 const localSettings = require('../localsettings.json');                      // Load local settings file
 
 // log to file
-if (localSettings.debug.logToFile && localSettings.debug.logPath) {
+if (localSettings.debug && localSettings.debug.logToFile && localSettings.debug.logPath) {
     const fs = require('fs');
     const path = require('path');
-    let logPath = localSettings.debug.logPath;
+    let { logPath } = localSettings.debug;
     if (!path.isAbsolute(localSettings.debug.logPath)) {
         logPath = path.join(process.cwd(), logPath);
     }
@@ -43,11 +43,13 @@ if (localSettings.debug.logToFile && localSettings.debug.logPath) {
         }
         log('logging output to:', logPath);
         const access = fs.createWriteStream(path.join(logPath, `droplitlog_${(new Date()).toISOString().replace(/:/g, '-').replace('T', '_').replace('.', '-')}.txt`));
-        const fn = process.stdout.write;
-        process.stdout.write = <any>function () {
-            fn.apply(process.stdout, arguments);
+        const fn = process.stderr.write;
+        /* tslint:disable no-function-expression */
+        process.stderr.write = <any>function () {
             access.write.apply(access, arguments);
+            fn.apply(process.stderr, arguments);
         };
+        /* tslint:disable no-function-expression */
     } else {
         log('log file path does not exist:', logPath);
     }
