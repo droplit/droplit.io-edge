@@ -28,6 +28,31 @@ const log = debug('droplit:router');                                         // 
 const logv = debug('droplit-v:router');                                      // initilize verbose logging
 const settings = require('../settings.json');                                // Load settings file
 const localSettings = require('../localsettings.json');                      // Load local settings file
+
+// log to file
+if (localSettings.debug.logToFile && localSettings.debug.logPath) {
+    const fs = require('fs');
+    const path = require('path');
+    let logPath = localSettings.debug.logPath;
+    if (!path.isAbsolute(localSettings.debug.logPath)) {
+        logPath = path.join(process.cwd(), logPath);
+    }
+    if (fs.existsSync(path.join(logPath, '../'))) {
+        if (!fs.existsSync(logPath)) {
+            fs.mkdirSync(logPath);
+        }
+        log('logging output to:', logPath);
+        const access = fs.createWriteStream(path.join(logPath, `droplitlog_${(new Date()).toISOString().replace(/:/g, '-').replace('T', '_').replace('.', '-')}.txt`));
+        const fn = process.stdout.write;
+        process.stdout.write = <any>function () {
+            fn.apply(process.stdout, arguments);
+            access.write.apply(access, arguments);
+        };
+    } else {
+        log('log file path does not exist:', logPath);
+    }
+}
+
 export { Transport };                                                        // export Transport interface
 export const macAddress: string =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
