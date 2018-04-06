@@ -222,7 +222,7 @@ const bump = (done, params) => {
 
     const cwd = `projects/${params.project}/`;
     return gulp.src('./package.json', { cwd })
-        .pipe(G$.bump({ typeName }))
+        .pipe(G$.bump({ type: typeName }))
         .pipe(gulp.dest('./', { cwd }));
 };
 
