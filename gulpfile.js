@@ -76,28 +76,31 @@ const tslint = () =>
         .pipe(G$.tslint.report({ emitError: false }));
 
 /* Transpiling */
-const tsProjects = {};
-projectNames.forEach(project => {
-    const tsProj = () => {
-        const tsResult = gulp.src(mapPaths(settings.tsfiles, project))
-            .pipe(G$.sourcemaps.init())
-            .pipe(G$.typescript.createProject(tsconfig.compilerOptions)());
-        const dest = mapPath(settings.dest, project);
-        return merge([
-            tsResult.dts.pipe(gulp.dest(dest)),
-            tsResult.js // separate .js.map files
-                .pipe(G$.sourcemaps.write('.'))
-                .pipe(gulp.dest(dest)),
-            // JS files
-            gulp.src(mapPaths(settings.jsFiles, project))
-                .pipe(G$.babel({ presets: ['es2015'] }))
-                .pipe(gulp.dest(dest)),
-            // all other files
-            gulp.src(mapPaths(settings.resources, project)).pipe(gulp.dest(dest))
-        ]);
-    };
-    tsProjects[project] = tsProj;
-});
+const transpileProjects = projects => () => {
+    const jsSources = Array.from(new Set(projects.reduce((globs, project) => globs.concat(mapPaths(settings.jsFiles, project)), [])));
+    const tsSources = Array.from(new Set(projects.reduce((globs, project) => globs.concat(mapPaths(settings.tsfiles, project)), [])));
+    const resources = Array.from(new Set(projects.reduce((globs, project) => globs.concat(mapPaths(settings.resources, project)), [])));
+
+    const tsResult = gulp.src(tsSources)
+        .pipe(G$.sourcemaps.init())
+        .pipe(G$.typescript.createProject(tsconfig.compilerOptions)());
+
+    const destTrans = file =>
+        file.base.replace(/.+?(?:\\|\/)projects(?:\\|\/)(.+?)(?:\\|\/)src(?:\\|\/.+)?/, 'projects\/$1\/lib\/');
+
+    return merge([
+        tsResult.dts.pipe(gulp.dest(destTrans)),
+        tsResult.js // separate .js.map files
+            .pipe(G$.sourcemaps.write('.'))
+            .pipe(gulp.dest(destTrans)),
+        // JS files
+        gulp.src(jsSources)
+            .pipe(G$.babel({ presets: ['es2015'] }))
+            .pipe(gulp.dest(destTrans)),
+        // all other files
+        gulp.src(resources).pipe(gulp.dest(destTrans))
+    ]);
+};
 
 const watch = () => {
     projectNames.forEach(project =>
@@ -252,13 +255,13 @@ gulp.task('tslint', tslint);
 gulp.task('tslint').description = 'Lints all TypeScript source files';
 
 // Make project specific tasks
-Object.keys(tsProjects).forEach(project => {
-    gulp.task(`ts-${project}`, tsProjects[project]);
+gulp.task('ts-all', gulp.series(transpileProjects(projectNames)));
+gulp.task('ts-all').description = 'Transpile all projects';
+
+projectNames.forEach(project => {
+    gulp.task(`ts-${project}`, transpileProjects([project]));
     gulp.task(`ts-${project}`).description = `Transpile ${colors.green(project)}`;
 });
-
-gulp.task('ts-all', gulp.series(projectNames.map(name => `ts-${name}`)));
-gulp.task('ts-all').description = 'Transpile all projects';
 
 gulp.task('build', gulp.series(gulp.parallel('tslint', 'clean'), 'ts-all'));
 gulp.task('build').description = 'Compiles all TypeScript source files and updates module references';
