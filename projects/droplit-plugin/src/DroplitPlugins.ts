@@ -53,6 +53,11 @@ export interface DeviceInfo {
     pluginName?: string;
     timestamp?: Date;
 }
+
+export interface RemoveMessage {
+    localId: string;
+}
+
 export abstract class DroplitLocalPlugin extends EventEmitter {
 
     /**
@@ -426,6 +431,10 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
      */
     protected onEvents(events: DeviceServiceMember[]) {
         this.emit('event raised', events);
+    }
+
+    protected onRemoveExcept(messages: RemoveMessage[]) {
+        this.emit('remove except', messages);
     }
 
     /**

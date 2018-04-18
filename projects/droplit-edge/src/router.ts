@@ -21,7 +21,8 @@ import {
     PluginSetting,
     PluginSettingResponse,
     RequestMethodResponse,
-    SetPropertiesResponse
+    SetPropertiesResponse,
+    RemoveMessage
 } from './types/types';
 
 const log = debug('droplit:router');                                         // initilize logging module for log levels
@@ -438,6 +439,11 @@ function loadPlugin(pluginName: string) {
                     transport.sendReliable('property changed', properties);
                 else
                     transport.send('property changed', properties, err => { });
+            });
+
+            pluginController.on('remove except', (messages: RemoveMessage[]) => {
+                log(`remove except < ${pluginName}:[ ${messages.map(m => m.localId).join(', ')} ]`);
+                transport.send('remove except', messages.map(m => ({ pluginName, ...m })));
             });
 
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => basicSend('log error'));
