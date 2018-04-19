@@ -353,13 +353,16 @@ const bumpOpts = {
 };
 
 gulp.task('bump', 'Version bump a project.', function (major, minor, patch, project) {
-    if (!project) return console.log(`${chalk.red('No project specified!')}`);
-    let type = '';
-    if (major && !minor && !patch) type = 'major';
-    if (!major && minor && !patch) type = 'minor';
-    if (!major && !minor && patch) type = 'patch';
-    if (!type) return console.log(`${chalk.red('Specify one version type to bump!')}`);
-    const cwd = 'projects/project/';
+    if (!project)
+        return console.log(`${chalk.red('No project specified!')}`);
+
+    const typeFlags = { 1: 'major', 2: 'minor', 4: 'patch' };
+    const typeValue = (major << 0) + (minor << 1) + (patch << 2);
+    const type = typeFlags[typeValue];
+    if (!type)
+        return console.log(`${chalk.red('Specify one version type to bump!')}`);
+
+    const cwd = `projects/${project}/`;
     return gulp.src('./package.json', { cwd })
         .pipe(G$.bump({ type }))
         .pipe(gulp.dest('./', { cwd }));
