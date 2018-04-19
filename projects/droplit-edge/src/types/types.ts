@@ -46,9 +46,7 @@ export interface PluginMessage {
     message: any;
 }
 
-export interface RemoveMessage extends DP.RemoveMessage {
-    pluginName: string;
-}
+export type RemoveMessage = DP.RemoveMessage;
 
 export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface SetPropertiesResponse { supported: boolean[]; }
