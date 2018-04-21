@@ -163,10 +163,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             // Packet is in response to one we sent
             const sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             const address = packet.preamble.target.toString('hex');
-
-            // if (address === 'd073d52736240000')
-            //     console.log('processed d073d52736240000');
-
+            
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
                     if (packet.payload.service === 1 && packet.payload.port > 0) {
