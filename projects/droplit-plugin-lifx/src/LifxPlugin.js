@@ -25,6 +25,7 @@ const ColorProps = [
 ];
 const EmptySource = new Buffer([0, 0, 0, 0]);
 const MulticastPort = 56700;
+const StaleTime = 6000;
 const StepSize = parseInt(0xFFFF / 10);
 const TempLower = 2500;
 const TempUpper = 9000;
@@ -41,7 +42,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
         this.bulbs = new Map();
         this.gateways = new Map();
-        this._deviceCache = new Map();
 
         this.sequencer = new LifxSequencer();
         this.source = EmptySource;
@@ -73,6 +73,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 get_temperatureMin: this.getTempMin,
                 get_temperatureMax: this.getTempMax,
                 set_temperature: this.setTemperature
+            },
+            Connectivity: {
+                get_status: this.getStatus
             },
             DimmableSwitch: {
                 get_brightness: this.getDSBrightness,
@@ -113,6 +116,10 @@ class LifxPlugin extends droplit.DroplitPlugin {
                 propChanges.push(bulb.propertyObject('LightColor', 'hue', output.hue));
                 propChanges.push(bulb.propertyObject('LightColor', 'saturation', output.sat));
             }
+            if (bulb.services.some(s => s === 'Connectivity') && (bulb.online !== true)) {
+                bulb.online = true;
+                propChanges.push(bulb.propertyObject('Connectivity', 'status', 'online'));
+            }
 
             if (propChanges.length > 0)
                 this.onPropertiesChanged(propChanges);
@@ -142,6 +149,11 @@ class LifxPlugin extends droplit.DroplitPlugin {
             if (!state.hasOwnProperty('kelvin') || state.kelvin !== newState.kelvin)
                 propChanges.push(bulb.propertyObject('ColorTemperature', 'temperature', output.temp));
 
+            if (bulb.services.some(s => s === 'Connectivity') && (bulb.online !== true)) {
+                bulb.online = true;
+                propChanges.push(bulb.propertyObject('Connectivity', 'status', 'online'));
+            }
+
             if (propChanges.length > 0)
                 this.onPropertiesChanged(propChanges);
         }
@@ -151,6 +163,9 @@ class LifxPlugin extends droplit.DroplitPlugin {
             // Packet is in response to one we sent
             const sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             const address = packet.preamble.target.toString('hex');
+
+            // if (address === 'd073d52736240000')
+            //     console.log('processed d073d52736240000');
 
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
@@ -169,7 +184,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
                         } else if (gateway.ip !== rinfo.address)
                             gateway.ip = rinfo.address; // IP address has changed
                     }
-                    this.cache(address);
                     break;
                 }
                 case 'stateVersion': {
@@ -183,8 +197,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
                     if (bulb.state === undefined)
                         this.send(lifxPacket.getLight(), packet.preamble.target);
-
-                    this.cache(address);
                     break;
                 }
                 case 'lightState': {
@@ -218,8 +230,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
 
                     if (bulb.version === undefined)
                         this.send(lifxPacket.getVersion(), packet.preamble.target);
-
-                    this.cache(address);
                     break;
                 }
                 case 'statePower': {
@@ -244,8 +254,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
                     const state = bulb.state;
                     state.power = packet.payload.level;
                     bulb.state = state;
-
-                    this.cache(address);
                     break;
                 }
                 case 'acknowledgement': {
@@ -262,10 +270,12 @@ class LifxPlugin extends droplit.DroplitPlugin {
                                 });
                         }
                     }
-                    this.cache(address);
                     break;
                 }
             }
+
+            if (this.bulbs.has(address))
+                this.bulbs.get(address).updateActivity();
         }
 
         function udpError() { }
@@ -279,10 +289,30 @@ class LifxPlugin extends droplit.DroplitPlugin {
             if (packet)
                 processPacket.bind(this)(packet, rinfo);
         }
-    }
 
-    cache(address) {
-        this._deviceCache.set(address, new Date(Date.now()));
+        const CheckInterval = Math.round(StaleTime / 3);
+
+        // Activity check
+        setInterval(() => {
+            // To avoid having to wait a full discovery cycle, test activity on each activity cycle
+            Array.from(this.bulbs.values())
+                .filter(bulb => bulb.services.some(s => s === 'Connectivity'))
+                .forEach(bulb => this.send(lifxPacket.getLight(), bulb.address, null));
+
+            // Bulbs are stale if no recent activity
+            const staleBulbs = Array
+                .from(this.bulbs.values())
+                .filter(bulb =>
+                    (bulb.online === true) &&
+                    bulb.services.some(s => s === 'Connectivity') &&
+                    ((new Date(Date.now()).getTime() - bulb.activity.getTime()) > StaleTime)
+                );
+
+            if (staleBulbs.length > 0) {
+                staleBulbs.forEach(bulb => (bulb.online = false));
+                this.onPropertiesChanged(staleBulbs.map(bulb => bulb.propertyObject('Connectivity', 'status', 'offline')));
+            }
+        }, CheckInterval);
     }
 
     discover() {
@@ -463,6 +493,54 @@ class LifxPlugin extends droplit.DroplitPlugin {
             this.send(lifxPacket.setLightPower({ level: 0xFFFF }), bulb.address);
     }
 
+    // ColorTemperature Implementation
+    getTemperature(localId, callback) {
+        const bulb = this.bulbs.get(localId);
+        if (bulb) {
+            this.send(lifxPacket.getLight(), bulb.address, callback, 'temp');
+            return;
+        }
+        callback();
+    }
+
+    getTempMin(localId, callback) {
+        const bulb = this.bulbs.get(localId);
+        if (bulb) {
+            callback(TempLower);
+            return;
+        }
+        callback();
+    }
+
+    getTempMax(localId, callback) {
+        const bulb = this.bulbs.get(localId);
+        if (bulb) {
+            callback(TempLower);
+            return;
+        }
+        callback();
+    }
+
+    setTemperature(localId, value) {
+        const bulb = this.bulbs.get(localId);
+        if (bulb) {
+            const state = bulb.state;
+            this.setColor(bulb.address, state.hue, state.saturation, state.brightness, value);
+        }
+        return true;
+    }
+
+    // Connectivity
+    getStatus(localId, callback) {
+        const bulb = this.bulbs.get(localId);
+        if (bulb) {
+            const online = ((new Date(Date.now()).getTime() - bulb.activity.getTime()) > StaleTime);
+            callback(online ? 'offline' : 'online');
+            return true;
+        }
+        return false;
+    }
+
     // DimmableSwitch Implementation
     getDSBrightness(localId, callback) {
         const bulb = this.bulbs.get(localId);
@@ -535,33 +613,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
         callback();
     }
 
-    getTemperature(localId, callback) {
-        const bulb = this.bulbs.get(localId);
-        if (bulb) {
-            this.send(lifxPacket.getLight(), bulb.address, callback, 'temp');
-            return;
-        }
-        callback();
-    }
-
-    getTempMin(localId, callback) {
-        const bulb = this.bulbs.get(localId);
-        if (bulb) {
-            callback(TempLower);
-            return;
-        }
-        callback();
-    }
-
-    getTempMax(localId, callback) {
-        const bulb = this.bulbs.get(localId);
-        if (bulb) {
-            callback(TempLower);
-            return;
-        }
-        callback();
-    }
-
     setHue(localId, value) {
         const bulb = this.bulbs.get(localId);
         if (bulb) {
@@ -588,15 +639,6 @@ class LifxPlugin extends droplit.DroplitPlugin {
         }
         return true;
     }
-
-    setTemperature(localId, value) {
-        const bulb = this.bulbs.get(localId);
-        if (bulb) {
-            const state = bulb.state;
-            this.setColor(bulb.address, state.hue, state.saturation, state.brightness, value);
-        }
-        return true;
-    }
 }
 
 // Encapsulate private fields via symbols
@@ -608,8 +650,11 @@ class LifxBulb extends EventEmitter {
     constructor(address) {
         super();
 
+        this.activity = new Date(Date.now());
         this.address = address;
+        this.connected = true;
         this.deviceMeta = {};
+        this.online = false;
         this.services = [];
         this.promotedMembers = {
             switch: 'BinarySwitch.switch',
@@ -654,6 +699,10 @@ class LifxBulb extends EventEmitter {
         };
     }
 
+    updateActivity() {
+        this.activity = new Date(Date.now());
+    }
+
     get ready() { return this[_ready]; }
 
     get state() { return this[_state]; }
@@ -681,8 +730,8 @@ class LifxBulb extends EventEmitter {
 
         const isWhite = hasProduct && products[version.vendor][version.product].features.color !== true;
         this.services = isWhite ?
-            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature'] :
-            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature'];
+            ['BinarySwitch', 'DimmableSwitch', 'ColorTemperature', 'Connectivity'] :
+            ['BinarySwitch', 'DimmableSwitch', 'LightColor', 'ColorTemperature', 'Connectivity'];
 
         if (this[_state] && !this[_ready]) {
             this[_ready] = true;
