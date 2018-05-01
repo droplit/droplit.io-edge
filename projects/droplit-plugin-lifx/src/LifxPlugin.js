@@ -25,7 +25,7 @@ const ColorProps = [
 ];
 const EmptySource = new Buffer([0, 0, 0, 0]);
 const MulticastPort = 56700;
-const StaleTime = 6000;
+const StaleTime = 7000;
 const StepSize = parseInt(0xFFFF / 10);
 const TempLower = 2500;
 const TempUpper = 9000;
@@ -163,7 +163,7 @@ class LifxPlugin extends droplit.DroplitPlugin {
             // Packet is in response to one we sent
             const sourceMatch = (Buffer.compare(packet.preamble.source, this.source) === 0);
             const address = packet.preamble.target.toString('hex');
-            
+
             switch (packet.packetTypeShortName) {
                 case 'stateService': {
                     if (packet.payload.service === 1 && packet.payload.port > 0) {
