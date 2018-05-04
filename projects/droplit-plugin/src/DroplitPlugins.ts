@@ -19,6 +19,7 @@ export interface DeviceServiceMember {
     index: string;
     member: string;
     value?: any;
+    isRouted?: boolean;
     error?: Error;
     timestamp?: Date;
 }
@@ -49,6 +50,7 @@ export interface DeviceInfo {
         [x: string]: any
     };
     services?: string[];
+    routedServices?: string[];
     promotedMembers?: { [name: string]: string };
     pluginName?: string;
     timestamp?: Date;

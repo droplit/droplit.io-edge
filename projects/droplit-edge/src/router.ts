@@ -99,6 +99,8 @@ logv(`PluginDiscoveryCascade: ${PluginDiscoveryCascade / 1000}s`);
 // log select settings
 log(`using setting host: ${settings.transport.host}`);
 log(`using setting ecosystem: ${settings.ecosystemId}`);
+if (settings.environmentId)
+    log(`using setting environment: ${settings.environmentId}`);
 log(`using setting edge id: ${macAddress}`);
 
 // If enabled, generates a heap dump on a set interval for diognostic purposes
@@ -134,9 +136,10 @@ if (localSettings.config && localSettings.config.provisioningServiceEnabled) {
 loadPlugins().then(() => {
     // Initialize the transport
     const headers: { [k: string]: string } = { 'x-edge-id': macAddress };
-    if (settings.ecosystemId) {
+    if (settings.ecosystemId)
         headers['x-ecosystem-id'] = settings.ecosystemId;
-    }
+    if (settings.environmentId)
+        headers['x-environment-id'] = settings.environmentId;
     transport.start(settings.transport, headers);
 });
 
