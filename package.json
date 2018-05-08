@@ -53,7 +53,6 @@
     "gulp-gzip": "^1.4.0",
     "gulp-help": "^1.6.1",
     "gulp-load-plugins": "^1.2.2",
-    "gulp-param": "^1.0.3",
     "gulp-plumber": "^1.1.0",
     "gulp-sequence": "^0.4.5",
     "gulp-size": "^2.1.0",
@@ -67,6 +66,7 @@
     "mocha": "^3.4.2",
     "source-map-support": "^0.4.0",
     "tslint": "5.9.1",
-    "typescript": "2.8.1"
+    "typescript": "2.8.1",
+    "yargs": "^11.0.0"
   }
 }

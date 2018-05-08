@@ -1,9 +1,7 @@
 'use strict';
 
-/* eslint-disable prefer-arrow-callback */
-/* TODO: Use arrow-functions for tasks once gulp-param fixes bug that causes them not to work */
-
-const gulp = require('gulp-help')(require('gulp-param')(require('gulp'), process.argv));
+const argv = require('yargs').argv
+const gulp = require('gulp-help')(require('gulp'));
 const async = require('async');
 const del = require('del');
 const merge = require('merge2');
@@ -67,7 +65,7 @@ const exec = require('child_process').exec;
 
 function runCommand(command, options, callback) {
     try {
-        exec(command, options, function (error, stdout, stderr) {
+        exec(command, options, (error, stdout, stderr) => {
             console.log(`${path.resolve(options.cwd || '.')} ${chalk.cyan(command)}`);
             console.log(stdout);
             console.log(stderr);
@@ -86,15 +84,15 @@ function runCommand(command, options, callback) {
  */
 function runCommands(commands, parallel, callback) {
     if (parallel === true) {
-        async.each(commands, function (command, done) {
+        async.each(commands, (command, done) => {
             runCommand(command.cmd, { cwd: command.cwd }, done);
-        }, function () {
+        }, () => {
             callback();
         });
     } else {
-        async.eachSeries(commands, function (command, done) {
+        async.eachSeries(commands, (command, done) => {
             runCommand(command.cmd, { cwd: command.cwd }, done);
-        }, function () {
+        }, () => {
             callback();
         });
     }
@@ -102,32 +100,35 @@ function runCommands(commands, parallel, callback) {
 
 // Setup
 
-gulp.task('setup', 'Install all modules and link projects', function (callback) {
+gulp.task('setup', 'Install all modules and link projects', callback => {
     G$.sequence('install', 'link', callback);
 });
 
-gulp.task('teardown', 'Clean all and unlink projects', function (callback) {
+gulp.task('teardown', 'Clean all and unlink projects', callback => {
     G$.sequence('unlink', 'deepclean', callback);
 });
 
 // npm install
 
-gulp.task('install', 'Install all npm modules', function (callback) {
+gulp.task('install', 'Install all npm modules', callback => {
     const commands = [];
-    commands.push({ cmd: 'npm install', cwd: undefined });
+    let packageNpmInstall = 'npm install'
+    if (argv.optional == false) packageNpmInstall += ' --no-optional';
+    if (argv.buildFromSource) packageNpmInstall += ' --build-from-source'
+    if (argv.target_arch) packageNpmInstall += ` --target_arch=${argv.target_arch}`;
     projectNames.forEach(name => {
-        commands.push({ cmd: 'npm install', cwd: `projects/${name}` });
+        commands.push({ cmd: packageNpmInstall, cwd: `projects/${name}` });
     });
     runCommands(commands, true, callback);
 });
 
 // npm link
 
-gulp.task('link', 'Link dependencies on local disk', function (callback) {
+gulp.task('link', 'Link dependencies on local disk', callback => {
     linker(true, callback);
 });
 
-gulp.task('unlink', 'Unlink dependencies on local disk', function (callback) {
+gulp.task('unlink', 'Unlink dependencies on local disk', callback => {
     linker(false, callback);
 });
 
@@ -155,18 +156,18 @@ function linker(mode, callback) {
 
 // Building
 
-gulp.task('build', 'Compiles all TypeScript source files and updates module references', function (callback) {
+gulp.task('build', 'Compiles all TypeScript source files and updates module references', callback => {
     G$.sequence(['tslint', 'clean'], 'ts-all', callback);
 });
 
-gulp.task('watch', 'Contiuous build', ['build'], function () {
+gulp.task('watch', 'Contiuous build', ['build'], () => {
     projectNames.forEach(project => {
         gulp.watch(mapPaths(Array.prototype.concat(settings.tsfiles, settings.jsFiles), project), [`ts-${project}`]);
     });
 });
 
 // see https://www.npmjs.com/package/tslint
-gulp.task('tslint', 'Lints all TypeScript source files', function () {
+gulp.task('tslint', 'Lints all TypeScript source files', () => {
     return gulp.src(wildcharPaths(settings.tsfiles))
         .pipe(G$.tslint({ formatter: 'verbose' }))
         .pipe(G$.tslint.report({ emitError: false }));
@@ -174,17 +175,17 @@ gulp.task('tslint', 'Lints all TypeScript source files', function () {
 
 // Cleaning
 
-gulp.task('clean', 'Cleans the generated files from lib directory', function () {
+gulp.task('clean', 'Cleans the generated files from lib directory', () => {
     return del(expandPaths(settings.clean));
 });
 
-gulp.task('deepclean', 'Cleans the generated files from lib directory and all node_modules', function () {
+gulp.task('deepclean', 'Cleans the generated files from lib directory and all node_modules', () => {
     return del(expandPaths(settings.deepClean));
 });
 
 // Transpiling
 projectNames.forEach(project => {
-    gulp.task(`ts-${project}`, `Transpile ${chalk.green(project)}`, function () {
+    gulp.task(`ts-${project}`, `Transpile ${chalk.green(project)}`, () => {
         const tsResult = gulp.src(mapPaths(settings.tsfiles, project))
             .pipe(G$.sourcemaps.init())
             .pipe(G$.typescript.createProject(tsconfig.compilerOptions)());
@@ -204,14 +205,16 @@ projectNames.forEach(project => {
     });
 });
 
-gulp.task('ts-all', 'Transpile all projects', function (callback) {
+gulp.task('ts-all', 'Transpile all projects', callback => {
     G$.sequence(projectNames.map(name => `ts-${name}`), callback);
 });
 
 // Extras
 
-gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
-    runCommand(`npm install --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
+gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, callback => {
+    const pack = argv.pack;
+    const project = argv.project;
+    runCommand(`npm install --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, () => {
         callback();
     });
 }, {
@@ -221,8 +224,10 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         }
     });
 
-gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, function (project, pack, callback) {
-    runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, function () {
+gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, callback => {
+    const pack = argv.pack;
+    const project = argv.project;
+    runCommand(`npm uninstall --save ${pack}`, { cwd: mapPath(settings.projectPath, project) }, () => {
         callback();
     });
 }, {
@@ -232,7 +237,8 @@ gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.c
         }
     });
 
-gulp.task('stats', 'Get lines of code', function (project) {
+gulp.task('stats', 'Get lines of code', () => {
+    const project = argv.project;
     console.log(project);
     if (project) {
         console.log(`Source Lines of Code: ${chalk.green(project)}`);
@@ -247,7 +253,8 @@ gulp.task('stats', 'Get lines of code', function (project) {
         }
     });
 
-gulp.task('size', 'Get size of code', function (project) {
+gulp.task('size', 'Get size of code', () => {
+    const project = argv.project;
     console.log(project);
     if (project) {
         console.log(`Source Lines of Code: ${chalk.green(project)}`);
@@ -269,7 +276,7 @@ function getPackageName(packagePath) {
     return `${packageFile.name}_${packageFile.version}`;
 }
 
-gulp.task('package', false, function () {
+gulp.task('package', false, () => {
     const packageFileName = `${getPackageName(settings.edgeDir)}.tar`;
     return gulp.src(settings.packageFiles, { follow: true })
         .pipe(gulp.dest('dist/droplit-edge'))
@@ -279,22 +286,22 @@ gulp.task('package', false, function () {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('clean-dist', false, function () {
+gulp.task('clean-dist', false, () => {
     return del('dist');
 });
 
-gulp.task('move-temp', false, function () {
+gulp.task('move-temp', false, () => {
     return gulp.src(settings.edgeFiles, { follow: true })
         .pipe(gulp.dest('temp/droplit-edge'));
 });
 
-gulp.task('clean-temp', false, function () {
+gulp.task('clean-temp', false, () => {
     return del('temp');
 });
 
-gulp.task('setup-package', false, function () {
+gulp.task('setup-package', false, () => {
     return gulp.src('./temp/droplit-edge/package.json')
-        .pipe(jeditor(function (json) {
+        .pipe(jeditor((json) => {
             const localConfig = require('./temp/droplit-edge/localsettings.json');
             if (Array.isArray(localConfig.plugins))
                 localConfig.plugins.forEach(plugin => {
@@ -317,27 +324,31 @@ gulp.task('setup-package', false, function () {
         .pipe(gulp.dest('temp/droplit-edge/'));
 });
 
-gulp.task('pre-install-dist', false, function () {
+gulp.task('pre-install-dist', false, () => {
     return del('temp/droplit-edge/node_modules');
 });
 
-gulp.task('install-dist', false, function (callback) {
-    runCommand('npm install', { cwd: 'temp/droplit-edge' }, () => {
+gulp.task('install-dist', false, callback => {
+    let npmInstall = 'npm install'
+    if (argv.optional == false) npmInstall += ' --no-optional';
+    if (argv.buildFromSource) npmInstall += ' --build-from-source'
+    if (argv.target_arch) npmInstall += ` --target_arch=${argv.target_arch}`;
+    runCommand(npmInstall, { cwd: 'temp/droplit-edge' }, () => {
         console.log('done');
         callback();
     });
 });
 
-gulp.task('build-dist', false, function (callback) {
+gulp.task('build-dist', false, callback => {
     G$.sequence('clean-dist', 'build', 'unlink', 'move-temp', 'setup-package', 'pre-install-dist', 'install-dist', 'package', 'clean-temp', callback);
 });
 
-gulp.task('deploy', 'Glob the Droplit Edge for embedding', function (callback) {
+gulp.task('deploy', 'Glob the Droplit Edge for embedding', callback => {
     G$.sequence('setup', 'build-dist', callback);
 });
 
 // Testing for improving package
-gulp.task('prep', false, function () {
+gulp.task('prep', false, () => {
     return del(expandPaths(settings.prep));
 });
 
@@ -352,7 +363,11 @@ const bumpOpts = {
     }
 };
 
-gulp.task('bump', 'Version bump a project.', function (major, minor, patch, project) {
+gulp.task('bump', 'Version bump a project.', () => {
+    const major = argv.major;
+    const minor = argv.minor;
+    const patch = argv.patch;
+    const project = argv.project;
     if (!project)
         return console.log(`${chalk.red('No project specified!')}`);
 
@@ -368,7 +383,7 @@ gulp.task('bump', 'Version bump a project.', function (major, minor, patch, proj
         .pipe(gulp.dest('./', { cwd }));
 }, bumpOpts);
 
-gulp.task('debug', 'Debug droplit-edge', function () {
+gulp.task('debug', 'Debug droplit-edge', () => {
     const project = 'droplit-edge';
     G$.nodemon({
         script: `${project}.js`,
@@ -385,7 +400,7 @@ gulp.task('debug', 'Debug droplit-edge', function () {
 // .pipe(G$.plumber()) // exit gracefully if something fails after this
 
 
-// gulp.task('test', 'Runs all tests', [], function () {
+// gulp.task('test', 'Runs all tests', [], () => {
 //     $.util.log(colors.cyan(`Testing ${settings.testGlob}`));
 
 //     return gulp
