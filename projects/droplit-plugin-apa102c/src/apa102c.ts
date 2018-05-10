@@ -70,6 +70,9 @@ export class Apa102c extends droplit.DroplitPlugin {
                     services: ['BinarySwitch', 'DimmableSwitch', 'LightColor']
                 }
             );
+            setInterval(() => { // In case of interference changing pixels
+                this.strip.update(this.strip.pixels);
+            }, 60000);
         }
     }
 
@@ -192,11 +195,27 @@ export class Apa102c extends droplit.DroplitPlugin {
 
     }
 
-    // private hue: number;
-    // private saturation: number;
-    // private value: number;
-
-    setHue(localId: string, value: any, callback: any, index: number) {
+    setHue(localId: string, valueIndexes: ValueIndex[], callback: any) {
+        valueIndexes.forEach(valueIndex => {
+            const pixel = this.strip.pixels[valueIndex.index];
+            const hsv = this.rgbToHsv(pixel.red, pixel.green, pixel.blue);
+            hsv.hue = valueIndex.value;
+            const rgb = this.hsvToRgb(hsv.hue, hsv.sat, hsv.value);
+            this.strip.pixels[valueIndex.index].red = rgb.red;
+            this.strip.pixels[valueIndex.index].green = rgb.green;
+            this.strip.pixels[valueIndex.index].blue = rgb.blue;
+        });
+        this.strip.update(this.strip.pixels);
+        this.onPropertiesChanged(valueIndexes.map(valueIndex => {
+            return {
+                localId: '.',
+                service: 'LightColor',
+                member: 'hue',
+                index: valueIndex.index.toString(),
+                value: valueIndex.value
+            };
+        }));
+        return true;
         // this.hue = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         // const pixels = new Array(this.strip.pixels.length);
         // const color = hsvToRgb(this.hue, this.saturation, this.value);
@@ -206,7 +225,27 @@ export class Apa102c extends droplit.DroplitPlugin {
         // this.strip.library.render(pixels);
     }
 
-    setMclBrightness(localId: string, value: any, callback: any, index: number) {
+    setMclBrightness(localId: string, valueIndexes: ValueIndex[], callback: any) {
+        valueIndexes.forEach(valueIndex => {
+            const pixel = this.strip.pixels[valueIndex.index];
+            const hsv = this.rgbToHsv(pixel.red, pixel.green, pixel.blue);
+            hsv.value = valueIndex.value;
+            const rgb = this.hsvToRgb(hsv.hue, hsv.sat, hsv.value);
+            this.strip.pixels[valueIndex.index].red = rgb.red;
+            this.strip.pixels[valueIndex.index].green = rgb.green;
+            this.strip.pixels[valueIndex.index].blue = rgb.blue;
+        });
+        this.strip.update(this.strip.pixels);
+        this.onPropertiesChanged(valueIndexes.map(valueIndex => {
+            return {
+                localId: '.',
+                service: 'LightColor',
+                member: 'brightness',
+                index: valueIndex.index.toString(),
+                value: valueIndex.value
+            };
+        }));
+        return true;
         // this.value = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         // const pixels = new Array(this.strip.pixels.length);
         // const color = hsvToRgb(this.hue, this.saturation, this.value);
@@ -216,7 +255,27 @@ export class Apa102c extends droplit.DroplitPlugin {
         // this.strip.library.render(pixels);
     }
 
-    setSaturation(localId: string, value: any, callback: any, index: number) {
+    setSaturation(localId: string, valueIndexes: ValueIndex[], callback: any) {
+        valueIndexes.forEach(valueIndex => {
+            const pixel = this.strip.pixels[valueIndex.index];
+            const hsv = this.rgbToHsv(pixel.red, pixel.green, pixel.blue);
+            hsv.sat = valueIndex.value;
+            const rgb = this.hsvToRgb(hsv.hue, hsv.sat, hsv.value);
+            this.strip.pixels[valueIndex.index].red = rgb.red;
+            this.strip.pixels[valueIndex.index].green = rgb.green;
+            this.strip.pixels[valueIndex.index].blue = rgb.blue;
+        });
+        this.strip.update(this.strip.pixels);
+        this.onPropertiesChanged(valueIndexes.map(valueIndex => {
+            return {
+                localId: '.',
+                service: 'LightColor',
+                member: 'saturation',
+                index: valueIndex.index.toString(),
+                value: valueIndex.value
+            };
+        }));
+        return true;
         // this.saturation = Math.min(Math.max(normalize(value, 0, 0xffff, 254), 0), 254);
         // const pixels = new Array(this.strip.pixels.length);
         // const color = hsvToRgb(this.hue, this.saturation, this.value);
@@ -224,6 +283,60 @@ export class Apa102c extends droplit.DroplitPlugin {
         //     pixels[i] = this.rgb2Int(color.red, color.green, color.blue);
         // }
         // this.strip.library.render(pixels);
+    }
+
+    hsvToRgb(hue: number, saturation: number, value: number) {
+        const c = value * saturation;
+        const h = hue / 60;
+        const x = c * (1 - Math.abs((h % 2) - 1));
+        const m = value - c;
+
+        let tmp: { r: number, g: number, b: number };
+        if (h >= 0 && h < 1)
+            tmp = { r: c, g: x, b: 0 };
+        else if (h >= 1 && h < 2)
+            tmp = { r: x, g: c, b: 0 };
+        else if (h >= 2 && h < 3)
+            tmp = { r: 0, g: c, b: x };
+        else if (h >= 3 && h < 4)
+            tmp = { r: 0, g: x, b: c };
+        else if (h >= 4 && h < 5)
+            tmp = { r: x, g: 0, b: c };
+        else if (h >= 5 && h <= 6)
+            tmp = { r: c, g: 0, b: x };
+        else
+            tmp = { r: 0, g: 0, b: 0 };
+
+        return {
+            red: Number(255 * (tmp.r + m)),
+            green: Number(255 * (tmp.g + m)),
+            blue: Number(255 * (tmp.b + m))
+        };
+    }
+
+    rgbToHsv(red: number, green: number, blue: number) {
+        const b = blue / 255;
+        const g = green / 255;
+        const r = red / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const c = max - min;
+
+        let tmp = 0;
+        if (c === 0)
+            tmp = 0;
+        else if (max === r)
+            tmp = ((g - b) / c) % 6;
+        else if (max === g)
+            tmp = ((b - r) / c) + 2;
+        else
+            tmp = ((r - g) / c) + 4;
+
+        const hue = tmp * 60;
+        const value = max;
+        const sat = c === 0 ? 0 : c / value;
+
+        return { hue, sat, value };
     }
 
     setProperties(properties: droplit.DeviceServiceMember[]): boolean[] {
@@ -250,7 +363,7 @@ export class Apa102c extends droplit.DroplitPlugin {
             }, {});
             Object.keys(mappedProperties).forEach((service: string) => {
                 Object.keys(mappedProperties[service]).forEach((member: string) => {
-                    this.getServiceMember(service, `set_${member}`).apply(this, [ '.', mappedProperties[service][member] ]);
+                    this.getServiceMember(service, `set_${member}`).apply(this, ['.', mappedProperties[service][member]]);
                 });
             });
         }
@@ -299,7 +412,7 @@ export class Apa102c extends droplit.DroplitPlugin {
             }, {});
             Object.keys(mappedMethods).forEach((service: string) => {
                 Object.keys(mappedMethods[service]).forEach((member: string) => {
-                    this.getServiceMember(service, member).apply(this, [ '.', mappedMethods[service][member] ]);
+                    this.getServiceMember(service, member).apply(this, ['.', mappedMethods[service][member]]);
                 });
             });
         }
