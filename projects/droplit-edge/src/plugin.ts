@@ -159,6 +159,7 @@ export class Controller extends EventEmitter {
     private eventFilter(event: DP.DeviceServiceMember): DP.DeviceServiceMember {
         event.index = event.index ? event.index : '0';
         event.timestamp = event.timestamp ? event.timestamp as Date : new Date();
+        event.messageQueue = event.messageQueue || 'all';
         return event;
     }
 

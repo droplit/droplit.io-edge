@@ -416,8 +416,8 @@ function loadPlugin(pluginName: string) {
                 events.reduce((p, c) => {
                     const d = cache.getDeviceByLocalId(c.localId);
                     const message = (d && d.pluginName) ? `event < ${d.pluginName}:${d.localId}` :
-                                    d ? `event < unknown:${d.localId}` :
-                                    `event < unknown`;
+                        d ? `event < unknown:${d.localId}` :
+                            `event < unknown`;
                     log(message);
                     if (d && d.pluginName)
                         c.pluginName = d.pluginName;
@@ -426,22 +426,17 @@ function loadPlugin(pluginName: string) {
                 transport.send('event raised', events, err => { });
             });
 
-            pluginController.on('property changed', (properties: any[]) => {
-                properties = Array.isArray(properties) ? properties : [properties];
-                properties.reduce((p, c) => {
-                    const d = cache.getDeviceByLocalId(c.localId);
-                    const valueOutput = c.value && typeof c.value === 'object' && !Array.isArray(c.value) ? JSON.stringify(c.value) : c.value;
-                    log(`pc < ${c.localId}\\${c.service}.${c.member} ${valueOutput}`);
-                    if (d && d.pluginName)
-                        c.pluginName = d.pluginName;
-                    return p.concat([c]);
-                }, []);
-
-                // Only guarentee if send before first connect
-                if (!hasConnected)
-                    transport.sendReliable('property changed', properties);
-                else
-                    transport.send('property changed', properties, err => { });
+            pluginController.on('property changed', (properties: EventRaised[]) => {
+                const transportMethod = (hasConnected ? transport.send : transport.sendReliable).bind(transport);
+                const filtered = (Array.isArray(properties) ? properties : [properties])
+                    .filter(p => !hasConnected ? (p.messageQueue === 'all') : true) // Filter out non-queued if no connection
+                    .map(({ messageQueue, ...keep}) => ({ ...keep, pluginName })); // Add `pluginName` and omit `messageQueue`
+                // Log changes to transport
+                filtered.forEach((property: EventRaised) => {
+                    const valueOutput = property.value && typeof property.value === 'object' && !Array.isArray(property.value) ? JSON.stringify(property.value) : property.value;
+                    log(`pc < ${property.localId}\\${property.service}.${property.member} ${valueOutput}`);
+                });
+                transportMethod('property changed', filtered);
             });
 
             pluginController.on('remove except', (messages: RemoveMessage[]) => {

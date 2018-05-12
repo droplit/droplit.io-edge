@@ -27,6 +27,7 @@ export interface EventRaised {
     index: string;
     member: string;
     value: any;
+    messageQueue?: 'all' | 'none';
 }
 
 export type DiscoverComplete = EventRaised;

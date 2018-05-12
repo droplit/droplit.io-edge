@@ -20,6 +20,7 @@ export interface DeviceServiceMember {
     member: string;
     value?: any;
     isRouted?: boolean;
+    messageQueue?: 'all' | 'none';
     error?: Error;
     timestamp?: Date;
 }
