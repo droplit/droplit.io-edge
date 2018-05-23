@@ -86,7 +86,7 @@ const transpileProjects = projects => () => {
         .pipe(G$.typescript.createProject(tsconfig.compilerOptions)());
 
     const destTrans = file =>
-        file.base.replace(/.+?(?:\\|\/)projects(?:\\|\/)(.+?)(?:\\|\/)src(?:\\|\/.+)?/, 'projects\/$1\/lib\/');
+        path.relative(file.cwd, file.base).replace(/projects(?:\\|\/)(.+?)(?:\\|\/)src(?:\\|\/.+)?/, 'projects\/$1\/lib\/');
 
     return merge([
         tsResult.dts.pipe(gulp.dest(destTrans)),
