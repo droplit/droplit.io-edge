@@ -4,7 +4,6 @@ import * as WebSocket from 'ws';
 
 import net = require('net');
 import readline = require('readline');
-import { isPrimitive } from 'util';
 
 type Command = { desc: string; exec: (...args: any[]) => void };
 type StringIndexor<T> = { [k: string]: T };
@@ -23,6 +22,9 @@ const dxData = {
 
 if (settings.diagnostics && settings.diagnostics.port)
     port = settings.diagnostics.port;
+
+const isPrimitive = (value: any) =>
+    (typeof value !== 'object' && typeof value !== 'function') || (value === null);
 
 module.exports = (router: any) => {
     const server = net.createServer(connection);
