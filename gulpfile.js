@@ -1,6 +1,6 @@
 'use strict';
 
-const argv = require('yargs').argv
+const argv = require('yargs').argv;
 const gulp = require('gulp-help')(require('gulp'));
 const async = require('async');
 const del = require('del');
@@ -112,9 +112,9 @@ gulp.task('teardown', 'Clean all and unlink projects', callback => {
 
 gulp.task('install', 'Install all npm modules', callback => {
     const commands = [];
-    let packageNpmInstall = 'npm install'
-    if (argv.optional == false) packageNpmInstall += ' --no-optional';
-    if (argv.buildFromSource) packageNpmInstall += ' --build-from-source'
+    let packageNpmInstall = 'npm install';
+    if (argv.optional === false) packageNpmInstall += ' --no-optional';
+    if (argv.buildFromSource) packageNpmInstall += ' --build-from-source';
     if (argv.target_arch) packageNpmInstall += ` --target_arch=${argv.target_arch}`;
     projectNames.forEach(name => {
         commands.push({ cmd: packageNpmInstall, cwd: `projects/${name}` });
@@ -149,7 +149,7 @@ function linker(mode, callback) {
         });
     }
     runCommands(linkCommands, true, () => {
-        runCommands(packageLinkCommands, true, callback)
+        runCommands(packageLinkCommands, true, callback);
     });
     // info about "--no-bin-links" : see http://stackoverflow.com/questions/17990647/npm-install-errors-with-error-enoent-chmod
 }
@@ -167,21 +167,21 @@ gulp.task('watch', 'Contiuous build', ['build'], () => {
 });
 
 // see https://www.npmjs.com/package/tslint
-gulp.task('tslint', 'Lints all TypeScript source files', () => {
-    return gulp.src(wildcharPaths(settings.tsfiles))
+gulp.task('tslint', 'Lints all TypeScript source files', () =>
+    gulp.src(wildcharPaths(settings.tsfiles))
         .pipe(G$.tslint({ formatter: 'verbose' }))
-        .pipe(G$.tslint.report({ emitError: false }));
-});
+        .pipe(G$.tslint.report({ emitError: false }))
+);
 
 // Cleaning
 
-gulp.task('clean', 'Cleans the generated files from lib directory', () => {
-    return del(expandPaths(settings.clean));
-});
+gulp.task('clean', 'Cleans the generated files from lib directory', () =>
+    del(expandPaths(settings.clean))
+);
 
-gulp.task('deepclean', 'Cleans the generated files from lib directory and all node_modules', () => {
-    return del(expandPaths(settings.deepClean));
-});
+gulp.task('deepclean', 'Cleans the generated files from lib directory and all node_modules', () =>
+    del(expandPaths(settings.deepClean))
+);
 
 // Transpiling
 projectNames.forEach(project => {
@@ -218,11 +218,11 @@ gulp.task('npm-i', `Install and save a ${chalk.cyan('pack')}age to a ${chalk.cya
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.cyan('project')}`, callback => {
     const pack = argv.pack;
@@ -231,11 +231,11 @@ gulp.task('npm-u', `Uninstall and save a ${chalk.cyan('pack')}age to a ${chalk.c
         callback();
     });
 }, {
-        options: {
-            pack: 'Package name',
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        pack: 'Package name',
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('stats', 'Get lines of code', () => {
     const project = argv.project;
@@ -248,10 +248,10 @@ gulp.task('stats', 'Get lines of code', () => {
         gulp.src(settings.sloc_all).pipe(G$.sloc({ tolerant: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 gulp.task('size', 'Get size of code', () => {
     const project = argv.project;
@@ -264,10 +264,10 @@ gulp.task('size', 'Get size of code', () => {
         gulp.src(expandPaths(settings.runtimeFiles)).pipe(G$.size({ showFiles: true }));
     }
 }, {
-        options: {
-            project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
-        }
-    });
+    options: {
+        project: `Project name: ${chalk.green(projectNames.join(chalk.white(', ')))}`
+    }
+});
 
 // Deploying
 
@@ -286,22 +286,18 @@ gulp.task('package', false, () => {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('clean-dist', false, () => {
-    return del('dist');
-});
+gulp.task('clean-dist', false, () => del('dist'));
 
-gulp.task('move-temp', false, () => {
-    return gulp.src(settings.edgeFiles, { follow: true })
-        .pipe(gulp.dest('temp/droplit-edge'));
-});
+gulp.task('move-temp', false, () =>
+    gulp.src(settings.edgeFiles, { follow: true })
+        .pipe(gulp.dest('temp/droplit-edge'))
+);
 
-gulp.task('clean-temp', false, () => {
-    return del('temp');
-});
+gulp.task('clean-temp', false, () => del('temp'));
 
-gulp.task('setup-package', false, () => {
-    return gulp.src('./temp/droplit-edge/package.json')
-        .pipe(jeditor((json) => {
+gulp.task('setup-package', false, () =>
+    gulp.src('./temp/droplit-edge/package.json')
+        .pipe(jeditor(json => {
             const localConfig = require('./temp/droplit-edge/localsettings.json');
             if (Array.isArray(localConfig.plugins))
                 localConfig.plugins.forEach(plugin => {
@@ -321,17 +317,15 @@ gulp.task('setup-package', false, () => {
                 });
             return json;
         }))
-        .pipe(gulp.dest('temp/droplit-edge/'));
-});
+        .pipe(gulp.dest('temp/droplit-edge/'))
+);
 
-gulp.task('pre-install-dist', false, () => {
-    return del('temp/droplit-edge/node_modules');
-});
+gulp.task('pre-install-dist', false, () => del('temp/droplit-edge/node_modules'));
 
 gulp.task('install-dist', false, callback => {
-    let npmInstall = 'npm install'
-    if (argv.optional == false) npmInstall += ' --no-optional';
-    if (argv.buildFromSource) npmInstall += ' --build-from-source'
+    let npmInstall = 'npm install';
+    if (argv.optional === false) npmInstall += ' --no-optional';
+    if (argv.buildFromSource) npmInstall += ' --build-from-source';
     if (argv.target_arch) npmInstall += ` --target_arch=${argv.target_arch}`;
     runCommand(npmInstall, { cwd: 'temp/droplit-edge' }, () => {
         console.log('done');
@@ -348,9 +342,7 @@ gulp.task('deploy', 'Glob the Droplit Edge for embedding', callback => {
 });
 
 // Testing for improving package
-gulp.task('prep', false, () => {
-    return del(expandPaths(settings.prep));
-});
+gulp.task('prep', false, () => del(expandPaths(settings.prep)));
 
 // Version bump
 
