@@ -9,7 +9,10 @@
         "noUnusedParameters": false,
         "preserveConstEnums": true,
         "removeComments": true,
-        "target": "ES5"
+        "target": "ES5",
+        "lib": [
+            "es2015"
+        ]
     },
     "include": [
         "typings/index.d.ts",

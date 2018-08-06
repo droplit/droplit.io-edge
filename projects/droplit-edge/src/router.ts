@@ -73,7 +73,7 @@ declare const Map: any; // Work-around typescript not knowing Map when it exists
 export const plugins = new Map();                       // Create hashmap of plugins
 export const transport = new Transport();               // Create a new instance of the transport layer
 
-let autodiscoverTimer: number;                          // Device auto discovery timer
+let autodiscoverTimer: NodeJS.Timer;                          // Device auto discovery timer
 let hasConnected = false;                               // Has Transport layer connected, used first time connection
 
 // overwrite settings with local settings

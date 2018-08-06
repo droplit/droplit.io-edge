@@ -448,7 +448,7 @@ class PiStrip {
                 });
             }
             canContinue = false;
-        }));
+        }, 0));
     }
 
     pulse(red: number = 255, green: number = 255, blue: number = 255, time: number = 5, min: number = 0) {
