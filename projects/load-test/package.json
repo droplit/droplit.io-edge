@@ -29,5 +29,7 @@
   "dependencies": {
     "debug": "^2.2.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/debug": "0.0.30"
+  }
 }
