@@ -311,7 +311,7 @@ export default class Transport extends EventEmitter {
                 }
                 this.retryConnect();
             }
-        } else {
+        } else if (cb) {
             // connection was closed intentionally or never opened
             cb(new Error('not connected'));
         }
