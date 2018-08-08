@@ -30,6 +30,9 @@
         "enabled": false,
         "port": 8888
     },
+    "router": {
+        "autodiscover": true
+    },
     "config": {
         "provisioningServiceEnabled": false,
         "provisioningServicePort": null,

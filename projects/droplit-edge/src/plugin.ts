@@ -3,7 +3,8 @@ import * as DP from 'droplit-plugin';
 import {
     DeviceMessageResponse,
     PluginMessageResponse,
-    PluginSetting
+    PluginSetting,
+    RemoveMessage
 } from './types/types';
 const log = require('debug')('droplit:plugin');
 const logv = require('debug')('droplit-v:plugin');
@@ -64,6 +65,7 @@ export class Controller extends EventEmitter {
         this.pluginInstance.on('event raised', this.eventsHandler.bind(this));
         this.pluginInstance.on('log info', this.logInfoHandler.bind(this));
         this.pluginInstance.on('log error', this.logErrorHandler.bind(this));
+        this.pluginInstance.on('remove except', this.removeExceptHandler.bind(this));
         // this.pluginInstance.on('log info many', this.logInfoHandler.bind(this));
         // this.pluginInstance.on('log error many', this.logErrorHandler.bind(this));
     }
@@ -96,6 +98,10 @@ export class Controller extends EventEmitter {
 
     private logErrorHandler(events: any[]) {
         this.emit('log error', events.map(this.errorFilter));
+    }
+
+    private removeExceptHandler(messages: RemoveMessage[]) {
+        this.emit('remove except', messages);
     }
 
     // management
@@ -153,6 +159,7 @@ export class Controller extends EventEmitter {
     private eventFilter(event: DP.DeviceServiceMember): DP.DeviceServiceMember {
         event.index = event.index ? event.index : '0';
         event.timestamp = event.timestamp ? event.timestamp as Date : new Date();
+        event.messageQueue = event.messageQueue || 'all';
         return event;
     }
 

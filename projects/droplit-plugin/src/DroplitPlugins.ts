@@ -19,6 +19,8 @@ export interface DeviceServiceMember {
     index: string;
     member: string;
     value?: any;
+    isRouted?: boolean;
+    messageQueue?: 'all' | 'none';
     error?: Error;
     timestamp?: Date;
 }
@@ -49,10 +51,16 @@ export interface DeviceInfo {
         [x: string]: any
     };
     services?: string[];
+    routedServices?: string[];
     promotedMembers?: { [name: string]: string };
     pluginName?: string;
     timestamp?: Date;
 }
+
+export interface RemoveMessage {
+    localId: string;
+}
+
 export abstract class DroplitLocalPlugin extends EventEmitter {
 
     /**
@@ -426,6 +434,10 @@ export abstract class DroplitPlugin extends DroplitLocalPlugin {
      */
     protected onEvents(events: DeviceServiceMember[]) {
         this.emit('event raised', events);
+    }
+
+    protected onRemoveExcept(messages: RemoveMessage[]) {
+        this.emit('remove except', messages);
     }
 
     /**

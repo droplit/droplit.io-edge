@@ -21,13 +21,41 @@ import {
     PluginSetting,
     PluginSettingResponse,
     RequestMethodResponse,
-    SetPropertiesResponse
+    SetPropertiesResponse,
+    RemoveMessage
 } from './types/types';
 
 const log = debug('droplit:router');                                         // initilize logging module for log levels
 const logv = debug('droplit-v:router');                                      // initilize verbose logging
 const settings = require('../settings.json');                                // Load settings file
 const localSettings = require('../localsettings.json');                      // Load local settings file
+
+// log to file
+if (localSettings.debug && localSettings.debug.logToFile && localSettings.debug.logPath) {
+    const fs = require('fs');
+    const path = require('path');
+    let { logPath } = localSettings.debug;
+    if (!path.isAbsolute(localSettings.debug.logPath)) {
+        logPath = path.join(process.cwd(), logPath);
+    }
+    if (fs.existsSync(path.join(logPath, '../'))) {
+        if (!fs.existsSync(logPath)) {
+            fs.mkdirSync(logPath);
+        }
+        log('logging output to:', logPath);
+        const access = fs.createWriteStream(path.join(logPath, `droplitlog_${(new Date()).toISOString().replace(/:/g, '-').replace('T', '_').replace('.', '-')}.txt`));
+        const fn = process.stderr.write;
+        /* tslint:disable no-function-expression */
+        process.stderr.write = <any>function () {
+            access.write.apply(access, arguments);
+            fn.apply(process.stderr, arguments);
+        };
+        /* tslint:enable no-function-expression */
+    } else {
+        log('log file path does not exist:', logPath);
+    }
+}
+
 export { Transport };                                                        // export Transport interface
 export const macAddress: string =                                                    // use node-getmac library to get hardware mac address, used to uniquely identify this device
     localSettings.config && localSettings.config.MACAddressOverride ? localSettings.config.MACAddressOverride : null || // Override UID retrieval
@@ -45,7 +73,7 @@ declare const Map: any; // Work-around typescript not knowing Map when it exists
 export const plugins = new Map();                       // Create hashmap of plugins
 export const transport = new Transport();               // Create a new instance of the transport layer
 
-let autodiscoverTimer: number;                          // Device auto discovery timer
+let autodiscoverTimer: NodeJS.Timer;                          // Device auto discovery timer
 let hasConnected = false;                               // Has Transport layer connected, used first time connection
 
 // overwrite settings with local settings
@@ -53,6 +81,8 @@ Object.keys(localSettings).forEach(key => settings[key] = localSettings[key]);
 
 // Amount of time (ms) to wait before turning on auto discover
 const AutoDiscoverDelay = 2 * 60 * 1000;
+// Determine if auto discover should run
+const AutoDiscover = (settings.router && settings.router.autodiscover) ? settings.router.autodiscover : true;
 // Amount of time (ms) between discovery attempts
 const AutoDiscoverCadence = (settings.router && settings.router.autodiscoverCadence) ?
     settings.router.autodiscoverCadence : 60000;
@@ -69,6 +99,8 @@ logv(`PluginDiscoveryCascade: ${PluginDiscoveryCascade / 1000}s`);
 // log select settings
 log(`using setting host: ${settings.transport.host}`);
 log(`using setting ecosystem: ${settings.ecosystemId}`);
+if (settings.environmentId)
+    log(`using setting environment: ${settings.environmentId}`);
 log(`using setting edge id: ${macAddress}`);
 
 // If enabled, generates a heap dump on a set interval for diognostic purposes
@@ -104,9 +136,10 @@ if (localSettings.config && localSettings.config.provisioningServiceEnabled) {
 loadPlugins().then(() => {
     // Initialize the transport
     const headers: { [k: string]: string } = { 'x-edge-id': macAddress };
-    if (settings.ecosystemId) {
+    if (settings.ecosystemId)
         headers['x-ecosystem-id'] = settings.ecosystemId;
-    }
+    if (settings.environmentId)
+        headers['x-environment-id'] = settings.environmentId;
     transport.start(settings.transport, headers);
 });
 
@@ -114,7 +147,7 @@ loadPlugins().then(() => {
 transport.once('connected', () => {
     hasConnected = true;
     discoverAll();
-    if (settings.router.autodiscover)
+    if (AutoDiscover)
         setTimeout(startAutodiscover.bind(this), AutoDiscoverDelay);
 });
 
@@ -393,22 +426,22 @@ function loadPlugin(pluginName: string) {
                 transport.send('event raised', events, err => { });
             });
 
-            pluginController.on('property changed', (properties: any[]) => {
-                properties = Array.isArray(properties) ? properties : [properties];
-                properties.reduce((p, c) => {
-                    const d = cache.getDeviceByLocalId(c.localId);
-                    const valueOutput = c.value && typeof c.value === 'object' && !Array.isArray(c.value) ? JSON.stringify(c.value) : c.value;
-                    log(`pc < ${c.localId}\\${c.service}.${c.member} ${valueOutput}`);
-                    if (d && d.pluginName)
-                        c.pluginName = d.pluginName;
-                    return p.concat([c]);
-                }, []);
+            pluginController.on('property changed', (properties: EventRaised[]) => {
+                const transportMethod = (hasConnected ? transport.send : transport.sendReliable).bind(transport);
+                const filtered = (Array.isArray(properties) ? properties : [properties])
+                    .filter(p => !hasConnected ? (p.messageQueue === 'all') : true) // Filter out non-queued if no connection
+                    .map(({ messageQueue, ...keep}) => ({ ...keep, pluginName })); // Add `pluginName` and omit `messageQueue`
+                // Log changes to transport
+                filtered.forEach((property: EventRaised) => {
+                    const valueOutput = property.value && typeof property.value === 'object' && !Array.isArray(property.value) ? JSON.stringify(property.value) : property.value;
+                    log(`pc < ${property.localId}\\${property.service}.${property.member} ${valueOutput}`);
+                });
+                transportMethod('property changed', filtered);
+            });
 
-                // Only guarentee if send before first connect
-                if (!hasConnected)
-                    transport.sendReliable('property changed', properties);
-                else
-                    transport.send('property changed', properties, err => { });
+            pluginController.on('remove except', (messages: RemoveMessage[]) => {
+                log(`remove except < ${pluginName}:[ ${messages.map(m => m.localId).join(', ')} ]`);
+                transport.send('remove except', { pluginName, localIds: messages.map(m => m.localId) });
             });
 
             const basicSend = (event: string) => (data: any) => transport.send(event, data, err => basicSend('log error'));

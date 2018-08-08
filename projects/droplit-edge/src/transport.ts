@@ -180,6 +180,17 @@ export default class Transport extends EventEmitter {
             this.stopHeartbeat();
             log('disconnected');
             this.emit('disconnected');
+
+            if (message) {
+                try {
+                    const error = JSON.parse(message);
+                    if (error.message)
+                        return log(error.message);
+                    if (error.code && error.code === 1008)
+                        return log('Connection violated policy');
+                } catch {}
+            }
+
             this.retryConnect();
         }
     }
@@ -300,7 +311,7 @@ export default class Transport extends EventEmitter {
                 }
                 this.retryConnect();
             }
-        } else {
+        } else if (cb) {
             // connection was closed intentionally or never opened
             cb(new Error('not connected'));
         }

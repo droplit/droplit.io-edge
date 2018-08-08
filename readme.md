@@ -1,11 +1,11 @@
 ```
- _| _ _  _ |.|_   . _  
-(_|| (_)|_)|||_.o |(_) 
-        |             
+ _| _ _  _ |.|_   . _
+(_|| (_)|_)|||_.o |(_)
+        |
 ```
 # BETA Droplit.io Edge Solution
 
-Droplit.io Edge is the software that creates a connection to the Droplit.io cloud. This is typically run from an embedded device to control devices on the local network. 
+Droplit.io Edge is the software that creates a connection to the Droplit.io cloud. This is typically run from an embedded device to control devices on the local network.
 
 In order to run the Droplit.io Edge software, you must:
 
@@ -20,7 +20,7 @@ In order to run the Droplit.io Edge software, you must:
 Currently we support these platforms:
 
 * Raspberry Pi 3 (Raspbian Lite 2016-05-27)
-* Openwrt 
+* Openwrt
 * Windows 10 on desktop
 * macOS 10.12.X
 * Debian 8 +
@@ -28,7 +28,7 @@ Currently we support these platforms:
 
 Platforms with known issues:
 
-* Low memory/cpu power embedded devices 
+* Low memory/cpu power embedded devices
 
 ## Plugins
 
@@ -60,7 +60,7 @@ The following documentation assumes you are using a Raspberry Pi 3 on Raspbian L
 Make sure your device is connected to the local network, we recommend a wired connection for best results.
 
 
-### Install Git 
+### Install Git
 
 ```
 sudo apt-get install git
@@ -75,7 +75,7 @@ For instructions on installing NodeJS, see [https://docs.droplit.io/docs/install
 
 ### Install global NPM dependencies
 
-run: 
+run:
 
 ```
 npm install -g typescript gulp
@@ -85,7 +85,7 @@ npm install -g typescript gulp
 
 Using git:
 
-run: 
+run:
 ```
 git clone https://github.com/droplit/droplit.io-edge.git --depth 1
 ```
@@ -94,25 +94,28 @@ git clone https://github.com/droplit/droplit.io-edge.git --depth 1
 
 From the project root folder (`cd ~/droplit.io-edge`)
 
-
-run: 
+run:
 ```
 npm install
 ```
 
+Next, install the gulp command line utility:
+
+run:
+```
+npm install --global gulp-cli
+```
+
 Then you can install all the node modules and link the dependent projects with a single command.
 
-
-run: 
+run:
 ```
 gulp setup
 ```
 
-
 You only need to do this once. (unless the project dependency structure change)
 
-
-## Local configuration 
+## Local configuration
 
 You must supply the EcosystemID in order for the edge to link to your ecosystem.
 
@@ -165,7 +168,7 @@ To observe debug output, prior to running:
 To run the application from the project root (`cd ~/droplit.io-edge`)
 
 
-run:  
+run:
 ```
 node droplit-edge
 ```
@@ -180,6 +183,6 @@ run: `gulp teardown`
 
 
 If you need to change the project dependencies:
- - run `gulp teardown` 
+ - run `gulp teardown`
  - then change the projects.json file
  - then run `gulp setup`.

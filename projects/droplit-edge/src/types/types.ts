@@ -27,6 +27,7 @@ export interface EventRaised {
     index: string;
     member: string;
     value: any;
+    messageQueue?: 'all' | 'none';
 }
 
 export type DiscoverComplete = EventRaised;
@@ -45,6 +46,8 @@ export interface PluginMessage {
     plugin: string;
     message: any;
 }
+
+export type RemoveMessage = DP.RemoveMessage;
 
 export interface GetPropertiesResponse { supported: boolean[]; values: DP.DeviceServiceMember[]; }
 export interface SetPropertiesResponse { supported: boolean[]; }
