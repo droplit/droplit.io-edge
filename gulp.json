@@ -36,7 +36,7 @@
     "sloc_project": [
         "projects/{project}/src/**/*.ts",
         "projects/{project}/src/**/*.json",
-        "projects/{project}/node_modules/**/*"
+        "!projects/{project}/node_modules/**/*"
     ],
     "sloc_all": [
         "projects/*/src/**/*.ts",
